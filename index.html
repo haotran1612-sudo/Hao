@@ -1,0 +1,218 @@
+```html
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Website Cá Nhân - Trần Hào</title>
+
+    <style>
+        *{
+            margin:0;
+            padding:0;
+            box-sizing:border-box;
+            font-family: Arial, sans-serif;
+        }
+
+        body{
+            background:#f5f7fa;
+            color:#333;
+            line-height:1.6;
+        }
+
+        header{
+            background:#0d6efd;
+            color:white;
+            text-align:center;
+            padding:60px 20px;
+        }
+
+        .avatar{
+            width:180px;
+            height:180px;
+            border-radius:50%;
+            border:5px solid white;
+            object-fit:cover;
+            margin-bottom:20px;
+        }
+
+        nav{
+            background:white;
+            padding:15px;
+            text-align:center;
+            box-shadow:0 2px 5px rgba(0,0,0,.1);
+            position:sticky;
+            top:0;
+            z-index:100;
+        }
+
+        nav a{
+            text-decoration:none;
+            color:#0d6efd;
+            margin:0 15px;
+            font-weight:bold;
+        }
+
+        section{
+            max-width:1000px;
+            margin:auto;
+            padding:60px 20px;
+        }
+
+        h2{
+            color:#0d6efd;
+            margin-bottom:20px;
+        }
+
+        .card{
+            background:white;
+            padding:20px;
+            border-radius:10px;
+            box-shadow:0 3px 8px rgba(0,0,0,.1);
+            margin-bottom:20px;
+        }
+
+        .skills{
+            display:flex;
+            flex-wrap:wrap;
+            gap:10px;
+        }
+
+        .skill{
+            background:#0d6efd;
+            color:white;
+            padding:10px 15px;
+            border-radius:20px;
+        }
+
+        .btn{
+            display:inline-block;
+            background:#0d6efd;
+            color:white;
+            padding:12px 20px;
+            text-decoration:none;
+            border-radius:5px;
+            margin-top:10px;
+        }
+
+        form{
+            display:flex;
+            flex-direction:column;
+            gap:15px;
+        }
+
+        input, textarea{
+            padding:12px;
+            border:1px solid #ccc;
+            border-radius:5px;
+        }
+
+        button{
+            background:#0d6efd;
+            color:white;
+            border:none;
+            padding:12px;
+            border-radius:5px;
+            cursor:pointer;
+        }
+
+        footer{
+            background:#222;
+            color:white;
+            text-align:center;
+            padding:20px;
+        }
+
+        @media(max-width:768px){
+            nav a{
+                display:block;
+                margin:10px 0;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<header>
+    <img src="https://via.placeholder.com/180" class="avatar" alt="Avatar">
+    <h1>Trần Hào</h1>
+    <p>Chuyên viên Hỗ trợ Kinh doanh</p>
+</header>
+
+<nav>
+    <a href="#about">Giới thiệu</a>
+    <a href="#experience">Kinh nghiệm</a>
+    <a href="#skills">Kỹ năng</a>
+    <a href="#contact">Liên hệ</a>
+</nav>
+
+<section id="about">
+    <h2>Giới thiệu bản thân</h2>
+    <div class="card">
+        <p>
+            Tôi là Chuyên viên Hỗ trợ Kinh doanh với kinh nghiệm quản lý đơn hàng,
+            báo cáo dữ liệu, phối hợp với khách hàng và các phòng ban nhằm đảm bảo
+            quy trình vận hành hiệu quả.
+        </p>
+    </div>
+</section>
+
+<section id="experience">
+    <h2>Kinh nghiệm làm việc</h2>
+
+    <div class="card">
+        <h3>Cofeas Company</h3>
+        <p><strong>Chuyên viên Hỗ trợ Kinh doanh</strong></p>
+        <p>2022 - Hiện tại</p>
+        <ul>
+            <li>Quản lý đơn hàng khách hàng.</li>
+            <li>Theo dõi tiến độ giao hàng.</li>
+            <li>Lập báo cáo doanh số định kỳ.</li>
+        </ul>
+    </div>
+</section>
+
+<section id="skills">
+    <h2>Kỹ năng</h2>
+
+    <div class="skills">
+        <div class="skill">Excel</div>
+        <div class="skill">Data Analysis</div>
+        <div class="skill">Reporting</div>
+        <div class="skill">Customer Support</div>
+        <div class="skill">Business Support</div>
+    </div>
+
+    <br>
+
+    <a href="CV.pdf" class="btn" download>Tải CV</a>
+</section>
+
+<section id="contact">
+    <h2>Liên hệ</h2>
+
+    <div class="card">
+        <form id="contactForm">
+            <input type="text" placeholder="Họ và tên" required>
+            <input type="email" placeholder="Email" required>
+            <textarea rows="5" placeholder="Nội dung liên hệ"></textarea>
+            <button type="submit">Gửi liên hệ</button>
+        </form>
+    </div>
+</section>
+
+<footer>
+    <p>Email: your-email@gmail.com</p>
+    <p>© 2026 Trần Hào</p>
+</footer>
+
+<script>
+document.getElementById('contactForm').addEventListener('submit', function(e){
+    e.preventDefault();
+    alert('Cảm ơn bạn đã liên hệ!');
+});
+</script>
+
+</body>
+</html>
+```

@@ -8,316 +8,174 @@
 
 <link rel="stylesheet" href="style.css">
 
+<!-- Firebase (PHẢI ĐẶT TRƯỚC app.js) -->
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js"></script>
+
 </head>
 
 <body>
 
 <!-- LOGIN -->
-
 <div id="loginPage">
+  <div class="login-box">
 
-    <div class="login-box">
+    <h1>TaskFlow</h1>
 
-        <h1>TaskFlow</h1>
+    <h3>Đăng nhập</h3>
 
-        <h3>Đăng nhập</h3>
+    <input id="loginEmail" type="email" placeholder="Email">
+    <input id="loginPassword" type="password" placeholder="Mật khẩu">
 
-        <input
-            id="loginEmail"
-            type="email"
-            placeholder="Email">
+    <button onclick="login()">Đăng nhập</button>
 
-        <input
-            id="loginPassword"
-            type="password"
-            placeholder="Mật khẩu">
+    <hr>
 
-        <button onclick="login()">
-            Đăng nhập
-        </button>
+    <h3>Đăng ký</h3>
 
-        <hr>
+    <input id="registerName" placeholder="Họ tên">
+    <input id="registerEmail" type="email" placeholder="Email">
+    <input id="registerPassword" type="password" placeholder="Mật khẩu">
 
-        <h3>Đăng ký</h3>
+    <button onclick="registerUser()">Đăng ký</button>
 
-        <input
-            id="registerName"
-            placeholder="Họ tên">
-
-        <input
-            id="registerEmail"
-            type="email"
-            placeholder="Email">
-
-        <input
-            id="registerPassword"
-            type="password"
-            placeholder="Mật khẩu">
-
-        <button onclick="registerUser()">
-            Đăng ký
-        </button>
-
-    </div>
-
+  </div>
 </div>
 
 <!-- APP -->
-
 <div id="appPage" style="display:none;">
 
-<header>
+  <header>
+    <div class="logo">TaskFlow</div>
 
-    <div class="logo">
-        TaskFlow
+    <div class="menu">
+      <button onclick="showKanban()">Kanban</button>
+      <button onclick="showTracker()">Tracker</button>
     </div>
-<div class="menu">
 
-    <button onclick="showKanban()">
-        Kanban
-    </button>
-
-    <button onclick="showTracker()">
-        Tracker
-    </button>
-
-</div>
     <div>
-
-        <span id="welcomeUser"></span>
-
-        <button onclick="openTaskModal()">
-            + Task
-        </button>
-
-        <button onclick="logout()">
-            Logout
-        </button>
-
+      <span id="welcomeUser"></span>
+      <button onclick="openTaskModal()">+ Task</button>
+      <button onclick="logout()">Logout</button>
     </div>
+  </header>
 
-</header>
+  <!-- DASHBOARD -->
+  <div class="dashboard">
+    <div class="card"><h3>Total</h3><h1 id="totalTask">0</h1></div>
+    <div class="card"><h3>Todo</h3><h1 id="todoCount">0</h1></div>
+    <div class="card"><h3>Processing</h3><h1 id="processingCount">0</h1></div>
+    <div class="card"><h3>Done</h3><h1 id="doneCount">0</h1></div>
+  </div>
 
-<!-- DASHBOARD -->
-
-<div class="dashboard">
-
-    <div class="card">
-        <h3>Total</h3>
-        <h1 id="totalTask">0</h1>
-    </div>
-
-    <div class="card">
-        <h3>Todo</h3>
-        <h1 id="todoCount">0</h1>
-    </div>
-
-    <div class="card">
-        <h3>Processing</h3>
-        <h1 id="processingCount">0</h1>
-    </div>
-
-    <div class="card">
-        <h3>Done</h3>
-        <h1 id="doneCount">0</h1>
-    </div>
-
-</div>
-
-<!-- KANBAN -->
-<div id="trackerPage" style="display:none;">
-
-    <div class="tracker-header">
-
+  <!-- TRACKER -->
+  <div id="trackerPage" style="display:none;">
     <h2>Task Tracker</h2>
 
-    <button id="addRowBtn" onclick="addRow()">
-        + Add Row
-    </button>
-
-</div>
+    <button onclick="addRow()">+ Add Row</button>
 
     <table id="taskTable">
+      <thead>
+        <tr>
+          <th>Start</th>
+          <th>Deadline</th>
+          <th>Task</th>
+          <th>Priority</th>
+          <th>Status</th>
+          <th>Type</th>
+        </tr>
+      </thead>
 
-        <thead>
-
-            <tr>
-
-                <th>Start</th>
-                <th>Deadline</th>
-                <th>Task</th>
-                <th>Week</th>
-                <th>Priority</th>
-                <th>Status</th>
-                <th>Type</th>
-
-            </tr>
-
-        </thead>
-
-        <tbody id="taskTableBody">
-
-        </tbody>
-
+      <tbody id="taskTableBody"></tbody>
     </table>
-</div>
-<div class="kanban">
+  </div>
+
+  <!-- KANBAN -->
+  <div class="kanban">
 
     <div class="column">
-
-        <h2>TODO</h2>
-
-        <div id="todoList"></div>
-
+      <h2>TODO</h2>
+      <div id="todoList"></div>
     </div>
 
     <div class="column">
-
-        <h2>PROCESSING</h2>
-
-        <div id="processingList"></div>
-
+      <h2>PROCESSING</h2>
+      <div id="processingList"></div>
     </div>
 
     <div class="column">
-
-        <h2>DONE</h2>
-
-        <div id="doneList"></div>
-
+      <h2>DONE</h2>
+      <div id="doneList"></div>
     </div>
 
-</div>
-
+  </div>
 </div>
 
 <!-- MODAL -->
-
 <div id="taskModal" class="modal">
 
-    <div class="modal-content">
+  <div class="modal-content">
 
-        <h2>Tạo Task</h2>
+    <h2>Tạo Task</h2>
 
-        <input
-            id="taskName"
-            placeholder="Tên Task">
+    <input id="taskName" placeholder="Tên Task">
+    <textarea id="taskDescription" placeholder="Mô tả"></textarea>
 
-        <textarea
-            id="taskDescription"
-            placeholder="Mô tả">
-        </textarea>
+    <label>Start</label>
+    <input id="startDate" type="datetime-local">
 
-        <label>Start Date</label>
+    <label>Deadline</label>
+    <input id="deadline" type="datetime-local">
 
-        <input
-            id="startDate"
-            type="datetime-local">
+    <label>Type</label>
+    <select id="taskType">
+      <option>Daily</option>
+      <option>Weekly</option>
+      <option>Monthly</option>
+    </select>
 
-        <label>Deadline</label>
+    <label>Priority</label>
+    <select id="priority">
+      <option>Normal</option>
+      <option>Urgent</option>
+    </select>
 
-        <input
-            id="deadline"
-            type="datetime-local">
+    <label>Status</label>
+    <select id="status">
+      <option>Todo</option>
+      <option>Processing</option>
+      <option>Done</option>
+    </select>
 
-        <label>Task Type</label>
+    <label>Calendar Title</label>
+    <input id="calendarTitle">
 
-        <select id="taskType">
+    <label>Location</label>
+    <input id="location">
 
-            <option>Daily</option>
-            <option>Weekly</option>
-            <option>Monthly</option>
-            <option>Yearly</option>
-            <option>Abnormal</option>
+    <label>Attendees</label>
+    <input id="attendees">
 
-        </select>
+    <label>
+      <input type="checkbox" id="applyCalendar">
+      Create Calendar
+    </label>
 
-        <label>Priority</label>
+    <label>
+      <input type="checkbox" id="sendMail">
+      Send Email
+    </label>
 
-        <select id="priority">
+    <br><br>
 
-            <option>Normal</option>
-            <option>Urgent</option>
+    <button onclick="saveTask()">Save</button>
+    <button onclick="closeTaskModal()">Cancel</button>
 
-        </select>
-
-        <label>Status</label>
-
-        <select id="status">
-
-            <option>Todo</option>
-            <option>Processing</option>
-            <option>Done</option>
-
-        </select>
-
-        <label>Calendar Title</label>
-
-        <input
-            id="calendarTitle"
-            placeholder="Tên trên Google Calendar">
-
-        <label>Location</label>
-
-        <input
-            id="location"
-            placeholder="Location">
-
-        <label>Attendees</label>
-
-        <input
-            id="attendees"
-            placeholder="email1@gmail.com,email2@gmail.com">
-
-        <label>Google Meet Link</label>
-
-        <input
-            id="meetLink"
-            placeholder="https://meet.google.com/...">
-
-        <label>Reminder (minutes)</label>
-
-        <input
-            id="reminder"
-            type="number"
-            value="30">
-
-        <label>
-
-            <input
-                id="applyCalendar"
-                type="checkbox">
-
-            Create Calendar Event
-
-        </label>
-
-        <label>
-
-            <input
-                id="sendMail"
-                type="checkbox">
-
-            Send Email
-
-        </label>
-
-        <br><br>
-
-        <button onclick="saveTask()">
-            Save Task
-        </button>
-
-        <button onclick="closeTaskModal()">
-            Cancel
-        </button>
-
-    </div>
-
+  </div>
 </div>
 
+<!-- APP SCRIPT (PHẢI ĐẶT CUỐI) -->
 <script src="app.js"></script>
-<!-- FLOATING BUTTON -->
-<button id="fabTask" onclick="openTaskModal()">+</button>
+
 </body>
 </html>

@@ -1,4 +1,22 @@
 // =======================
+// FIREBASE CONFIG
+// =======================
+const firebaseConfig = {
+  apiKey: "YOUR_API_KEY",
+  authDomain: "YOUR_PROJECT.firebaseapp.com",
+  projectId: "YOUR_PROJECT_ID",
+  storageBucket: "YOUR_PROJECT.appspot.com",
+  messagingSenderId: "YOUR_SENDER_ID",
+  appId: "YOUR_APP_ID"
+};
+
+// KHỞI TẠO FIREBASE
+firebase.initializeApp(firebaseConfig);
+
+// AUTH + DATABASE
+const auth = firebase.auth();
+const db = firebase.firestore();
+// =======================
 // FIREBASE INIT
 // =======================
 const firebaseConfig = {
@@ -180,7 +198,16 @@ async function updateTask(id, field, value) {
     console.log("Update error:", err);
   }
 }
+const firebaseConfig = {
+  apiKey: "...",
+  authDomain: "...",
+  projectId: "..."
+};
 
+firebase.initializeApp(firebaseConfig);
+
+// tạo auth
+const auth = firebase.auth();
 
 // =======================
 // AUTO LOGIN

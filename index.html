@@ -1,6 +1,5 @@
 <!DOCTYPE html>
 <html lang="vi">
-
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -9,7 +8,7 @@
 
 <link rel="stylesheet" href="style.css">
 
-<!-- Firebase v8 -->
+<!-- FIREBASE V8 -->
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
@@ -41,7 +40,7 @@
             Đăng nhập
         </button>
 
-        <hr><br>
+        <hr>
 
         <h3>Đăng ký</h3>
 
@@ -105,7 +104,6 @@
 </header>
 
 <!-- DASHBOARD -->
-
 <div class="dashboard">
 
     <div class="card">
@@ -131,7 +129,6 @@
 </div>
 
 <!-- TRACKER -->
-
 <div id="trackerPage" style="display:none;">
 
     <h2>Task Tracker</h2>
@@ -151,29 +148,39 @@
 
         </thead>
 
-        <tbody id="taskTableBody"></tbody>
+        <tbody id="taskTableBody">
+
+        </tbody>
 
     </table>
 
 </div>
 
 <!-- KANBAN -->
-
 <div class="kanban">
 
     <div class="column">
+
         <h2>TODO</h2>
+
         <div id="todoList"></div>
+
     </div>
 
     <div class="column">
+
         <h2>PROCESSING</h2>
+
         <div id="processingList"></div>
+
     </div>
 
     <div class="column">
+
         <h2>DONE</h2>
+
         <div id="doneList"></div>
+
     </div>
 
 </div>
@@ -181,7 +188,6 @@
 </div>
 
 <!-- MODAL -->
-
 <div id="taskModal" class="modal">
 
     <div class="modal-content">
@@ -211,35 +217,67 @@
         <label>Task Type</label>
 
         <select id="taskType">
+
             <option>Daily</option>
             <option>Weekly</option>
             <option>Monthly</option>
             <option>Yearly</option>
+
         </select>
 
         <label>Priority</label>
 
         <select id="priority">
+
             <option>Normal</option>
             <option>Urgent</option>
+
         </select>
 
         <label>Status</label>
 
         <select id="status">
+
             <option>Todo</option>
             <option>Processing</option>
             <option>Done</option>
+
         </select>
 
         <label>Calendar Title</label>
+
         <input id="calendarTitle">
 
         <label>Location</label>
+
         <input id="location">
 
         <label>Attendees</label>
+
         <input id="attendees">
+
+        <label>Reminder</label>
+
+        <input
+            id="reminder"
+            type="number"
+            value="30">
+
+        <label>
+            <input
+                type="checkbox"
+                id="applyCalendar">
+            Create Calendar
+        </label>
+
+        <br>
+
+        <label>
+            <input
+                type="checkbox"
+                id="sendMail">
+            Send Mail
+        </label>
 
         <br><br>
 
@@ -255,13 +293,9 @@
 
 </div>
 
-<!-- FLOAT BUTTON -->
+<button id="fabTask" onclick="openTaskModal()">+</button>
 
-<button id="fabAdd" onclick="openTaskModal()">
-+
-</button>
-
-<!-- APP JS -->
+<!-- APP.JS LUÔN ĐẶT CUỐI -->
 <script src="app.js"></script>
 
 </body>

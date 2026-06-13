@@ -1,26 +1,8 @@
 // =======================
-// FIREBASE CONFIG
-// =======================
-const firebaseConfig = {
-  apiKey: "YOUR_API_KEY",
-  authDomain: "YOUR_PROJECT.firebaseapp.com",
-  projectId: "YOUR_PROJECT_ID",
-  storageBucket: "YOUR_PROJECT.appspot.com",
-  messagingSenderId: "YOUR_SENDER_ID",
-  appId: "YOUR_APP_ID"
-};
-
-// KHỞI TẠO FIREBASE
-firebase.initializeApp(firebaseConfig);
-
-// AUTH + DATABASE
-const auth = firebase.auth();
-const db = firebase.firestore();
-// =======================
 // FIREBASE INIT
 // =======================
 const firebaseConfig = {
-  apiKey: "...",
+  apiKey: "YOUR_API_KEY",
   authDomain: "whoami-73408.firebaseapp.com",
   projectId: "whoami-73408",
   storageBucket: "whoami-73408.appspot.com",
@@ -29,31 +11,53 @@ const firebaseConfig = {
 };
 
 firebase.initializeApp(firebaseConfig);
+
+const auth = firebase.auth();
 const db = firebase.firestore();
 
+let currentUser = null;
+
 
 // =======================
-// LOGIN (DEMO)
+// REGISTER
 // =======================
-function login() {
-  const email = document.getElementById("loginEmail").value;
+function registerUser() {
+  const email = document.getElementById("registerEmail").value;
+  const password = document.getElementById("registerPassword").value;
 
-  localStorage.setItem("userEmail", email);
-
-  document.getElementById("loginPage").style.display = "none";
-  document.getElementById("appPage").style.display = "block";
-
-  document.getElementById("welcomeUser").innerText = email;
-
-  loadTasks();
+  auth.createUserWithEmailAndPassword(email, password)
+    .then(() => {
+      alert("Đăng ký thành công");
+    })
+    .catch(err => {
+      alert(err.message);
+    });
 }
 
 
 // =======================
-// REGISTER (DEMO)
+// LOGIN
 // =======================
-function registerUser() {
-  alert("Đang dùng Firebase demo (chưa bật Auth)");
+function login() {
+  const email = document.getElementById("loginEmail").value;
+  const password = document.getElementById("loginPassword").value;
+
+  auth.signInWithEmailAndPassword(email, password)
+    .then(userCredential => {
+      currentUser = userCredential.user.email;
+
+      localStorage.setItem("userEmail", currentUser);
+
+      document.getElementById("loginPage").style.display = "none";
+      document.getElementById("appPage").style.display = "block";
+
+      document.getElementById("welcomeUser").innerText = currentUser;
+
+      loadTasks();
+    })
+    .catch(err => {
+      alert(err.message);
+    });
 }
 
 
@@ -61,6 +65,7 @@ function registerUser() {
 // LOGOUT
 // =======================
 function logout() {
+  auth.signOut();
   localStorage.clear();
   location.reload();
 }
@@ -79,28 +84,34 @@ function closeTaskModal() {
 
 
 // =======================
-// SAVE TASK (FIREBASE)
+// SAVE TASK
 // =======================
 async function saveTask() {
   try {
     await db.collection("tasks").add({
       email: localStorage.getItem("userEmail"),
+
       taskName: document.getElementById("taskName").value,
       start: document.getElementById("startDate").value,
       deadline: document.getElementById("deadline").value,
+
       taskType: document.getElementById("taskType").value,
       priority: document.getElementById("priority").value,
       status: document.getElementById("status").value,
+
       calendarTitle: document.getElementById("calendarTitle").value,
       location: document.getElementById("location").value,
       attendees: document.getElementById("attendees").value,
+
       reminder: document.getElementById("reminder").value,
       apply: document.getElementById("applyCalendar").checked,
       sendMail: document.getElementById("sendMail").checked,
+
       createdAt: new Date()
     });
 
     alert("Tạo task thành công");
+
     closeTaskModal();
     resetForm();
     loadTasks();
@@ -152,28 +163,10 @@ async function loadTasks() {
 
     const tr = document.createElement("tr");
 
-    if (task.priority === "Urgent") {
-      tr.classList.add("urgent-row");
-    }
-
     tr.innerHTML = `
-      <td>
-        <input type="datetime-local"
-          value="${task.start || ""}"
-          onchange="updateTask('${doc.id}','start',this.value)">
-      </td>
-
-      <td>
-        <input type="datetime-local"
-          value="${task.deadline || ""}"
-          onchange="updateTask('${doc.id}','deadline',this.value)">
-      </td>
-
-      <td>
-        <input value="${task.taskName || ""}"
-          onchange="updateTask('${doc.id}','taskName',this.value)">
-      </td>
-
+      <td><input type="datetime-local" value="${task.start || ""}"></td>
+      <td><input type="datetime-local" value="${task.deadline || ""}"></td>
+      <td><input value="${task.taskName || ""}"></td>
       <td>${task.priority || ""}</td>
       <td>${task.status || ""}</td>
       <td>${task.taskType || ""}</td>
@@ -183,31 +176,6 @@ async function loadTasks() {
   });
 }
 
-
-// =======================
-// UPDATE TASK (FIREBASE ONLY)
-// =======================
-async function updateTask(id, field, value) {
-  try {
-    await db.collection("tasks").doc(id).update({
-      [field]: value
-    });
-
-    console.log("Updated:", field, value);
-  } catch (err) {
-    console.log("Update error:", err);
-  }
-}
-const firebaseConfig = {
-  apiKey: "...",
-  authDomain: "...",
-  projectId: "..."
-};
-
-firebase.initializeApp(firebaseConfig);
-
-// tạo auth
-const auth = firebase.auth();
 
 // =======================
 // AUTO LOGIN

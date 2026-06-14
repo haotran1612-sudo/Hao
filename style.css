@@ -202,7 +202,8 @@ header button {
 /* =======================
    INPUT TABLE
 ======================= */
-#taskTable input {
+#taskTable input[type="text"],
+#taskTable input[type="datetime-local"] {
   width: 100%;
   border: none;
   outline: none;

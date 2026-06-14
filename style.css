@@ -311,3 +311,21 @@ header button {
   border: 1px solid #eee;
   padding: 10px;
 }
+#backupTable{
+    width:100%;
+    border-collapse:collapse;
+    background:white;
+    border-radius:10px;
+    overflow:hidden;
+}
+
+#backupTable th{
+    background:#dc2626;
+    color:white;
+    padding:12px;
+}
+
+#backupTable td{
+    border:1px solid #eee;
+    padding:10px;
+}

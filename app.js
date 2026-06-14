@@ -469,3 +469,56 @@ async function showBackup() {
 
   });
 }
+// =======================
+// SHOW BACKUP
+// =======================
+async function showBackup() {
+
+  document.getElementById("trackerPage").style.display = "none";
+
+  const kanban = document.querySelector(".kanban");
+  if (kanban) kanban.style.display = "none";
+
+  document.getElementById("backupPage").style.display = "block";
+
+  const tbody =
+    document.getElementById("backupTableBody");
+
+  if (!tbody) return;
+
+  tbody.innerHTML = "";
+
+  try {
+
+    const email =
+      localStorage.getItem("userEmail");
+
+    const snapshot =
+      await db.collection("backupTasks")
+        .where("email", "==", email)
+        .get();
+
+    snapshot.forEach(doc => {
+
+      const task = doc.data();
+
+      const tr = document.createElement("tr");
+
+      tr.innerHTML = `
+        <td>${task.taskName || ""}</td>
+        <td>${task.start || ""}</td>
+        <td>${task.deadline || ""}</td>
+        <td>${task.status || ""}</td>
+        <td>${task.priority || ""}</td>
+      `;
+
+      tbody.appendChild(tr);
+
+    });
+
+  } catch(err) {
+
+    console.error(err);
+
+  }
+}

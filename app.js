@@ -304,13 +304,14 @@ function showTracker() {
 // =======================
 function showKanban() {
 
-  const tracker = document.getElementById("trackerPage");
+  document.getElementById("trackerPage").style.display = "none";
+
+  document.getElementById("backupPage").style.display = "none";
+
   const kanban = document.querySelector(".kanban");
 
-  if (tracker) tracker.style.display = "none";
   if (kanban) kanban.style.display = "flex";
 }
-
 
 // =======================
 // ADD EMPTY ROW

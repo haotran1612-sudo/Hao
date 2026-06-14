@@ -504,13 +504,19 @@ async function showBackup() {
 
       const tr = document.createElement("tr");
 
-      tr.innerHTML = `
-        <td>${task.taskName || ""}</td>
-        <td>${task.start || ""}</td>
-        <td>${task.deadline || ""}</td>
-        <td>${task.status || ""}</td>
-        <td>${task.priority || ""}</td>
-      `;
+    tr.innerHTML = `
+<td style="text-align:center;">
+  <input
+    type="checkbox"
+    onchange="restoreTask('${doc.id}')">
+</td>
+
+<td>${task.taskName || ""}</td>
+<td>${task.start || ""}</td>
+<td>${task.deadline || ""}</td>
+<td>${task.status || ""}</td>
+<td>${task.priority || ""}</td>
+`;
 
       tbody.appendChild(tr);
 

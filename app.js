@@ -217,10 +217,16 @@ async function loadTasks() {
       const tr = document.createElement("tr");
 
       tr.innerHTML = `
+<td style="text-align:center;">
+  <input
+    type="checkbox"
+    onchange="archiveTask('${doc.id}', this)">
+</td>
+
 <td>
   <input
     type="datetime-local"
-    value="${task.start || ''}"
+    value="${(task.start || '').substring(0,16)}"
     onkeydown="return false"
     onchange="updateTask('${doc.id}','start',this.value)">
 </td>
@@ -228,12 +234,12 @@ async function loadTasks() {
 <td>
   <input
     type="datetime-local"
-    value="${task.deadline || ''}"
+    value="${(task.deadline || '').substring(0,16)}"
     onkeydown="return false"
     onchange="updateTask('${doc.id}','deadline',this.value)">
 </td>
 
-    <td>
+<td>
   <input
     type="text"
     value="${task.taskName || ''}"
@@ -263,7 +269,7 @@ async function loadTasks() {
     <option value="Yearly" ${task.taskType==="Yearly"?"selected":""}>Yearly</option>
   </select>
 </td>
-`;  
+`;
 
       tbody.appendChild(tr);
 
@@ -372,5 +378,51 @@ async function updateTask(id, field, value) {
 
     console.error(err);
 
+  }
+}
+// =======================
+// ARCHIVE TASK
+// =======================
+async function archiveTask(id, checkbox) {
+
+  if (!confirm("Chuyển task này vào Backup?")) {
+    checkbox.checked = false;
+    return;
+  }
+
+  try {
+
+    const docRef = await db
+      .collection("tasks")
+      .doc(id)
+      .get();
+
+    if (!docRef.exists) return;
+
+    const task = docRef.data();
+
+    await db.collection("backupTasks").add({
+
+      ...task,
+
+      email: localStorage.getItem("userEmail"),
+
+      archivedAt: new Date()
+
+    });
+
+    await db.collection("tasks")
+      .doc(id)
+      .delete();
+
+    loadTasks();
+
+  } catch(err) {
+
+    console.error(err);
+
+    alert("Không thể backup task");
+
+    checkbox.checked = false;
   }
 }

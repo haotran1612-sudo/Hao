@@ -426,3 +426,46 @@ async function archiveTask(id, checkbox) {
     checkbox.checked = false;
   }
 }
+async function showBackup() {
+
+  document.getElementById("trackerPage").style.display = "none";
+
+  document.getElementById("backupPage").style.display = "block";
+
+  document.querySelector(".kanban").style.display = "none";
+
+  const tbody =
+    document.getElementById("backupTableBody");
+
+  tbody.innerHTML = "";
+
+  const email =
+    localStorage.getItem("userEmail");
+
+  const snapshot =
+    await db.collection("backupTasks")
+      .where("email","==",email)
+      .get();
+
+  snapshot.forEach(doc => {
+
+    const task = doc.data();
+
+    const tr = document.createElement("tr");
+
+    tr.innerHTML = `
+      <td>${task.taskName || ""}</td>
+      <td>${task.start || ""}</td>
+      <td>${task.deadline || ""}</td>
+      <td>${task.status || ""}</td>
+      <td>${
+        task.archivedAt
+        ? new Date(task.archivedAt.seconds * 1000).toLocaleString()
+        : ""
+      }</td>
+    `;
+
+    tbody.appendChild(tr);
+
+  });
+}

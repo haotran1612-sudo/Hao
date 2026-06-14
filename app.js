@@ -287,10 +287,12 @@ async function loadTasks() {
 // =======================
 function showTracker() {
 
-  const tracker = document.getElementById("trackerPage");
+  document.getElementById("trackerPage").style.display = "block";
+
+  document.getElementById("backupPage").style.display = "none";
+
   const kanban = document.querySelector(".kanban");
 
-  if (tracker) tracker.style.display = "block";
   if (kanban) kanban.style.display = "none";
 
   loadTasks();

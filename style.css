@@ -295,3 +295,19 @@ header button {
     width: 95%;
   }
 }
+#backupTable {
+  width: 100%;
+  border-collapse: collapse;
+  background: white;
+}
+
+#backupTable th {
+  background: #dc2626;
+  color: white;
+  padding: 12px;
+}
+
+#backupTable td {
+  border: 1px solid #eee;
+  padding: 10px;
+}

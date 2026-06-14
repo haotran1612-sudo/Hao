@@ -528,3 +528,37 @@ async function showBackup() {
 
   }
 }
+// =======================
+// RESTORE TASK
+// =======================
+async function restoreTask(id) {
+
+  try {
+
+    const docRef = await db
+      .collection("backupTasks")
+      .doc(id)
+      .get();
+
+    if (!docRef.exists) return;
+
+    const task = docRef.data();
+
+    delete task.archivedAt;
+
+    await db.collection("tasks").add(task);
+
+    await db.collection("backupTasks")
+      .doc(id)
+      .delete();
+
+    showBackup();
+
+  } catch(err) {
+
+    console.error(err);
+
+    alert("Không thể restore task");
+
+  }
+}

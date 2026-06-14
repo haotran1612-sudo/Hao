@@ -476,10 +476,10 @@ async function showBackup() {
 
   document.getElementById("trackerPage").style.display = "none";
 
+  document.getElementById("backupPage").style.display = "block";
+
   const kanban = document.querySelector(".kanban");
   if (kanban) kanban.style.display = "none";
-
-  document.getElementById("backupPage").style.display = "block";
 
   const tbody =
     document.getElementById("backupTableBody");
@@ -488,45 +488,45 @@ async function showBackup() {
 
   tbody.innerHTML = "";
 
-  try {
+  const email =
+    localStorage.getItem("userEmail");
 
-    const email =
-      localStorage.getItem("userEmail");
+  const snapshot = await db
+    .collection("backupTasks")
+    .where("email", "==", email)
+    .get();
 
-    const snapshot =
-      await db.collection("backupTasks")
-        .where("email", "==", email)
-        .get();
+  snapshot.forEach(doc => {
 
-    snapshot.forEach(doc => {
+    const task = doc.data();
 
-      const task = doc.data();
-
-      const tr = document.createElement("tr");
+    const tr =
+      document.createElement("tr");
 
     tr.innerHTML = `
-<td style="text-align:center;">
-  <input
-    type="checkbox"
-    onchange="restoreTask('${doc.id}')">
-</td>
+      <td style="text-align:center;">
+        <input
+          type="checkbox"
+          onchange="restoreTask('${doc.id}')">
+      </td>
 
-<td>${task.taskName || ""}</td>
-<td>${task.start || ""}</td>
-<td>${task.deadline || ""}</td>
-<td>${task.status || ""}</td>
-<td>${task.priority || ""}</td>
-`;
+      <td>${task.taskName || ""}</td>
+      <td>${task.start || ""}</td>
+      <td>${task.deadline || ""}</td>
+      <td>${task.status || ""}</td>
+      <td>${task.priority || ""}</td>
+      <td>
+        ${task.archivedAt
+          ? new Date(task.archivedAt.seconds * 1000)
+              .toLocaleString()
+          : ""}
+      </td>
+    `;
 
-      tbody.appendChild(tr);
+    tbody.appendChild(tr);
 
-    });
+  });
 
-  } catch(err) {
-
-    console.error(err);
-
-  }
 }
 // =======================
 // RESTORE TASK

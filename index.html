@@ -78,7 +78,13 @@
     <div class="menu">
 
 <button onclick="showKanban()">Kanban</button>
+<button onclick="showWeekCalendar()">
+Week
+</button>
 
+<button onclick="showMonthCalendar()">
+Month
+</button>
 <button onclick="showTracker()">Tracker</button>
 
 <button onclick="showBackup()">Backup</button>
@@ -139,7 +145,34 @@
         </button>
 
     </div>
+<div id="weekCalendarPage"
+     style="display:none;">
 
+  <h2>Week Calendar</h2>
+
+  <div id="weekCalendar"></div>
+
+</div>
+	<div id="monthCalendarPage"
+     style="display:none;">
+
+<div>
+
+<button onclick="prevMonth()">
+◀
+</button>
+
+<span id="monthTitle"></span>
+
+<button onclick="nextMonth()">
+▶
+</button>
+
+</div>
+
+<div id="monthGrid"></div>
+
+</div>
     <table id="taskTable">
 
         <thead>

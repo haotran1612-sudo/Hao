@@ -569,25 +569,46 @@ async function restoreTask(id) {
 // =======================
 function highlightTodayColumn() {
 
-  const table =
-    document.getElementById("taskTable");
+  const today = new Date();
 
-  if (!table) return;
+  let currentColumn = 4;
+
+  for(let i = 1; i <= 7; i++){
+
+    const th =
+      document.getElementById("day" + i);
+
+    if(!th) continue;
+
+    const text = th.innerText.trim();
+
+    const day =
+      parseInt(text.split(".")[0]);
+
+    const month =
+      parseInt(text.split(".")[1]);
+
+    if(
+      day === today.getDate() &&
+      month === (today.getMonth() + 1)
+    ){
+      currentColumn = i + 3;
+      break;
+    }
+  }
 
   const rows =
-    table.querySelectorAll("tr");
+    document.querySelectorAll("#taskTable tr");
 
   rows.forEach(row => {
 
     const cells = row.children;
 
-    if(cells.length > 4){
+    if(cells.length > currentColumn){
 
-      cells[4].style.borderLeft =
-        "3px solid red";
-
-      cells[4].style.borderRight =
-        "3px solid red";
+      cells[currentColumn]
+        .classList
+        .add("today-column");
 
     }
 

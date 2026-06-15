@@ -245,13 +245,47 @@ async function loadTasks() {
     value="${task.taskName || ''}"
     onchange="updateTask('${doc.id}','taskName',this.value)">
 </td>
-<td></td>
-<td></td>
-<td></td>
-<td></td>
-<td></td>
-<td></td>
-<td></td>
+<td>
+  <input type="text"
+    value="${task.day1 || ''}"
+    onchange="updateTask('${doc.id}','day1',this.value)">
+</td>
+
+<td>
+  <input type="text"
+    value="${task.day2 || ''}"
+    onchange="updateTask('${doc.id}','day2',this.value)">
+</td>
+
+<td>
+  <input type="text"
+    value="${task.day3 || ''}"
+    onchange="updateTask('${doc.id}','day3',this.value)">
+</td>
+
+<td>
+  <input type="text"
+    value="${task.day4 || ''}"
+    onchange="updateTask('${doc.id}','day4',this.value)">
+</td>
+
+<td>
+  <input type="text"
+    value="${task.day5 || ''}"
+    onchange="updateTask('${doc.id}','day5',this.value)">
+</td>
+
+<td>
+  <input type="text"
+    value="${task.day6 || ''}"
+    onchange="updateTask('${doc.id}','day6',this.value)">
+</td>
+
+<td>
+  <input type="text"
+    value="${task.day7 || ''}"
+    onchange="updateTask('${doc.id}','day7',this.value)">
+</td>
 
 <td>
   <select onchange="updateTask('${doc.id}','priority',this.value)">

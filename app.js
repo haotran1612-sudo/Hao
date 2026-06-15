@@ -281,7 +281,7 @@ async function loadTasks() {
       tbody.appendChild(tr);
 
     });
-highlightTodayColumn();
+
 
   } catch(err) {
 
@@ -367,20 +367,24 @@ function loadWeekHeader() {
 
     d.setDate(today.getDate() + (i - 1));
 
-    const th =
-      document.getElementById("day" + i);
+    const th = document.getElementById("day" + i);
 
     if(!th) continue;
+
+    th.classList.remove("today-column");
 
     th.innerText =
       d.getDate() +
       "." +
       (d.getMonth() + 1);
 
-    if(i === 1) {
+    if(
+      d.getDate() === today.getDate() &&
+      d.getMonth() === today.getMonth() &&
+      d.getFullYear() === today.getFullYear()
+    ){
       th.classList.add("today-column");
     }
-
   }
 }
 
@@ -560,32 +564,4 @@ async function restoreTask(id) {
 
   }
 }
-// =======================
-// HIGHLIGHT TODAY COLUMN
-// =======================
-function highlightTodayColumn() {
 
-  const table =
-    document.getElementById("taskTable");
-
-  if(!table) return;
-
-  const rows =
-    table.querySelectorAll("tr");
-
-  rows.forEach(row => {
-
-    const cells =
-      row.children;
-
-    if(cells.length > 4) {
-
-      cells[4].classList.add(
-        "today-column"
-      );
-
-    }
-
-  });
-
-}

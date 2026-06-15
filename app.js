@@ -581,9 +581,13 @@ function highlightTodayColumn() {
 
     const cells = row.children;
 
-    if (cells.length > 4) {
+    if(cells.length > 4){
 
-      cells[4].classList.add("today-column");
+      cells[4].style.borderLeft =
+        "3px solid red";
+
+      cells[4].style.borderRight =
+        "3px solid red";
 
     }
 

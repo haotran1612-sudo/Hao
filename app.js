@@ -281,7 +281,7 @@ async function loadTasks() {
       tbody.appendChild(tr);
 
     });
-
+highlightTodayColumn();
 
   } catch(err) {
 
@@ -564,4 +564,29 @@ async function restoreTask(id) {
 
   }
 }
+// =======================
+// HIGHLIGHT TODAY COLUMN
+// =======================
+function highlightTodayColumn() {
 
+  const table =
+    document.getElementById("taskTable");
+
+  if (!table) return;
+
+  const rows =
+    table.querySelectorAll("tr");
+
+  rows.forEach(row => {
+
+    const cells = row.children;
+
+    if (cells.length > 4) {
+
+      cells[4].classList.add("today-column");
+
+    }
+
+  });
+
+}

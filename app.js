@@ -245,6 +245,13 @@ async function loadTasks() {
     value="${task.taskName || ''}"
     onchange="updateTask('${doc.id}','taskName',this.value)">
 </td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
 
 <td>
   <select onchange="updateTask('${doc.id}','priority',this.value)">
@@ -274,6 +281,7 @@ async function loadTasks() {
       tbody.appendChild(tr);
 
     });
+highlightTodayColumn();
 
   } catch(err) {
 
@@ -347,9 +355,41 @@ async function addRow() {
   }
 }
 // =======================
+// LOAD WEEK HEADER
+// =======================
+function loadWeekHeader() {
+
+  const today = new Date();
+
+  for(let i = 1; i <= 7; i++) {
+
+    const d = new Date(today);
+
+    d.setDate(today.getDate() + (i - 1));
+
+    const th =
+      document.getElementById("day" + i);
+
+    if(!th) continue;
+
+    th.innerText =
+      d.getDate() +
+      "." +
+      (d.getMonth() + 1);
+
+    if(i === 1) {
+      th.classList.add("today-column");
+    }
+
+  }
+}
+
+// =======================
 // AUTO LOGIN
 // =======================
 window.onload = function () {
+
+  loadWeekHeader();
 
   const user = localStorage.getItem("userEmail");
 
@@ -519,4 +559,33 @@ async function restoreTask(id) {
     alert("Không thể restore task");
 
   }
+}
+// =======================
+// HIGHLIGHT TODAY COLUMN
+// =======================
+function highlightTodayColumn() {
+
+  const table =
+    document.getElementById("taskTable");
+
+  if(!table) return;
+
+  const rows =
+    table.querySelectorAll("tr");
+
+  rows.forEach(row => {
+
+    const cells =
+      row.children;
+
+    if(cells.length > 4) {
+
+      cells[4].classList.add(
+        "today-column"
+      );
+
+    }
+
+  });
+
 }

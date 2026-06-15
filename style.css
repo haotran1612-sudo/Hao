@@ -332,11 +332,26 @@ header button {
     padding:10px;
 }
 .today-column{
-    background: inherit !important;
+    position: relative;
+    background: transparent !important;
+}
 
-    border-left: 3px solid red !important;
-    border-right: 3px solid red !important;
+.today-column::before{
+    content:"";
+    position:absolute;
+    top:0;
+    bottom:0;
+    left:0;
+    width:3px;
+    background:red;
+}
 
-    border-top: none !important;
-    border-bottom: none !important;
+.today-column::after{
+    content:"";
+    position:absolute;
+    top:0;
+    bottom:0;
+    right:0;
+    width:3px;
+    background:red;
 }

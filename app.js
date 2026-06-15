@@ -704,3 +704,36 @@ function hideAllPages(){
  if(kanban)
    kanban.style.display="none";
 }
+function renderMonthCalendar(){
+
+ const title =
+   document.getElementById(
+     "monthTitle"
+   );
+
+ title.innerText =
+   currentMonth.toLocaleString(
+      "vi-VN",
+      {
+        month:"long",
+        year:"numeric"
+      }
+   );
+
+}
+function prevMonth(){
+
+ currentMonth.setMonth(
+   currentMonth.getMonth()-1
+ );
+
+ renderMonthCalendar();
+}
+function nextMonth(){
+
+ currentMonth.setMonth(
+   currentMonth.getMonth()+1
+ );
+
+ renderMonthCalendar();
+}

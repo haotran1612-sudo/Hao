@@ -378,13 +378,13 @@ function loadWeekHeader() {
       "." +
       (d.getMonth() + 1);
 
-    if(
-      d.getDate() === today.getDate() &&
-      d.getMonth() === today.getMonth() &&
-      d.getFullYear() === today.getFullYear()
-    ){
-      th.classList.add("today-column");
-    }
+  if(
+  d.getDate() === today.getDate() &&
+  d.getMonth() === today.getMonth() &&
+  d.getFullYear() === today.getFullYear()
+){
+  th.classList.add("today-column");
+}
   }
 }
 

@@ -335,3 +335,10 @@ header button {
     border-left:3px solid red !important;
     border-right:3px solid red !important;
 }
+#taskTable td input[type="text"]{
+    width:100%;
+    border:none;
+    outline:none;
+    background:transparent;
+    text-align:center;
+}

@@ -165,11 +165,13 @@ header button {
   border-left: 5px solid #10b981;
 }
 
+
 /* =======================
    TABLE (TRACKER)
 ======================= */
 #trackerPage {
   padding: 20px;
+  overflow-x: auto;
 }
 
 #taskTable {
@@ -328,4 +330,7 @@ header button {
 #backupTable td{
     border:1px solid #eee;
     padding:10px;
+}
+.today-column{
+    border:3px solid red !important;
 }

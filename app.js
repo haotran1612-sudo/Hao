@@ -737,3 +737,30 @@ function nextMonth(){
 
  renderMonthCalendar();
 }
+function dragStart(e){
+
+ e.dataTransfer.setData(
+   "id",
+   e.target.dataset.id
+ );
+
+}
+function dragOver(e){
+
+ e.preventDefault();
+
+}
+async function dropTask(
+ id,
+ status
+){
+
+ await db
+   .collection("tasks")
+   .doc(id)
+   .update({
+      status:status
+   });
+
+ loadTasks();
+}

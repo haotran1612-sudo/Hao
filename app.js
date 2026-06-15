@@ -655,3 +655,52 @@ function highlightTodayColumn() {
   });
 
 }
+let currentMonth = new Date();
+function showMonthCalendar(){
+
+  hideAllPages();
+
+  document
+    .getElementById(
+      "monthCalendarPage"
+    )
+    .style.display = "block";
+
+  renderMonthCalendar();
+}
+function showWeekCalendar(){
+
+  hideAllPages();
+
+  document
+    .getElementById(
+      "weekCalendarPage"
+    )
+    .style.display = "block";
+
+  renderWeekCalendar();
+}
+function hideAllPages(){
+
+ document.getElementById(
+   "trackerPage"
+ ).style.display="none";
+
+ document.getElementById(
+   "backupPage"
+ ).style.display="none";
+
+ document.getElementById(
+   "monthCalendarPage"
+ ).style.display="none";
+
+ document.getElementById(
+   "weekCalendarPage"
+ ).style.display="none";
+
+ const kanban =
+   document.querySelector(".kanban");
+
+ if(kanban)
+   kanban.style.display="none";
+}

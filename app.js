@@ -157,6 +157,10 @@ async function saveTask() {
   // Calendar Fields
   // =====================
 
+// =====================
+// Calendar Fields
+// =====================
+
 await db.collection("tasks").add({
 
   email: localStorage.getItem("userEmail"),

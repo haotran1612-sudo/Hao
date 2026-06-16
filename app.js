@@ -436,13 +436,13 @@ function loadWeekHeader() {
   const w0 = new Date(currentDate);
 
 const w1 = new Date(currentDate);
-w1.setDate(w1.getDate() - 7);
+w1.setDate(w1.getDate() + 7);
 
 const w2 = new Date(currentDate);
-w2.setDate(w2.getDate() - 14);
+w2.setDate(w2.getDate() + 14);
 
 const w3 = new Date(currentDate);
-w3.setDate(w3.getDate() - 21);
+w3.setDate(w3.getDate() + 21);
 
 th.innerHTML = `
 <div class="week-day">${weekDays[i]}</div>

@@ -447,13 +447,13 @@ w3.setDate(w3.getDate() + 21);
 th.innerHTML = `
 <div class="week-day">${weekDays[i]}</div>
 
-<div class="week-date">${w0.getDate()}.${w0.getMonth()+1}</div>
+<div class="week-date">${w3.getDate()}.${w0.getMonth()+1}</div>
 
-<div class="week-subdate">${w1.getDate()}.${w1.getMonth()+1}</div>
+<div class="week-subdate">${w2.getDate()}.${w1.getMonth()+1}</div>
 
-<div class="week-subdate">${w2.getDate()}.${w2.getMonth()+1}</div>
+<div class="week-subdate">${w1.getDate()}.${w2.getMonth()+1}</div>
 
-<div class="week-subdate">${w3.getDate()}.${w3.getMonth()+1}</div>
+<div class="week-subdate">${w0.getDate()}.${w3.getMonth()+1}</div>
 `;
 
     if (

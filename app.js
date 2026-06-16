@@ -423,10 +423,24 @@ function loadWeekHeader() {
 
     if (!th) continue;
 
-    th.innerText =
-      currentDate.getDate() +
-      "." +
-      (currentDate.getMonth() + 1);
+   const weekDays = [
+  "Mon",
+  "Tue",
+  "Wed",
+  "Thu",
+  "Fri",
+  "Sat",
+  "Sun"
+];
+
+th.innerHTML = `
+  <div style="font-size:11px;font-weight:600;">
+    ${weekDays[i]}
+  </div>
+  <div>
+    ${currentDate.getDate()}.${currentDate.getMonth() + 1}
+  </div>
+`;
 
     th.classList.remove("today-column");
 

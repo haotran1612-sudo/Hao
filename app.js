@@ -97,17 +97,61 @@ async function saveTask() {
 
   try {
 
- await db.collection("tasks").add({
+    await db.collection("tasks").add({
 
-  email: localStorage.getItem("userEmail"),
+      email: localStorage.getItem("userEmail"),
 
-  taskName: document.getElementById("taskName")?.value || "",
-  start: document.getElementById("startDate")?.value || "",
-  deadline: document.getElementById("deadline")?.value || "",
+      taskName:
+        document.getElementById("taskName")?.value || "",
 
-  taskType: document.getElementById("taskType")?.value || "Daily",
-  priority: document.getElementById("priority")?.value || "Normal",
-  status: document.getElementById("status")?.value || "Todo",
+      start:
+        document.getElementById("startDate")?.value || "",
+
+      deadline:
+        document.getElementById("deadline")?.value || "",
+
+      taskType:
+        document.getElementById("taskType")?.value || "Daily",
+
+      priority:
+        document.getElementById("priority")?.value || "Normal",
+
+      status:
+        document.getElementById("status")?.value || "Todo",
+
+      calendarTitle:
+        document.getElementById("calendarTitle")?.value || "",
+
+      location:
+        document.getElementById("location")?.value || "",
+
+      attendees:
+        document.getElementById("attendees")?.value || "",
+
+      apply:
+        document.getElementById("applyCalendar")?.checked || false,
+
+      sendMail:
+        document.getElementById("sendMail")?.checked || false,
+
+      createdAt: new Date()
+    });
+
+    alert("Tạo task thành công");
+
+    closeTaskModal();
+
+    resetForm();
+
+    loadTasks();
+
+  } catch (err) {
+
+    console.error(err);
+
+    alert("Lỗi tạo task");
+  }
+}
 
   // =====================
   // Calendar Fields

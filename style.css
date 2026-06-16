@@ -346,3 +346,27 @@ header button {
     background:transparent;
     text-align:center;
 }
+.week-day{
+    font-size:13px;
+    font-weight:bold;
+    margin-bottom:8px;
+}
+
+.week-date{
+    font-size:14px;
+    font-weight:bold;
+    margin-bottom:6px;
+}
+
+.week-subdate{
+    font-size:12px;
+    font-weight:normal;
+    margin-top:4px;
+}
+
+#taskTable th{
+    min-width:110px;
+    text-align:center;
+    vertical-align:top;
+    line-height:1.6;
+}

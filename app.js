@@ -398,20 +398,13 @@ async function addRow() {
 // =======================
 // LOAD WEEK HEADER
 // =======================
-// =======================
-// LOAD WEEK HEADER
-// =======================
-console.log("loadWeekHeader chạy");
-console.log("today =", today);
-console.log("monday =", monday);
 function loadWeekHeader() {
 
   const today = new Date();
 
-  // Tìm thứ 2 đầu tuần
   const monday = new Date(today);
 
-  const dayOfWeek = today.getDay(); // CN=0, T2=1...
+  const dayOfWeek = today.getDay();
 
   const daysFromMonday =
     dayOfWeek === 0 ? 6 : dayOfWeek - 1;
@@ -439,34 +432,34 @@ function loadWeekHeader() {
 
     if (!th) continue;
 
-    // reset
     th.classList.remove("today-column");
-    th.dataset.today = "false";
 
-    // render header
     th.innerHTML = `
-      <div style="font-size:11px;font-weight:600;">
+      <div style="font-size:11px">
         ${weekDays[i]}
       </div>
-      <div style="font-size:13px;">
-        ${currentDate.getDate()}.${currentDate.getMonth() + 1}
+      <div style="font-size:14px;font-weight:bold">
+        ${currentDate.getDate()}.${currentDate.getMonth()+1}
       </div>
     `;
 
-    // đánh dấu hôm nay
     if (
       currentDate.getDate() === today.getDate() &&
       currentDate.getMonth() === today.getMonth() &&
       currentDate.getFullYear() === today.getFullYear()
     ) {
 
-      th.dataset.today = "true";
-console.log("Today column =", i + 1);
       th.classList.add("today-column");
+
+      th.dataset.today = "true";
+
+    } else {
+
+      th.dataset.today = "false";
+
     }
   }
 
-  // highlight cột hôm nay trong table
   highlightTodayColumn();
 }
 // =======================

@@ -53,7 +53,7 @@ function login() {
       document.getElementById("loginPage").style.display = "none";
       document.getElementById("appPage").style.display = "block";
       document.getElementById("welcomeUser").innerText = userEmail;
-)
+
     .catch(err => {
       alert(err.message);
       console.error(err);

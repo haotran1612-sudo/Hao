@@ -595,20 +595,20 @@ async function restoreTask(id) {
 function highlightTodayColumn() {
   const today = new Date();
 
+  // 1. tìm đúng cột ngày hôm nay (1 → 7)
   let todayIndex = -1;
 
   for (let i = 1; i <= 7; i++) {
     const th = document.getElementById("day" + i);
     if (!th) continue;
 
-    const text = th.innerText.trim();
-    const [d, m] = text.split(".").map(Number);
+    const [d, m] = th.innerText.trim().split(".").map(Number);
 
     if (
       d === today.getDate() &&
       m === today.getMonth() + 1
     ) {
-      todayIndex = i;
+      todayIndex = i; // 1..7
       th.classList.add("today-column");
     } else {
       th.classList.remove("today-column");
@@ -617,15 +617,19 @@ function highlightTodayColumn() {
 
   if (todayIndex === -1) return;
 
+  // 2. FIX OFFSET CỘT (QUAN TRỌNG NHẤT)
+  // checkbox(0), start(1), deadline(2), task(3)
+  const OFFSET = 4;
+
   const rows = document.querySelectorAll("#taskTableBody tr");
 
   rows.forEach(row => {
     const cells = row.children;
 
-    const columnIndex = todayIndex + 2; // + checkbox + start/deadline offset
+    const targetCellIndex = OFFSET + (todayIndex - 1);
 
-    if (cells[columnIndex]) {
-      cells[columnIndex].classList.add("today-column");
+    if (cells[targetCellIndex]) {
+      cells[targetCellIndex].classList.add("today-column");
     }
   });
 }

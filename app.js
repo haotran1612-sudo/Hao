@@ -593,43 +593,52 @@ async function restoreTask(id) {
 // HIGHLIGHT TODAY COLUMN
 // =======================
 function highlightTodayColumn() {
-  const today = new Date();
+  setTimeout(() => {
+    const today = new Date();
 
-  // 1. tìm đúng cột ngày hôm nay (1 → 7)
-  let todayIndex = -1;
+    let todayIndex = -1;
 
-  for (let i = 1; i <= 7; i++) {
-    const th = document.getElementById("day" + i);
-    if (!th) continue;
+    // ===== 1. tìm cột ngày hôm nay =====
+    for (let i = 1; i <= 7; i++) {
+      const th = document.getElementById("day" + i);
+      if (!th) continue;
 
-    const [d, m] = th.innerText.trim().split(".").map(Number);
+      const text = th.innerText.trim();
+      const parts = text.split(".");
 
-    if (
-      d === today.getDate() &&
-      m === today.getMonth() + 1
-    ) {
-      todayIndex = i; // 1..7
-      th.classList.add("today-column");
-    } else {
-      th.classList.remove("today-column");
+      if (parts.length < 2) continue;
+
+      const d = parseInt(parts[0]);
+      const m = parseInt(parts[1]);
+
+      if (
+        d === today.getDate() &&
+        m === today.getMonth() + 1
+      ) {
+        todayIndex = i;
+        th.classList.add("today-column");
+      } else {
+        th.classList.remove("today-column");
+      }
     }
-  }
 
-  if (todayIndex === -1) return;
+    if (todayIndex === -1) return;
 
-  // 2. FIX OFFSET CỘT (QUAN TRỌNG NHẤT)
-  // checkbox(0), start(1), deadline(2), task(3)
-  const OFFSET = 4;
+    // ===== 2. tính đúng cột trong table =====
+    const rows = document.querySelectorAll("#taskTableBody tr");
 
-  const rows = document.querySelectorAll("#taskTableBody tr");
+    rows.forEach(row => {
+      const cells = row.querySelectorAll("td");
 
-  rows.forEach(row => {
-    const cells = row.children;
+      // checkbox + start + deadline + task = 4 cột đầu
+      const OFFSET = 4;
 
-    const targetCellIndex = OFFSET + (todayIndex - 1);
+      const col = OFFSET + (todayIndex - 1);
 
-    if (cells[targetCellIndex]) {
-      cells[targetCellIndex].classList.add("today-column");
-    }
-  });
+      if (cells[col]) {
+        cells[col].classList.add("today-column");
+      }
+    });
+
+  }, 300); // ⬅️ QUAN TRỌNG: đợi DOM render xong
 }

@@ -613,102 +613,36 @@ function highlightTodayColumn() {
 
   let currentColumn = 4;
 
-  for(let i = 1; i <= 7; i++){
+  for (let i = 1; i <= 7; i++) {
 
-    const th =
-      document.getElementById("day" + i);
+    const th = document.getElementById("day" + i);
 
-    if(!th) continue;
+    if (!th) continue;
 
     const text = th.innerText.trim();
 
-    const day =
-      parseInt(text.split(".")[0]);
+    const day = parseInt(text.split(".")[0]);
+    const month = parseInt(text.split(".")[1]);
 
-    const month =
-      parseInt(text.split(".")[1]);
-
-    if(
+    if (
       day === today.getDate() &&
       month === (today.getMonth() + 1)
-    ){
+    ) {
       currentColumn = i + 3;
       break;
     }
   }
 
-  const rows =
-    document.querySelectorAll("#taskTable tr");
+  const rows = document.querySelectorAll("#taskTable tr");
 
   rows.forEach(row => {
 
     const cells = row.children;
 
-    if(cells.length > currentColumn){
-
-      cells[currentColumn]
-        .classList
-        .add("today-column");
-
+    if (cells.length > currentColumn) {
+      cells[currentColumn].classList.add("today-column");
     }
 
   });
 
-}
-
-
-
-
- const kanban =
-   document.querySelector(".kanban");
-
- if(kanban)
-   kanban.style.display="none";
-}
-function renderMonthCalendar(){
-
- const title =
-   document.getElementById(
-     "monthTitle"
-   );
-
- title.innerText =
-   currentMonth.toLocaleString(
-      "vi-VN",
-      {
-        month:"long",
-        year:"numeric"
-      }
-   );
-
-}
-
-
-
-function dragStart(e){
-
- e.dataTransfer.setData(
-   "id",
-   e.target.dataset.id
- );
-
-}
-function dragOver(e){
-
- e.preventDefault();
-
-}
-async function dropTask(
- id,
- status
-){
-
- await db
-   .collection("tasks")
-   .doc(id)
-   .update({
-      status:status
-   });
-
- loadTasks();
 }

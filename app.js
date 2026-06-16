@@ -332,6 +332,7 @@ highlightTodayColumn();
 function showTracker() {
 
   document.getElementById("trackerPage").style.display = "block";
+   loadWeekHeader();
   document.getElementById("backupPage").style.display = "none";
 
   const kanban = document.querySelector(".kanban");
@@ -622,16 +623,12 @@ async function restoreTask(id) {
 // =======================
 // HIGHLIGHT TODAY COLUMN
 // =======================
-// =======================
-// HIGHLIGHT TODAY COLUMN
-// =======================
 function highlightTodayColumn() {
 
   setTimeout(() => {
 
     let todayIndex = -1;
 
-    // tìm cột hôm nay
     for (let i = 1; i <= 7; i++) {
 
       const th =
@@ -642,12 +639,8 @@ function highlightTodayColumn() {
       if (th.dataset.today === "true") {
 
         todayIndex = i;
+        break;
 
-        th.classList.add("today-column");
-
-      } else {
-
-        th.classList.remove("today-column");
       }
     }
 
@@ -658,20 +651,19 @@ function highlightTodayColumn() {
 
     rows.forEach(row => {
 
-      const cells = row.querySelectorAll("td");
+      const cells =
+        row.querySelectorAll("td");
 
-      // ✓ + Start + Deadline + Task
       const OFFSET = 4;
 
-      const col =
+      const targetCol =
         OFFSET + (todayIndex - 1);
 
-      cells.forEach(td =>
-        td.classList.remove("today-column")
-      );
+      if (cells[targetCol]) {
 
-      if (cells[col]) {
-        cells[col].classList.add("today-column");
+        cells[targetCol]
+          .classList.add("today-column");
+
       }
 
     });

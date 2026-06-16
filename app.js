@@ -695,3 +695,13 @@ function formatDate(d){
   return `${d.getDate()}-${months[d.getMonth()]}`;
 }
 
+// =======================
+// ENTER TO LOGIN
+// =======================
+function handleLoginEnter(event) {
+
+  if (event.key === "Enter") {
+    login();
+  }
+
+}

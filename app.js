@@ -403,33 +403,41 @@ function loadWeekHeader() {
 
   const today = new Date();
 
-  for(let i = 1; i <= 7; i++) {
+  // ===== 1. tìm thứ 2 của tuần =====
+  const day = today.getDay(); 
+  // 0 = Sunday, 1 = Monday ...
 
-    const d = new Date(today);
+  const diffToMonday = day === 0 ? -6 : 1 - day;
 
-    d.setDate(today.getDate() + (i - 1));
+  const monday = new Date(today);
+  monday.setDate(today.getDate() + diffToMonday);
+
+  let todayIndex = -1;
+
+  for (let i = 1; i <= 7; i++) {
+
+    const d = new Date(monday);
+    d.setDate(monday.getDate() + (i - 1));
 
     const th = document.getElementById("day" + i);
-
-    if(!th) continue;
+    if (!th) continue;
 
     th.classList.remove("today-column");
 
-    th.innerText =
-      d.getDate() +
-      "." +
-      (d.getMonth() + 1);
+    // format: 16.6
+    th.innerText = d.getDate() + "." + (d.getMonth() + 1);
 
-  if(
-  d.getDate() === today.getDate() &&
-  d.getMonth() === today.getMonth() &&
-  d.getFullYear() === today.getFullYear()
-){
-  th.classList.add("today-column");
-}
+    // ===== check today =====
+    if (
+      d.getDate() === today.getDate() &&
+      d.getMonth() === today.getMonth() &&
+      d.getFullYear() === today.getFullYear()
+    ) {
+      todayIndex = i;
+      th.classList.add("today-column");
+    }
   }
 }
-
 // =======================
 // AUTO LOGIN
 // =======================

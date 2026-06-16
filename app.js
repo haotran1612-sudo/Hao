@@ -403,37 +403,40 @@ function loadWeekHeader() {
 
   const today = new Date();
 
-  // ===== 1. tìm thứ 2 của tuần =====
-  const day = today.getDay(); 
-  // 0 = Sunday, 1 = Monday ...
-
-  const diffToMonday = day === 0 ? -6 : 1 - day;
-
+  // Tìm thứ 2 của tuần hiện tại
   const monday = new Date(today);
-  monday.setDate(today.getDate() + diffToMonday);
 
-  let todayIndex = -1;
+  const day = monday.getDay(); // 0=CN
+
+  monday.setHours(0,0,0,0);
+
+  if (day === 0) {
+    monday.setDate(monday.getDate() - 6);
+  } else {
+    monday.setDate(monday.getDate() - day + 1);
+  }
 
   for (let i = 1; i <= 7; i++) {
 
-    const d = new Date(monday);
-    d.setDate(monday.getDate() + (i - 1));
+    const currentDate = new Date(monday);
+    currentDate.setDate(monday.getDate() + (i - 1));
 
     const th = document.getElementById("day" + i);
+
     if (!th) continue;
+
+    th.innerText =
+      currentDate.getDate() +
+      "." +
+      (currentDate.getMonth() + 1);
 
     th.classList.remove("today-column");
 
-    // format: 16.6
-    th.innerText = d.getDate() + "." + (d.getMonth() + 1);
-
-    // ===== check today =====
     if (
-      d.getDate() === today.getDate() &&
-      d.getMonth() === today.getMonth() &&
-      d.getFullYear() === today.getFullYear()
+      currentDate.getDate() === today.getDate() &&
+      currentDate.getMonth() === today.getMonth() &&
+      currentDate.getFullYear() === today.getFullYear()
     ) {
-      todayIndex = i;
       th.classList.add("today-column");
     }
   }

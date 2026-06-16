@@ -332,16 +332,15 @@ highlightTodayColumn();
 function showTracker() {
 
   document.getElementById("trackerPage").style.display = "block";
-
   document.getElementById("backupPage").style.display = "none";
 
   const kanban = document.querySelector(".kanban");
-
   if (kanban) kanban.style.display = "none";
+
+  loadWeekHeader(); // thêm dòng này
 
   loadTasks();
 }
-
 
 // =======================
 // SHOW KANBAN
@@ -403,25 +402,24 @@ function loadWeekHeader() {
 
   const today = new Date();
 
-  // Tìm thứ 2 của tuần hiện tại
+  // Thứ 2 đầu tuần
   const monday = new Date(today);
 
-  const day = monday.getDay(); // 0=CN
+  const dayOfWeek = today.getDay(); // CN=0, T2=1...
 
-  monday.setHours(0,0,0,0);
+  const daysFromMonday =
+    dayOfWeek === 0 ? 6 : dayOfWeek - 1;
 
-  if (day === 0) {
-    monday.setDate(monday.getDate() - 6);
-  } else {
-    monday.setDate(monday.getDate() - day + 1);
-  }
+  monday.setDate(today.getDate() - daysFromMonday);
 
-  for (let i = 1; i <= 7; i++) {
+  for (let i = 0; i < 7; i++) {
 
     const currentDate = new Date(monday);
-    currentDate.setDate(monday.getDate() + (i - 1));
 
-    const th = document.getElementById("day" + i);
+    currentDate.setDate(monday.getDate() + i);
+
+    const th =
+      document.getElementById(`day${i + 1}`);
 
     if (!th) continue;
 
@@ -433,9 +431,8 @@ function loadWeekHeader() {
     th.classList.remove("today-column");
 
     if (
-      currentDate.getDate() === today.getDate() &&
-      currentDate.getMonth() === today.getMonth() &&
-      currentDate.getFullYear() === today.getFullYear()
+      currentDate.toDateString() ===
+      today.toDateString()
     ) {
       th.classList.add("today-column");
     }
@@ -446,17 +443,15 @@ function loadWeekHeader() {
 // =======================
 window.onload = function () {
 
-loadTasks();
-loadWeekHeader();
+  loadWeekHeader();
 
-  const user = localStorage.getItem("userEmail");
+  const user =
+    localStorage.getItem("userEmail");
 
   if (user) {
 
     document.getElementById("loginPage").style.display = "none";
-
     document.getElementById("appPage").style.display = "block";
-
     document.getElementById("welcomeUser").innerText = user;
 
     loadTasks();

@@ -309,6 +309,79 @@ async function loadTasks() {
     <option value="Yearly" ${task.taskType==="Yearly"?"selected":""}>Yearly</option>
   </select>
 </td>
+<td>
+  <input
+    type="text"
+    value="${task.calendarTitle || ''}"
+    onchange="updateTask('${doc.id}','calendarTitle',this.value)">
+</td>
+
+<td>
+  <select onchange="updateTask('${doc.id}','calendarType',this.value)">
+    <option value="Event" ${task.calendarType==="Event"?"selected":""}>Event</option>
+    <option value="Task" ${task.calendarType==="Task"?"selected":""}>Task</option>
+  </select>
+</td>
+
+<td>
+  <input
+    type="text"
+    value="${task.attendees || ''}"
+    onchange="updateTask('${doc.id}','attendees',this.value)">
+</td>
+
+<td style="text-align:center;">
+  <input
+    type="checkbox"
+    ${task.addMeet ? "checked" : ""}
+    onchange="updateTask('${doc.id}','addMeet',this.checked)">
+</td>
+
+<td>
+  <input
+    type="text"
+    value="${task.location || ''}"
+    onchange="updateTask('${doc.id}','location',this.value)">
+</td>
+
+<td>
+  <input
+    type="text"
+    value="${task.description || ''}"
+    onchange="updateTask('${doc.id}','description',this.value)">
+</td>
+
+<td>
+  <select onchange="updateTask('${doc.id}','repeat',this.value)">
+    <option value="None" ${task.repeat==="None"?"selected":""}>None</option>
+    <option value="Daily" ${task.repeat==="Daily"?"selected":""}>Daily</option>
+    <option value="Weekly" ${task.repeat==="Weekly"?"selected":""}>Weekly</option>
+    <option value="Monthly" ${task.repeat==="Monthly"?"selected":""}>Monthly</option>
+    <option value="Yearly" ${task.repeat==="Yearly"?"selected":""}>Yearly</option>
+  </select>
+</td>
+
+<td>
+  <input
+    type="date"
+    value="${task.repeatUntil || ''}"
+    onchange="updateTask('${doc.id}','repeatUntil',this.value)">
+</td>
+
+<td>
+  <select onchange="updateTask('${doc.id}','calendarStatus',this.value)">
+    <option value="Create" ${task.calendarStatus==="Create"?"selected":""}>Create</option>
+    <option value="Created" ${task.calendarStatus==="Created"?"selected":""}>Created</option>
+    <option value="Delete" ${task.calendarStatus==="Delete"?"selected":""}>Delete</option>
+  </select>
+</td>
+
+<td style="text-align:center;">
+  <input
+    type="checkbox"
+    ${task.autoDelete ? "checked" : ""}
+    onchange="updateTask('${doc.id}','autoDelete',this.checked)">
+</td>
 `;
 
       tbody.appendChild(tr);

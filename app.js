@@ -401,6 +401,9 @@ async function addRow() {
 // =======================
 // LOAD WEEK HEADER
 // =======================
+console.log("loadWeekHeader chạy");
+console.log("today =", today);
+console.log("monday =", monday);
 function loadWeekHeader() {
 
   const today = new Date();

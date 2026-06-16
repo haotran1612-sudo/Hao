@@ -130,72 +130,89 @@
 <!-- TRACKER -->
 <div id="trackerPage" style="display:none;">
 
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:15px;">
+   <!-- TRACKER -->
 
-        <h2>Task Tracker</h2>
+<div id="trackerPage" style="display:none;">
 
-        <button onclick="addRow()">
-            + Add Row
-        </button>
+```
+<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:15px;">
 
-    </div>
+    <h2>Task Tracker</h2>
+
+    <button onclick="addRow()">
+        + Add Row
+    </button>
+
+</div>
+
+<table id="taskTable">
+
+    <thead>
+        <tr>
+            <th>✓</th>
+            <th>Start</th>
+            <th>Deadline</th>
+            <th>Task</th>
+
+            <th id="day1"></th>
+            <th id="day2"></th>
+            <th id="day3"></th>
+            <th id="day4"></th>
+            <th id="day5"></th>
+            <th id="day6"></th>
+            <th id="day7"></th>
+
+            <th>Priority</th>
+            <th>Status</th>
+            <th>Type</th>
+        </tr>
+    </thead>
+
+    <tbody id="taskTableBody"></tbody>
+
+</table>
+```
+
+</div>
+
+<!-- WEEK CALENDAR -->
+
 <div id="weekCalendarPage"
-     style="display:none;">
+     style="display:none;padding:20px;">
 
-  <h2>Week Calendar</h2>
+```
+<h2>Week Calendar</h2>
 
- <div id="weekGrid"></div>
-
-</div>
-	<div id="monthCalendarPage"
-     style="display:none;">
+<div id="weekGrid"></div>
+```
 
 </div>
 
-<button onclick="prevMonth()">
-◀
-</button>
+<!-- MONTH CALENDAR -->
 
-<span id="monthTitle"></span>
+<div id="monthCalendarPage"
+     style="display:none;padding:20px;">
 
-<button onclick="nextMonth()">
-▶
-</button>
+```
+<div style="display:flex;justify-content:center;gap:20px;align-items:center;margin-bottom:20px;">
+
+    <button onclick="prevMonth()">
+        ◀
+    </button>
+
+    <h2 id="monthTitle"></h2>
+
+    <button onclick="nextMonth()">
+        ▶
+    </button>
 
 </div>
 
 <div id="monthGrid"></div>
-
-    <table id="taskTable">
-
-        <thead>
-
-            <tr>
-			    <th>✓</th>
-                <th>Start</th>
-                <th>Deadline</th>
-                <th>Task</th>
-				    <th id="day1"></th>
-    <th id="day2"></th>
-    <th id="day3"></th>
-    <th id="day4"></th>
-    <th id="day5"></th>
-    <th id="day6"></th>
-    <th id="day7"></th>
-                <th>Priority</th>
-                <th>Status</th>
-                <th>Type</th>
-            </tr>
-
-        </thead>
-
-        <tbody id="taskTableBody">
-
-        </tbody>
-
-    </table>
+```
 
 </div>
+
 <!-- BACKUP -->
 <!-- BACKUP -->
 
@@ -233,11 +250,7 @@
         <div id="todoList"></div>
 
     </div>
-	<div
- class="task-card"
- draggable="true"
- data-id="taskId">
-</div>
+
 
     <div class="column">
 

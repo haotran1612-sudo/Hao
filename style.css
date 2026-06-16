@@ -331,8 +331,13 @@ header button {
     border:1px solid #eee;
     padding:10px;
 }
-.today-column {
-  box-shadow: inset 3px 0 0 red, inset -3px 0 0 red;
+#taskTable th.today-column{
+    background:#f59e0b !important;
+    color:white !important;
+}
+
+#taskTable td.today-column{
+    background:#fef3c7 !important;
 }
 #taskTable td input[type="text"]{
     width:100%;

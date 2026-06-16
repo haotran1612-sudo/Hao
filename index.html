@@ -164,6 +164,19 @@
             <th>Priority</th>
             <th>Status</th>
             <th>Type</th>
+			<th>Calendar Title</th>
+<th>Calendar Type</th>
+<th>Attendees</th>
+<th>Add Meet</th>
+<th>Location</th>
+<th>Description</th>
+<th>Repeat</th>
+<th>Repeat Interval</th>
+<th>Repeat Until</th>
+<th>Calendar ID</th>
+<th>Meet Link</th>
+<th>Calendar Status</th>
+<th>Auto Delete</th>
         </tr>
     </thead>
 
@@ -297,40 +310,75 @@
 
         </select>
 
-        <label>Calendar Title</label>
+       <label>Calendar Title</label>
+<input id="calendarTitle">
 
-        <input id="calendarTitle">
+<label>Calendar Type</label>
+<select id="calendarType">
+    <option value="Event">Event</option>
+    <option value="Task">Task</option>
+</select>
 
-        <label>Location</label>
+<label>Attendees</label>
+<input id="attendees">
 
-        <input id="location">
+<label>
+    <input type="checkbox" id="addMeet">
+    Add Google Meet
+</label>
 
-        <label>Attendees</label>
+<label>Location</label>
+<input id="location">
 
-        <input id="attendees">
+<label>Description</label>
+<textarea id="description"></textarea>
 
-        <label>Reminder</label>
+<label>Repeat</label>
+<select id="repeat">
+    <option value="None">None</option>
+    <option value="Daily">Daily</option>
+    <option value="Weekly">Weekly</option>
+    <option value="Monthly">Monthly</option>
+    <option value="Yearly">Yearly</option>
+</select>
 
-        <input
-            id="reminder"
-            type="number"
-            value="30">
+<label>Repeat Interval</label>
+<input
+    id="repeatInterval"
+    type="number"
+    value="1">
 
-        <label>
-            <input
-                type="checkbox"
-                id="applyCalendar">
-            Create Calendar
-        </label>
+<label>Repeat Until</label>
+<input
+    id="repeatUntil"
+    type="date">
 
-        <br>
+<label>Reminder (minutes)</label>
+<input
+    id="reminder"
+    type="number"
+    value="30">
 
-        <label>
-            <input
-                type="checkbox"
-                id="sendMail">
-            Send Mail
-        </label>
+<label>
+    <input
+        type="checkbox"
+        id="applyCalendar">
+    Create Calendar
+</label>
+
+<label>
+    <input
+        type="checkbox"
+        id="sendMail">
+    Send Mail
+</label>
+
+<label>
+    <input
+        type="checkbox"
+        id="autoDelete">
+    Auto Delete
+</label>
 
         <br><br>
 

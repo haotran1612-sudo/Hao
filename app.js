@@ -97,62 +97,59 @@ async function saveTask() {
 
   try {
 
-    await db.collection("tasks").add({
+ await db.collection("tasks").add({
 
-      email: localStorage.getItem("userEmail"),
+  email: localStorage.getItem("userEmail"),
 
-      taskName:
-        document.getElementById("taskName")?.value || "",
+  taskName: document.getElementById("taskName")?.value || "",
+  start: document.getElementById("startDate")?.value || "",
+  deadline: document.getElementById("deadline")?.value || "",
 
-      start:
-        document.getElementById("startDate")?.value || "",
+  taskType: document.getElementById("taskType")?.value || "Daily",
+  priority: document.getElementById("priority")?.value || "Normal",
+  status: document.getElementById("status")?.value || "Todo",
 
-      deadline:
-        document.getElementById("deadline")?.value || "",
+  // =====================
+  // Calendar Fields
+  // =====================
 
-      taskType:
-        document.getElementById("taskType")?.value || "Daily",
+  calendarTitle:
+    document.getElementById("calendarTitle")?.value || "",
 
-      priority:
-        document.getElementById("priority")?.value || "Normal",
+  calendarType:
+    document.getElementById("calendarType")?.value || "Event",
 
-      status:
-        document.getElementById("status")?.value || "Todo",
+  attendees:
+    document.getElementById("attendees")?.value || "",
 
-      calendarTitle:
-        document.getElementById("calendarTitle")?.value || "",
+  addMeet:
+    document.getElementById("addMeet")?.checked || false,
 
-      location:
-        document.getElementById("location")?.value || "",
+  location:
+    document.getElementById("location")?.value || "",
 
-      attendees:
-        document.getElementById("attendees")?.value || "",
+  description:
+    document.getElementById("description")?.value || "",
 
-      apply:
-        document.getElementById("applyCalendar")?.checked || false,
+  repeat:
+    document.getElementById("repeat")?.value || "None",
 
-      sendMail:
-        document.getElementById("sendMail")?.checked || false,
+  repeatInterval:
+    document.getElementById("repeatInterval")?.value || 1,
 
-      createdAt: new Date()
-    });
+  repeatUntil:
+    document.getElementById("repeatUntil")?.value || "",
 
-    alert("Tạo task thành công");
+  autoDelete:
+    document.getElementById("autoDelete")?.checked || false,
 
-    closeTaskModal();
+  calendarId: "",
+  meetLink: "",
+  calendarStatus: "Create",
 
-    resetForm();
+  createdAt: new Date()
 
-    loadTasks();
-
-  } catch (err) {
-
-    console.error(err);
-
-    alert("Lỗi tạo task");
-  }
-}
-
+});
 
 // =======================
 // RESET FORM

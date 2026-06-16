@@ -157,42 +157,34 @@ async function saveTask() {
   // Calendar Fields
   // =====================
 
-  calendarTitle:
-    document.getElementById("calendarTitle")?.value || "",
+await db.collection("tasks").add({
 
-  calendarType:
-    document.getElementById("calendarType")?.value || "Event",
+  email: localStorage.getItem("userEmail"),
 
-  attendees:
-    document.getElementById("attendees")?.value || "",
+  taskName: document.getElementById("taskName")?.value || "",
+  start: document.getElementById("startDate")?.value || "",
+  deadline: document.getElementById("deadline")?.value || "",
 
-  addMeet:
-    document.getElementById("addMeet")?.checked || false,
+  taskType: document.getElementById("taskType")?.value || "Daily",
+  priority: document.getElementById("priority")?.value || "Normal",
+  status: document.getElementById("status")?.value || "Todo",
 
-  location:
-    document.getElementById("location")?.value || "",
-
-  description:
-    document.getElementById("description")?.value || "",
-
-  repeat:
-    document.getElementById("repeat")?.value || "None",
-
-  repeatInterval:
-    document.getElementById("repeatInterval")?.value || 1,
-
-  repeatUntil:
-    document.getElementById("repeatUntil")?.value || "",
-
-  autoDelete:
-    document.getElementById("autoDelete")?.checked || false,
+  calendarTitle: document.getElementById("calendarTitle")?.value || "",
+  calendarType: document.getElementById("calendarType")?.value || "Event",
+  attendees: document.getElementById("attendees")?.value || "",
+  addMeet: document.getElementById("addMeet")?.checked || false,
+  location: document.getElementById("location")?.value || "",
+  description: document.getElementById("description")?.value || "",
+  repeat: document.getElementById("repeat")?.value || "None",
+  repeatInterval: document.getElementById("repeatInterval")?.value || 1,
+  repeatUntil: document.getElementById("repeatUntil")?.value || "",
+  autoDelete: document.getElementById("autoDelete")?.checked || false,
 
   calendarId: "",
   meetLink: "",
   calendarStatus: "Create",
 
   createdAt: new Date()
-
 });
 
 // =======================

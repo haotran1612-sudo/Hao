@@ -435,7 +435,8 @@ function loadWeekHeader() {
 // =======================
 window.onload = function () {
 
-  loadWeekHeader();
+loadTasks();
+loadWeekHeader();
 
   const user = localStorage.getItem("userEmail");
 
@@ -473,42 +474,31 @@ async function updateTask(id, field, value) {
 // ARCHIVE TASK
 // =======================
 async function archiveTask(id, checkbox) {
-
- 
+  const confirmDelete = confirm("Bạn có chắc muốn archive task này không?");
+  if (!confirmDelete) {
+    checkbox.checked = false;
+    return;
+  }
 
   try {
-
-    const docRef = await db
-      .collection("tasks")
-      .doc(id)
-      .get();
-
+    const docRef = await db.collection("tasks").doc(id).get();
     if (!docRef.exists) return;
 
     const task = docRef.data();
 
     await db.collection("backupTasks").add({
-
       ...task,
-
       email: localStorage.getItem("userEmail"),
-
       archivedAt: new Date()
-
     });
 
-    await db.collection("tasks")
-      .doc(id)
-      .delete();
+    await db.collection("tasks").doc(id).delete();
 
     loadTasks();
 
-  } catch(err) {
-
+  } catch (err) {
     console.error(err);
-
     alert("Không thể backup task");
-
     checkbox.checked = false;
   }
 }
@@ -576,75 +566,66 @@ async function showBackup() {
 // RESTORE TASK
 // =======================
 async function restoreTask(id) {
-
   try {
-
-    const docRef = await db
-      .collection("backupTasks")
-      .doc(id)
-      .get();
-
+    const docRef = await db.collection("backupTasks").doc(id).get();
     if (!docRef.exists) return;
 
     const task = docRef.data();
 
     delete task.archivedAt;
 
-    await db.collection("tasks").add(task);
+    await db.collection("tasks").add({
+      ...task,
+      email: localStorage.getItem("userEmail"),
+      createdAt: new Date()
+    });
 
-    await db.collection("backupTasks")
-      .doc(id)
-      .delete();
+    await db.collection("backupTasks").doc(id).delete();
 
     showBackup();
 
-  } catch(err) {
-
+  } catch (err) {
     console.error(err);
-
     alert("Không thể restore task");
-
   }
 }
 // =======================
 // HIGHLIGHT TODAY COLUMN
 // =======================
 function highlightTodayColumn() {
-
   const today = new Date();
 
-  let currentColumn = 4;
+  let todayIndex = -1;
 
   for (let i = 1; i <= 7; i++) {
-
     const th = document.getElementById("day" + i);
-
     if (!th) continue;
 
     const text = th.innerText.trim();
-
-    const day = parseInt(text.split(".")[0]);
-    const month = parseInt(text.split(".")[1]);
+    const [d, m] = text.split(".").map(Number);
 
     if (
-      day === today.getDate() &&
-      month === (today.getMonth() + 1)
+      d === today.getDate() &&
+      m === today.getMonth() + 1
     ) {
-      currentColumn = i + 3;
-      break;
+      todayIndex = i;
+      th.classList.add("today-column");
+    } else {
+      th.classList.remove("today-column");
     }
   }
 
-  const rows = document.querySelectorAll("#taskTable tr");
+  if (todayIndex === -1) return;
+
+  const rows = document.querySelectorAll("#taskTableBody tr");
 
   rows.forEach(row => {
-
     const cells = row.children;
 
-    if (cells.length > currentColumn) {
-      cells[currentColumn].classList.add("today-column");
+    const columnIndex = todayIndex + 2; // + checkbox + start/deadline offset
+
+    if (cells[columnIndex]) {
+      cells[columnIndex].classList.add("today-column");
     }
-
   });
-
 }

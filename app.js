@@ -435,14 +435,28 @@ function loadWeekHeader() {
 
     th.classList.remove("today-column");
 
-    th.innerHTML = `
-      <div style="font-size:11px">
-        ${weekDays[i]}
-      </div>
-      <div style="font-size:14px;font-weight:bold">
-        ${currentDate.getDate()}.${currentDate.getMonth()+1}
-      </div>
-    `;
+  const w0 = new Date(currentDate);
+
+const w1 = new Date(currentDate);
+w1.setDate(w1.getDate() - 7);
+
+const w2 = new Date(currentDate);
+w2.setDate(w2.getDate() - 14);
+
+const w3 = new Date(currentDate);
+w3.setDate(w3.getDate() - 21);
+
+th.innerHTML = `
+<div class="week-day">${weekDays[i]}</div>
+
+<div class="week-date">${w0.getDate()}.${w0.getMonth()+1}</div>
+
+<div class="week-subdate">${w1.getDate()}.${w1.getMonth()+1}</div>
+
+<div class="week-subdate">${w2.getDate()}.${w2.getMonth()+1}</div>
+
+<div class="week-subdate">${w3.getDate()}.${w3.getMonth()+1}</div>
+`;
 
     if (
       currentDate.getDate() === today.getDate() &&
@@ -670,3 +684,4 @@ function highlightTodayColumn() {
 
   }, 300);
 }
+

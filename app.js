@@ -43,23 +43,27 @@ function login() {
   const email = document.getElementById("loginEmail").value.trim();
   const password = document.getElementById("loginPassword").value;
 
-  auth.signInWithEmailAndPassword(email, password)
-    .then(userCredential => {
+ auth.signInWithEmailAndPassword(email, password)
+.then(userCredential => {
 
-      const userEmail = userCredential.user.email;
+    const userEmail = userCredential.user.email;
 
-      localStorage.setItem("userEmail", userEmail);
+    localStorage.setItem("userEmail", userEmail);
 
-      document.getElementById("loginPage").style.display = "none";
-      document.getElementById("appPage").style.display = "block";
-      document.getElementById("welcomeUser").innerText = userEmail;
+    document.getElementById("loginPage").style.display = "none";
+    document.getElementById("appPage").style.display = "block";
+    document.getElementById("welcomeUser").innerText = userEmail;
 
-    .catch(err => {
-      alert(err.message);
-      console.error(err);
-    });
-}
+    loadTasks();
 
+})          // <-- thiếu đoạn này
+
+.catch(err => {
+
+    alert(err.message);
+    console.error(err);
+
+});
 
 // =======================
 // LOGOUT

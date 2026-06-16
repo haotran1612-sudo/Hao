@@ -398,11 +398,14 @@ async function addRow() {
 // =======================
 // LOAD WEEK HEADER
 // =======================
+// =======================
+// LOAD WEEK HEADER
+// =======================
 function loadWeekHeader() {
 
   const today = new Date();
 
-  // Thứ 2 đầu tuần
+  // Tìm thứ 2 đầu tuần
   const monday = new Date(today);
 
   const dayOfWeek = today.getDay(); // CN=0, T2=1...
@@ -411,6 +414,16 @@ function loadWeekHeader() {
     dayOfWeek === 0 ? 6 : dayOfWeek - 1;
 
   monday.setDate(today.getDate() - daysFromMonday);
+
+  const weekDays = [
+    "Mon",
+    "Tue",
+    "Wed",
+    "Thu",
+    "Fri",
+    "Sat",
+    "Sun"
+  ];
 
   for (let i = 0; i < 7; i++) {
 
@@ -423,34 +436,35 @@ function loadWeekHeader() {
 
     if (!th) continue;
 
-   const weekDays = [
-  "Mon",
-  "Tue",
-  "Wed",
-  "Thu",
-  "Fri",
-  "Sat",
-  "Sun"
-];
-
-th.innerHTML = `
-  <div style="font-size:11px;font-weight:600;">
-    ${weekDays[i]}
-  </div>
-  <div>
-    ${currentDate.getDate()}.${currentDate.getMonth() + 1}
-  </div>
-`;
-
+    // reset
     th.classList.remove("today-column");
+    th.dataset.today = "false";
 
+    // render header
+    th.innerHTML = `
+      <div style="font-size:11px;font-weight:600;">
+        ${weekDays[i]}
+      </div>
+      <div style="font-size:13px;">
+        ${currentDate.getDate()}.${currentDate.getMonth() + 1}
+      </div>
+    `;
+
+    // đánh dấu hôm nay
     if (
-      currentDate.toDateString() ===
-      today.toDateString()
+      currentDate.getDate() === today.getDate() &&
+      currentDate.getMonth() === today.getMonth() &&
+      currentDate.getFullYear() === today.getFullYear()
     ) {
+
+      th.dataset.today = "true";
+
       th.classList.add("today-column");
     }
   }
+
+  // highlight cột hôm nay trong table
+  highlightTodayColumn();
 }
 // =======================
 // AUTO LOGIN
@@ -612,53 +626,59 @@ async function restoreTask(id) {
 // =======================
 // HIGHLIGHT TODAY COLUMN
 // =======================
+// =======================
+// HIGHLIGHT TODAY COLUMN
+// =======================
 function highlightTodayColumn() {
+
   setTimeout(() => {
-    const today = new Date();
 
     let todayIndex = -1;
 
-    // ===== 1. tìm cột ngày hôm nay =====
+    // tìm cột hôm nay
     for (let i = 1; i <= 7; i++) {
-      const th = document.getElementById("day" + i);
+
+      const th =
+        document.getElementById("day" + i);
+
       if (!th) continue;
 
-      const text = th.innerText.trim();
-      const parts = text.split(".");
+      if (th.dataset.today === "true") {
 
-      if (parts.length < 2) continue;
-
-      const d = parseInt(parts[0]);
-      const m = parseInt(parts[1]);
-
-      if (
-        d === today.getDate() &&
-        m === today.getMonth() + 1
-      ) {
         todayIndex = i;
+
         th.classList.add("today-column");
+
       } else {
+
         th.classList.remove("today-column");
       }
     }
 
     if (todayIndex === -1) return;
 
-    // ===== 2. tính đúng cột trong table =====
-    const rows = document.querySelectorAll("#taskTableBody tr");
+    const rows =
+      document.querySelectorAll("#taskTableBody tr");
 
     rows.forEach(row => {
+
       const cells = row.querySelectorAll("td");
 
-      // checkbox + start + deadline + task = 4 cột đầu
+      // ✓ + Start + Deadline + Task
       const OFFSET = 4;
 
-      const col = OFFSET + (todayIndex - 1);
+      const col =
+        OFFSET + (todayIndex - 1);
+
+      cells.forEach(td =>
+        td.classList.remove("today-column")
+      );
 
       if (cells[col]) {
         cells[col].classList.add("today-column");
       }
+
     });
 
-  }, 300); // ⬅️ QUAN TRỌNG: đợi DOM render xong
+  }, 300);
 }

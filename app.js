@@ -332,17 +332,15 @@ highlightTodayColumn();
 function showTracker() {
 
   document.getElementById("trackerPage").style.display = "block";
-   loadWeekHeader();
+
   document.getElementById("backupPage").style.display = "none";
 
   const kanban = document.querySelector(".kanban");
   if (kanban) kanban.style.display = "none";
 
-  loadWeekHeader(); // thêm dòng này
-
+  loadWeekHeader();
   loadTasks();
 }
-
 // =======================
 // SHOW KANBAN
 // =======================
@@ -684,4 +682,23 @@ function highlightTodayColumn() {
 
   }, 300);
 }
+// =======================
+// FORMAT DATE
+// =======================
+function formatDate(d){
 
+  const months = [
+    "Jan","Feb","Mar","Apr","May","Jun",
+    "Jul","Aug","Sep","Oct","Nov","Dec"
+  ];
+
+  return `${d.getDate()}-${months[d.getMonth()]}`;
+}
+
+// =======================
+// LOAD WEEK HEADER
+// =======================
+function loadWeekHeader() {
+
+  ...
+}

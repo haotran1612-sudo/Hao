@@ -695,10 +695,3 @@ function formatDate(d){
   return `${d.getDate()}-${months[d.getMonth()]}`;
 }
 
-// =======================
-// LOAD WEEK HEADER
-// =======================
-function loadWeekHeader() {
-
-  ...
-}

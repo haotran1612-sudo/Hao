@@ -461,7 +461,7 @@ function loadWeekHeader() {
     ) {
 
       th.dataset.today = "true";
-
+console.log("Today column =", i + 1);
       th.classList.add("today-column");
     }
   }

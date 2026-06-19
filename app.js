@@ -131,104 +131,74 @@ async function saveTask() {
 
   try {
 
-  const taskData = {
+    const taskData = {
 
-  email: localStorage.getItem("userEmail"),
+      email: localStorage.getItem("userEmail"),
 
-  taskName:
-    document.getElementById("taskName")?.value || "",
+      taskName:
+        document.getElementById("taskName")?.value || "",
 
-  start:
-    document.getElementById("startDate")?.value || "",
+      start:
+        document.getElementById("startDate")?.value || "",
 
-  deadline:
-    document.getElementById("deadline")?.value || "",
+      deadline:
+        document.getElementById("deadline")?.value || "",
 
-  taskType:
-    document.getElementById("taskType")?.value || "Daily",
+      taskType:
+        document.getElementById("taskType")?.value || "Daily",
 
-  priority:
-    document.getElementById("priority")?.value || "Normal",
+      priority:
+        document.getElementById("priority")?.value || "Normal",
 
-  status:
-    document.getElementById("status")?.value || "Todo",
+      status:
+        document.getElementById("status")?.value || "Todo",
 
-  calendarTitle:
-    document.getElementById("calendarTitle")?.value || "",
+      calendarTitle:
+        document.getElementById("calendarTitle")?.value || "",
 
-  calendarType:
-    document.getElementById("calendarType")?.value || "Event",
+      calendarType:
+        document.getElementById("calendarType")?.value || "Event",
 
-  attendees:
-    document.getElementById("attendees")?.value || "",
+      attendees:
+        document.getElementById("attendees")?.value || "",
 
-  addMeet:
-    document.getElementById("addMeet")?.checked || false,
+      addMeet:
+        document.getElementById("addMeet")?.checked || false,
 
-  location:
-    document.getElementById("location")?.value || "",
+      location:
+        document.getElementById("location")?.value || "",
 
-  description:
-    document.getElementById("description")?.value || "",
+      description:
+        document.getElementById("description")?.value || "",
 
-  repeat:
-    document.getElementById("repeat")?.value || "None",
+      repeat:
+        document.getElementById("repeat")?.value || "None",
 
-  repeatInterval:
-    Number(document.getElementById("repeatInterval")?.value) || 1,
+      repeatInterval:
+        Number(document.getElementById("repeatInterval")?.value) || 1,
 
-  repeatUntil:
-    document.getElementById("repeatUntil")?.value || "",
+      repeatUntil:
+        document.getElementById("repeatUntil")?.value || "",
 
-  autoDelete:
-    document.getElementById("autoDelete")?.checked || false,
+      autoDelete:
+        document.getElementById("autoDelete")?.checked || false,
 
-  apply:false,
+      apply: false,
 
-  sendMail:
-    document.getElementById("sendMail")?.checked || false,
+      sendMail:
+        document.getElementById("sendMail")?.checked || false,
 
-  calendarId: "",
+      calendarId: "",
 
-  meetLink: "",
+      meetLink: "",
 
-  calendarStatus: "Create",
+      calendarStatus: "Create",
 
-  createdAt: new Date()
+      createdAt: new Date()
 
-};
-    const docRef =
-await db.collection("tasks")
-.doc(id)
-.update({
+    };
 
-  apply:true,
-
-  calendarId:
-    event.id || "",
-
-  meetLink:
-    event.hangoutLink || "",
-
-  calendarStatus:
-    "Created"
-
-});
-
-  }catch(err){
-
-    console.error(err);
-
-    await docRef.update({
-
-      calendarStatus:
-        "Error"
-
-    });
-
-  }
-
-}
+    await db.collection("tasks").add(taskData);
 
     alert("Tạo task thành công");
 

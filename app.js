@@ -486,19 +486,7 @@ async function loadTasks() {
     ${task.calendarId ? "checked" : ""}
     onchange="createCalendarFromRow('${doc.id}',this)">
 </td>
-<td>
-  <input
-    type="text"
-    value="${task.calendarId || ''}"
-    readonly>
-</td>
 
-<td>
-  <input
-    type="text"
-    value="${task.meetLink || ''}"
-    readonly>
-</td>
 <td>
   <select onchange="updateTask('${doc.id}','calendarStatus',this.value)">
     <option value="Create" ${task.calendarStatus==="Create"?"selected":""}>Create</option>

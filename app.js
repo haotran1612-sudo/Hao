@@ -14,7 +14,11 @@ firebase.initializeApp(firebaseConfig);
 
 const auth = firebase.auth();
 const db = firebase.firestore();
+const provider = new firebase.auth.GoogleAuthProvider();
 
+provider.addScope(
+  "https://www.googleapis.com/auth/calendar"
+);
 
 // =======================
 // REGISTER
@@ -65,6 +69,35 @@ function login() {
 
 });
 } 
+async function googleLogin() {
+
+  try {
+
+    const result =
+      await auth.signInWithPopup(provider);
+
+    const credential =
+      result.credential;
+
+    const token =
+      credential.accessToken;
+
+    localStorage.setItem(
+      "googleToken",
+      token
+    );
+
+    alert("Google Calendar Connected");
+
+  } catch(err){
+
+    console.error(err);
+
+    alert(err.message);
+
+  }
+
+}
 // =======================
 // LOGOUT
 // =======================
@@ -97,7 +130,7 @@ async function saveTask() {
 
   try {
 
-    await db.collection("tasks").add({
+   const taskData = {
 
       email: localStorage.getItem("userEmail"),
 
@@ -133,7 +166,46 @@ async function saveTask() {
       sendMail:
         document.getElementById("sendMail")?.checked || false,
 
-      createdAt: new Date()
+    createdAt: new Date()
+};
+
+const docRef =
+await db.collection("tasks")
+.add(taskData);
+    if(taskData.apply){
+
+  try{
+
+    const event =
+      await createCalendarEvent(
+        taskData
+      );
+
+    await docRef.update({
+
+      calendarId:
+        event.id || "",
+
+      meetLink:
+        event.conferenceData?.entryPoints?.[0]?.uri || "",
+
+      calendarStatus:
+        "Created"
+
+    });
+
+  }catch(err){
+
+    console.error(err);
+
+    await docRef.update({
+      calendarStatus:
+        "Error"
+    });
+
+  }
+
+}
     });
 
     alert("Tạo task thành công");
@@ -691,6 +763,39 @@ async function archiveTask(id, checkbox) {
     if (!docRef.exists) return;
 
     const task = docRef.data();
+    const token =
+localStorage.getItem(
+  "googleToken"
+);
+
+if(
+  task.calendarId &&
+  token
+){
+
+  try{
+
+    await fetch(
+      `https://www.googleapis.com/calendar/v3/calendars/primary/events/${task.calendarId}`,
+      {
+        method:"DELETE",
+        headers:{
+          Authorization:
+            `Bearer ${token}`
+        }
+      }
+    );
+
+  }catch(err){
+
+    console.error(
+      "Delete calendar error",
+      err
+    );
+
+  }
+
+}
 
     await db.collection("backupTasks").add({
       ...task,
@@ -861,6 +966,93 @@ function formatDate(d){
 // =======================
 // ENTER TO LOGIN
 // =======================
+async function createCalendarEvent(task){
+
+  const token =
+    localStorage.getItem("googleToken");
+
+  if(!token){
+    throw new Error(
+      "Google chưa kết nối"
+    );
+  }
+
+  const body = {
+
+    summary:
+      task.calendarTitle ||
+      task.taskName,
+
+    location:
+      task.location || "",
+
+    description:
+      task.description || "",
+
+    start:{
+      dateTime: task.start
+    },
+
+    end:{
+      dateTime: task.deadline
+    }
+
+  };
+
+  if(task.addMeet){
+
+    body.conferenceData = {
+      createRequest:{
+        requestId:
+          Date.now().toString()
+      }
+    };
+
+  }
+
+  if(task.repeat === "Daily"){
+    body.recurrence = [
+      "RRULE:FREQ=DAILY"
+    ];
+  }
+
+  if(task.repeat === "Weekly"){
+    body.recurrence = [
+      "RRULE:FREQ=WEEKLY"
+    ];
+  }
+
+  if(task.repeat === "Monthly"){
+    body.recurrence = [
+      "RRULE:FREQ=MONTHLY"
+    ];
+  }
+
+  if(task.repeat === "Yearly"){
+    body.recurrence = [
+      "RRULE:FREQ=YEARLY"
+    ];
+  }
+
+  const response =
+    await fetch(
+      "https://www.googleapis.com/calendar/v3/calendars/primary/events?conferenceDataVersion=1",
+      {
+        method:"POST",
+        headers:{
+          Authorization:
+            `Bearer ${token}`,
+          "Content-Type":
+            "application/json"
+        },
+        body:
+          JSON.stringify(body)
+      }
+    );
+
+  return await response.json();
+
+}
 function handleLoginEnter(event) {
 
   if (event.key === "Enter") {

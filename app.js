@@ -199,26 +199,21 @@ async function saveTask() {
 };
     const docRef =
 await db.collection("tasks")
-.add(taskData);
-  if(taskData.apply){
+.doc(id)
+.update({
 
-  try{
+  apply:true,
 
-    const event =
-      await createCalendarEvent(taskData);
+  calendarId:
+    event.id || "",
 
-    await docRef.update({
+  meetLink:
+    event.hangoutLink || "",
 
-      calendarId:
-        event.id || "",
+  calendarStatus:
+    "Created"
 
-      meetLink:
-        event.hangoutLink || "",
-
-      calendarStatus:
-        "Created"
-
-    });
+});
 
   }catch(err){
 

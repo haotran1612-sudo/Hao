@@ -237,7 +237,6 @@ function resetForm() {
     const el = document.getElementById(id);
     if (el) el.value = "";
   });
-
   const taskType = document.getElementById("taskType");
   if (taskType) taskType.value = "Daily";
 

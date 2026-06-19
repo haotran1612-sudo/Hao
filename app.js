@@ -131,73 +131,110 @@ async function saveTask() {
 
   try {
 
-    await db.collection("tasks").add({
+  const taskData = {
 
-      email: localStorage.getItem("userEmail"),
+  email: localStorage.getItem("userEmail"),
 
-      taskName:
-        document.getElementById("taskName")?.value || "",
+  taskName:
+    document.getElementById("taskName")?.value || "",
 
-      start:
-        document.getElementById("startDate")?.value || "",
+  start:
+    document.getElementById("startDate")?.value || "",
 
-      deadline:
-        document.getElementById("deadline")?.value || "",
+  deadline:
+    document.getElementById("deadline")?.value || "",
 
-      taskType:
-        document.getElementById("taskType")?.value || "Daily",
+  taskType:
+    document.getElementById("taskType")?.value || "Daily",
 
-      priority:
-        document.getElementById("priority")?.value || "Normal",
+  priority:
+    document.getElementById("priority")?.value || "Normal",
 
-      status:
-        document.getElementById("status")?.value || "Todo",
+  status:
+    document.getElementById("status")?.value || "Todo",
 
-      calendarTitle:
-        document.getElementById("calendarTitle")?.value || "",
+  calendarTitle:
+    document.getElementById("calendarTitle")?.value || "",
 
-      calendarType:
-        document.getElementById("calendarType")?.value || "Event",
+  calendarType:
+    document.getElementById("calendarType")?.value || "Event",
 
-      attendees:
-        document.getElementById("attendees")?.value || "",
+  attendees:
+    document.getElementById("attendees")?.value || "",
 
-      addMeet:
-        document.getElementById("addMeet")?.checked || false,
+  addMeet:
+    document.getElementById("addMeet")?.checked || false,
 
-      location:
-        document.getElementById("location")?.value || "",
+  location:
+    document.getElementById("location")?.value || "",
 
-      description:
-        document.getElementById("description")?.value || "",
+  description:
+    document.getElementById("description")?.value || "",
 
-      repeat:
-        document.getElementById("repeat")?.value || "None",
+  repeat:
+    document.getElementById("repeat")?.value || "None",
 
-      repeatInterval:
-        Number(document.getElementById("repeatInterval")?.value) || 1,
+  repeatInterval:
+    Number(document.getElementById("repeatInterval")?.value) || 1,
 
-      repeatUntil:
-        document.getElementById("repeatUntil")?.value || "",
+  repeatUntil:
+    document.getElementById("repeatUntil")?.value || "",
 
-      autoDelete:
-        document.getElementById("autoDelete")?.checked || false,
+  autoDelete:
+    document.getElementById("autoDelete")?.checked || false,
 
-      apply:
-        document.getElementById("applyCalendar")?.checked || false,
+  apply:
+    document.getElementById("applyCalendar")?.checked || false,
 
-      sendMail:
-        document.getElementById("sendMail")?.checked || false,
+  sendMail:
+    document.getElementById("sendMail")?.checked || false,
 
-      calendarId: "",
+  calendarId: "",
 
-      meetLink: "",
+  meetLink: "",
 
-      calendarStatus: "Create",
+  calendarStatus: "Create",
 
-      createdAt: new Date()
+  createdAt: new Date()
+
+};
+    const docRef =
+await db.collection("tasks")
+.add(taskData);
+  if(taskData.apply){
+
+  try{
+
+    const event =
+      await createCalendarEvent(taskData);
+
+    await docRef.update({
+
+      calendarId:
+        event.id || "",
+
+      meetLink:
+        event.hangoutLink || "",
+
+      calendarStatus:
+        "Created"
 
     });
+
+  }catch(err){
+
+    console.error(err);
+
+    await docRef.update({
+
+      calendarStatus:
+        "Error"
+
+    });
+
+  }
+
+}
 
     alert("Tạo task thành công");
 
@@ -431,7 +468,19 @@ async function loadTasks() {
     value="${task.repeatUntil || ''}"
     onchange="updateTask('${doc.id}','repeatUntil',this.value)">
 </td>
+<td>
+  <input
+    type="text"
+    value="${task.calendarId || ''}"
+    readonly>
+</td>
 
+<td>
+  <input
+    type="text"
+    value="${task.meetLink || ''}"
+    readonly>
+</td>
 <td>
   <select onchange="updateTask('${doc.id}','calendarStatus',this.value)">
     <option value="Create" ${task.calendarStatus==="Create"?"selected":""}>Create</option>
@@ -909,45 +958,52 @@ async function createCalendarEvent(task){
 
   }
 
-  if(task.repeat === "Daily"){
-    body.recurrence = [
-      "RRULE:FREQ=DAILY"
-    ];
+if(task.repeat !== "None"){
+
+  let freq =
+    task.repeat.toUpperCase();
+
+  let rule =
+    `RRULE:FREQ=${freq};INTERVAL=${task.repeatInterval || 1}`;
+
+  if(task.repeatUntil){
+
+    const until =
+      task.repeatUntil.replace(/-/g,"") +
+      "T235959Z";
+
+    rule += `;UNTIL=${until}`;
+
   }
 
-  if(task.repeat === "Weekly"){
-    body.recurrence = [
-      "RRULE:FREQ=WEEKLY"
-    ];
-  }
+  body.recurrence = [rule];
 
-  if(task.repeat === "Monthly"){
-    body.recurrence = [
-      "RRULE:FREQ=MONTHLY"
-    ];
+}
+ const response =
+await fetch(
+  "https://www.googleapis.com/calendar/v3/calendars/primary/events?conferenceDataVersion=1",
+  {
+    method:"POST",
+    headers:{
+      Authorization:`Bearer ${token}`,
+      "Content-Type":"application/json"
+    },
+    body:JSON.stringify(body)
   }
+);
 
-  if(task.repeat === "Yearly"){
-    body.recurrence = [
-      "RRULE:FREQ=YEARLY"
-    ];
-  }
+if(!response.ok){
 
-  const response =
-    await fetch(
-      "https://www.googleapis.com/calendar/v3/calendars/primary/events?conferenceDataVersion=1",
-      {
-        method:"POST",
-        headers:{
-          Authorization:
-            `Bearer ${token}`,
-          "Content-Type":
-            "application/json"
-        },
-        body:
-          JSON.stringify(body)
-      }
-    );
+  const error =
+    await response.json();
+
+  console.error(error);
+
+  throw error;
+
+}
+
+
 
   return await response.json();
 

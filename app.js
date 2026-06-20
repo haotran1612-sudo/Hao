@@ -437,6 +437,12 @@ async function loadTasks() {
     value="${task.repeatUntil || ''}"
     onchange="updateTask('${doc.id}','repeatUntil',this.value)">
 </td>
+<td style="text-align:center;">
+  <input
+    type="checkbox"
+    ${task.apply ? "checked" : ""}
+    onchange="toggleCreateCalendar('${doc.id}',this)">
+</td>
 <td>
   <input
     type="text"
@@ -450,12 +456,7 @@ async function loadTasks() {
     value="${task.meetLink || ''}"
     readonly>
 </td>
-<td style="text-align:center;">
-  <input
-    type="checkbox"
-    ${task.apply ? "checked" : ""}
-    onchange="toggleCreateCalendar('${doc.id}',this)">
-</td>
+
 
 <td>
   <select onchange="updateTask('${doc.id}','calendarStatus',this.value)">

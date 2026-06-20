@@ -1111,12 +1111,14 @@ await fetch(
 
 if(!response.ok){
 
-  const error =
+const error =
     await response.json();
 
-  console.error(error);
+console.log(
+    JSON.stringify(error,null,2)
+);
 
-  throw error;
+throw error;
 
 }
 

@@ -424,7 +424,13 @@ async function loadTasks() {
     <option value="Yearly" ${task.repeat==="Yearly"?"selected":""}>Yearly</option>
   </select>
 </td>
-
+<td>
+    <input
+        type="number"
+        min="1"
+        value="${task.repeatInterval || 1}"
+        onchange="updateTask('${doc.id}','repeatInterval',Number(this.value))">
+</td>
 <td>
   <input
     type="date"
@@ -447,8 +453,8 @@ async function loadTasks() {
 <td style="text-align:center;">
   <input
     type="checkbox"
-    ${task.calendarId ? "checked" : ""}
-    onchange="createCalendarFromRow('${doc.id}',this)">
+    ${task.apply ? "checked" : ""}
+    onchange="toggleCreateCalendar('${doc.id}',this)">
 </td>
 
 <td>
@@ -533,7 +539,20 @@ async function addRow() {
       priority: "Normal",
       status: "Todo",
       taskType: "Daily",
-
+repeat: "None",
+repeatInterval: 1,
+repeatUntil: "",
+calendarTitle: "",
+calendarType: "Event",
+attendees: "",
+addMeet: false,
+location: "",
+description: "",
+apply: false,
+calendarId: "",
+meetLink: "",
+calendarStatus: "Create",
+autoDelete: false,
       createdAt: new Date()
 
     });
@@ -754,31 +773,39 @@ async function createCalendarFromRow(id){
       await createCalendarEvent(task);
 
     await db.collection("tasks")
-      .doc(id)
-      .update({
+.doc(id)
+.update({
 
-        calendarId:
-          event.id || "",
+    apply:true,
 
-        meetLink:
-          event.hangoutLink || "",
+    calendarId:
+      event.id || "",
 
-        calendarStatus:
-          "Created"
+    meetLink:
+      event.hangoutLink || "",
 
-      });
+    calendarStatus:
+      "Created"
+
+});
 
     loadTasks();
 
-  }catch(err){
+ }catch(err){
 
     console.error(err);
 
-    checkbox.checked = false;
+    await db.collection("tasks")
+    .doc(id)
+    .update({
+        apply:false
+    });
+
+    loadTasks();
 
     alert("Tạo Calendar thất bại");
 
-  }
+}
 
 }
 // =======================
@@ -1044,7 +1071,7 @@ async function createCalendarEvent(task){
 
   }
 
-if(task.repeat !== "None"){
+if(task.repeat && task.repeat !== "None"){
 
   let freq =
     task.repeat.toUpperCase();

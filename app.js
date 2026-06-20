@@ -791,14 +791,17 @@ async function createCalendarFromRow(id){
 
     loadTasks();
 
- }catch(err){
+}catch(err){
 
     console.error(err);
 
     await db.collection("tasks")
     .doc(id)
     .update({
-        apply:false
+
+        apply:false,
+        calendarStatus:"Create"
+
     });
 
     loadTasks();

@@ -1096,6 +1096,9 @@ if(task.repeat && task.repeat !== "None"){
   body.recurrence = [rule];
 
 }
+  console.log("task.start =", task.start);
+console.log("task.deadline =", task.deadline);
+console.log("Body =", JSON.stringify(body, null, 2));
  const response =
 await fetch(
   "https://www.googleapis.com/calendar/v3/calendars/primary/events?conferenceDataVersion=1",

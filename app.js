@@ -1054,13 +1054,15 @@ async function createCalendarEvent(task){
     description:
       task.description || "",
 
-    start:{
-      dateTime: task.start
-    },
+   start: {
+  dateTime: new Date(task.start).toISOString(),
+  timeZone: "Asia/Ho_Chi_Minh"
+},
 
-    end:{
-      dateTime: task.deadline
-    }
+end: {
+  dateTime: new Date(task.deadline).toISOString(),
+  timeZone: "Asia/Ho_Chi_Minh"
+}
 
   };
 

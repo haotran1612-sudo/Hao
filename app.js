@@ -666,11 +666,72 @@ async function updateTask(id, field, value) {
 
   }
 }
-async function createCalendarFromRow(id, checkbox){
+async function toggleCreateCalendar(id, checkbox){
 
-  if(!checkbox.checked){
-    return;
-  }
+    try{
+
+        await db.collection("tasks")
+        .doc(id)
+        .update({
+            apply: checkbox.checked
+        });
+
+        if(checkbox.checked){
+
+            await createCalendarFromRow(id);
+
+        }else{
+
+            const docRef =
+            await db.collection("tasks")
+            .doc(id)
+            .get();
+
+            const task = docRef.data();
+
+            if(task.calendarId){
+
+                const token =
+                localStorage.getItem("googleToken");
+
+                await fetch(
+                `https://www.googleapis.com/calendar/v3/calendars/primary/events/${task.calendarId}`,
+                {
+                    method:"DELETE",
+                    headers:{
+                        Authorization:`Bearer ${token}`
+                    }
+                });
+
+                await db.collection("tasks")
+                .doc(id)
+                .update({
+
+                    calendarId:"",
+                    meetLink:"",
+                    calendarStatus:"Create",
+                    apply:false
+
+                });
+
+                loadTasks();
+
+            }
+
+        }
+
+    }catch(err){
+
+        console.error(err);
+
+        checkbox.checked=false;
+
+    }
+
+}
+async function createCalendarFromRow(id){
+
+  
 
   try{
 
@@ -821,11 +882,12 @@ async function showBackup() {
       document.createElement("tr");
 
     tr.innerHTML = `
-      <td style="text-align:center;">
-        <input
-          type="checkbox"
-          onchange="restoreTask('${doc.id}')">
-      </td>
+    <td style="text-align:center;">
+<input
+type="checkbox"
+${task.apply ? "checked" : ""}
+onchange="toggleCreateCalendar('${doc.id}',this)">
+</td>
 
       <td>${task.taskName || ""}</td>
       <td>${task.start || ""}</td>

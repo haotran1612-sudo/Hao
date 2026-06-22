@@ -310,43 +310,50 @@ const reviewDays = buildReviewDays(task);
 </td>
 <td>
   <input type="text"
-  value="${reviewDays.day1 || task.day1 || ''}"
+  value="${reviewDays.day1}"
+
     onchange="updateTask('${doc.id}','day1',this.value)">
 </td>
 
 <td>
   <input type="text"
-   value="${reviewDays.day2 || task.day2 || ''}"
+ value="${reviewDays.day2}"
+
     onchange="updateTask('${doc.id}','day2',this.value)">
 </td>
 
 <td>
   <input type="text"
-    value="${reviewDays.day3 || task.day3 || ''}"
+    value="${reviewDays.day3}"
+
     onchange="updateTask('${doc.id}','day3',this.value)">
 </td>
 
 <td>
   <input type="text"
-   value="${reviewDays.day4 || task.day4 || ''}"
+  value="${reviewDays.day4}"
+
     onchange="updateTask('${doc.id}','day4',this.value)">
 </td>
 
 <td>
   <input type="text"
-   value="${reviewDays.day5 || task.day5 || ''}"
+  value="${reviewDays.day5}"
+
     onchange="updateTask('${doc.id}','day5',this.value)">
 </td>
 
 <td>
   <input type="text"
-   value="${reviewDays.day6 || task.day6 || ''}"
+  value="${reviewDays.day6}"
+
     onchange="updateTask('${doc.id}','day6',this.value)">
 </td>
 
 <td>
   <input type="text"
-    value="${reviewDays.day7 || task.day7 || ''}"
+    value="${reviewDays.day7}"
+
     onchange="updateTask('${doc.id}','day7',this.value)">
 </td>
 

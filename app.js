@@ -1044,7 +1044,7 @@ function buildReviewDays(task){
     // Monday = 1 ... Sunday = 7
     let day=start.getDay();
     day=(day===0)?7:day;
-
+console.log(task.taskType);
     switch(task.taskType){
 
         case "Daily":

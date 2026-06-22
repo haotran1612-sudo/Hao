@@ -1032,6 +1032,69 @@ function highlightTodayColumn() {
 // =======================
 // Hàm ôn tập
 // =======================
+function buildReviewSchedule(task){
+
+    const result = {
+        day1:"",
+        day2:"",
+        day3:"",
+        day4:"",
+        day5:"",
+        day6:"",
+        day7:""
+    };
+
+    if(!task.start || !task.taskName) return result;
+
+    const start = new Date(task.start);
+
+    const now = new Date();
+
+    const monday = new Date(now);
+    let dow = now.getDay();
+    dow = (dow === 0) ? 6 : dow - 1;
+    monday.setDate(now.getDate() - dow);
+
+    // các mốc ôn tập
+    const reviewDates = [];
+
+    // 10 phút
+    reviewDates.push(new Date(start.getTime() + 10 * 60 * 1000));
+
+    // 24h
+    reviewDates.push(new Date(start.getTime() + 24 * 60 * 60 * 1000));
+
+    // 7 ngày
+    const d7 = new Date(start);
+    d7.setDate(d7.getDate() + 7);
+    reviewDates.push(d7);
+
+    // 30 ngày
+    const d30 = new Date(start);
+    d30.setMonth(d30.getMonth() + 1);
+    reviewDates.push(d30);
+
+    // map vào 7 ngày tuần hiện tại
+    for(let i=0;i<7;i++){
+
+        const colDate = new Date(monday);
+        colDate.setDate(monday.getDate() + i);
+
+        for(const r of reviewDates){
+
+            if(
+                r.getDate() === colDate.getDate() &&
+                r.getMonth() === colDate.getMonth() &&
+                r.getFullYear() === colDate.getFullYear()
+            ){
+                result["day"+(i+1)] = task.taskName;
+            }
+
+        }
+    }
+
+    return result;
+}
 function buildReviewDays(task){
 
     const result={

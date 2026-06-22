@@ -681,11 +681,17 @@ async function updateTask(id, field, value) {
         [field]: value
       });
 
+    // Nếu thay đổi Type hoặc Start thì cập nhật lại Tracker ngay
+    if (field === "taskType" || field === "start") {
+      await loadTasks();
+    }
+
   } catch(err) {
 
     console.error(err);
 
   }
+
 }
 async function toggleCreateCalendar(id, checkbox){
 

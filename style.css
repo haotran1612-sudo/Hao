@@ -395,3 +395,13 @@ table {
   width: max-content;
   min-width: 100%;
 }
+.table-wrapper {
+  width: 100%;
+  overflow-x: auto;
+}
+
+table {
+  border-collapse: collapse;
+  width: max-content;
+  min-width: 100%;
+}

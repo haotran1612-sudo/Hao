@@ -385,3 +385,13 @@ td button {
   background: #e74c3c;
   color: white;
 }
+.table-wrapper {
+  width: 100%;
+  overflow-x: auto;
+}
+
+table {
+  border-collapse: collapse;
+  width: max-content;
+  min-width: 100%;
+}

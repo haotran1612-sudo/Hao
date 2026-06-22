@@ -1037,62 +1037,46 @@ function buildReviewDays(task){
         day7:""
     };
 
-    if(task.taskType!=="Ôn tập") return result;
-
     if(!task.start) return result;
 
     const start=new Date(task.start);
 
-    const reviews=[];
+    // Monday = 1 ... Sunday = 7
+    let day=start.getDay();
+    day=(day===0)?7:day;
 
-    // 10 phút
-    reviews.push(new Date(start.getTime()+10*60*1000));
+    switch(task.taskType){
 
-    //24h
-    reviews.push(new Date(start.getTime()+24*60*60*1000));
+        case "Daily":
 
-    //1 tuần
-    const week=new Date(start);
-    week.setDate(week.getDate()+7);
-    reviews.push(week);
-
-    //1 tháng
-    const month=new Date(start);
-    month.setMonth(month.getMonth()+1);
-    reviews.push(month);
-
-    //Header của Tracker
-    const today=new Date();
-
-    const monday=new Date(today);
-
-    const dow=today.getDay();
-
-    monday.setDate(today.getDate()-(dow===0?6:dow-1));
-
-    for(let i=0;i<7;i++){
-
-        const colDate=new Date(monday);
-
-        colDate.setDate(monday.getDate()+i);
-
-        reviews.forEach(r=>{
-
-            if(
-                r.getDate()==colDate.getDate() &&
-                r.getMonth()==colDate.getMonth() &&
-                r.getFullYear()==colDate.getFullYear()
-            ){
-
-                const key="day"+(i+1);
-
-                if(result[key]!="")
-                    result[key]+="\n";
-
-                result[key]+=task.taskName;
+            for(let i=1;i<=7;i++){
+                result["day"+i]=task.taskName;
             }
 
-        });
+            break;
+
+        case "Weekly":
+
+            result["day"+day]=task.taskName;
+
+            break;
+
+        case "Monthly":
+
+            result["day"+day]=task.taskName;
+
+            break;
+
+        case "Yearly":
+
+            result["day"+day]=task.taskName;
+
+            break;
+
+        case "Ôn tập":
+
+            // Giữ nguyên thuật toán ôn tập hiện tại của bạn
+            return buildReviewSchedule(task);
 
     }
 

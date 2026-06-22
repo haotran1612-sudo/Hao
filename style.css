@@ -370,3 +370,18 @@ header button {
     vertical-align:top;
     line-height:1.6;
 }
+button {
+  padding: 4px 8px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+button:hover {
+  opacity: 0.8;
+}
+
+td button {
+  background: #e74c3c;
+  color: white;
+}

@@ -276,7 +276,7 @@ async function loadTasks() {
     snapshot.forEach(doc => {
 
       const task = doc.data();
-
+const reviewDays = buildReviewDays(task);
       const tr = document.createElement("tr");
 
       tr.innerHTML = `
@@ -310,43 +310,43 @@ async function loadTasks() {
 </td>
 <td>
   <input type="text"
-    value="${task.day1 || ''}"
+  value="${reviewDays.day1 || task.day1 || ''}"
     onchange="updateTask('${doc.id}','day1',this.value)">
 </td>
 
 <td>
   <input type="text"
-    value="${task.day2 || ''}"
+   value="${reviewDays.day2 || task.day2 || ''}"
     onchange="updateTask('${doc.id}','day2',this.value)">
 </td>
 
 <td>
   <input type="text"
-    value="${task.day3 || ''}"
+    value="${reviewDays.day3 || task.day3 || ''}"
     onchange="updateTask('${doc.id}','day3',this.value)">
 </td>
 
 <td>
   <input type="text"
-    value="${task.day4 || ''}"
+   value="${reviewDays.day4 || task.day4 || ''}"
     onchange="updateTask('${doc.id}','day4',this.value)">
 </td>
 
 <td>
   <input type="text"
-    value="${task.day5 || ''}"
+   value="${reviewDays.day5 || task.day5 || ''}"
     onchange="updateTask('${doc.id}','day5',this.value)">
 </td>
 
 <td>
   <input type="text"
-    value="${task.day6 || ''}"
+   value="${reviewDays.day6 || task.day6 || ''}"
     onchange="updateTask('${doc.id}','day6',this.value)">
 </td>
 
 <td>
   <input type="text"
-    value="${task.day7 || ''}"
+    value="${reviewDays.day7 || task.day7 || ''}"
     onchange="updateTask('${doc.id}','day7',this.value)">
 </td>
 
@@ -367,6 +367,7 @@ async function loadTasks() {
 
 <td>
   <select onchange="updateTask('${doc.id}','taskType',this.value)">
+      <option value="Ôn tập" ${task.taskType==="Ôn tập"?"selected":""}>Ôn tập</option>
     <option value="Daily" ${task.taskType==="Daily"?"selected":""}>Daily</option>
     <option value="Weekly" ${task.taskType==="Weekly"?"selected":""}>Weekly</option>
     <option value="Monthly" ${task.taskType==="Monthly"?"selected":""}>Monthly</option>
@@ -1016,7 +1017,84 @@ function highlightTodayColumn() {
   }, 300);
 }
 // =======================
-// FORMAT DATE
+// Hàm ôn tập
+// =======================
+function buildReviewDays(task){
+
+    const result={
+        day1:"",
+        day2:"",
+        day3:"",
+        day4:"",
+        day5:"",
+        day6:"",
+        day7:""
+    };
+
+    if(task.taskType!=="Ôn tập") return result;
+
+    if(!task.start) return result;
+
+    const start=new Date(task.start);
+
+    const reviews=[];
+
+    // 10 phút
+    reviews.push(new Date(start.getTime()+10*60*1000));
+
+    //24h
+    reviews.push(new Date(start.getTime()+24*60*60*1000));
+
+    //1 tuần
+    const week=new Date(start);
+    week.setDate(week.getDate()+7);
+    reviews.push(week);
+
+    //1 tháng
+    const month=new Date(start);
+    month.setMonth(month.getMonth()+1);
+    reviews.push(month);
+
+    //Header của Tracker
+    const today=new Date();
+
+    const monday=new Date(today);
+
+    const dow=today.getDay();
+
+    monday.setDate(today.getDate()-(dow===0?6:dow-1));
+
+    for(let i=0;i<7;i++){
+
+        const colDate=new Date(monday);
+
+        colDate.setDate(monday.getDate()+i);
+
+        reviews.forEach(r=>{
+
+            if(
+                r.getDate()==colDate.getDate() &&
+                r.getMonth()==colDate.getMonth() &&
+                r.getFullYear()==colDate.getFullYear()
+            ){
+
+                const key="day"+(i+1);
+
+                if(result[key]!="")
+                    result[key]+="\n";
+
+                result[key]+=task.taskName;
+            }
+
+        });
+
+    }
+
+    return result;
+
+}
+// =======================
+// FORMAT EDAT
 // =======================
 function formatDate(d){
 

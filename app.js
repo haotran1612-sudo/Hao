@@ -948,6 +948,11 @@ onchange="toggleCreateCalendar('${doc.id}',this)">
               .toLocaleString()
           : ""}
       </td>
+      <td>
+  <button onclick="deleteBackupTask('${doc.id}')">
+    Xóa
+  </button>
+</td>
     `;
 
     tbody.appendChild(tr);
@@ -1285,10 +1290,27 @@ throw error;
   return await response.json();
 
 }
+// =======================
+// Xóa backup
+// =======================
 function handleLoginEnter(event) {
 
   if (event.key === "Enter") {
     login();
   }
 
+}
+async function deleteBackupTask(id) {
+  const ok = confirm("Bạn có chắc muốn xóa vĩnh viễn task này?");
+  if (!ok) return;
+
+  try {
+    await db.collection("backupTasks").doc(id).delete();
+    alert("Đã xóa backup task");
+
+    showBackup(); // reload lại bảng
+  } catch (err) {
+    console.error(err);
+    alert("Xóa thất bại");
+  }
 }

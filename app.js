@@ -277,6 +277,7 @@ async function loadTasks() {
 
       const task = doc.data();
 const reviewDays = buildReviewDays(task);
+      if (!task || !task.taskName) return;
       const tr = document.createElement("tr");
 
       tr.innerHTML = `
@@ -310,7 +311,7 @@ const reviewDays = buildReviewDays(task);
 </td>
 <td>
   <input type="text"
-  value="${reviewDays.day1}"
+value="${reviewDays.day1 || ""}"
 
     onchange="updateTask('${doc.id}','day1',this.value)">
 </td>
@@ -824,8 +825,10 @@ async function createCalendarFromRow(id){
     alert("Tạo Calendar thất bại");
 
 }
-
+if (!id || !field) return;
+if (value === undefined) return;
 }
+
 // =======================
 // ARCHIVE TASK
 // =======================
@@ -1046,7 +1049,8 @@ function buildReviewSchedule(task){
 
     if(!task.start || !task.taskName) return result;
 
-    const start = new Date(task.start);
+ const start = new Date(task.start);
+if (isNaN(start.getTime())) return result;
 
     const now = new Date();
 
@@ -1082,13 +1086,12 @@ function buildReviewSchedule(task){
 
         for(const r of reviewDates){
 
-            if(
-                r.getDate() === colDate.getDate() &&
-                r.getMonth() === colDate.getMonth() &&
-                r.getFullYear() === colDate.getFullYear()
-            ){
-                result["day"+(i+1)] = task.taskName;
-            }
+           const rr = normalizeDate(r);
+const cc = normalizeDate(colDate);
+
+if(rr.getTime() === cc.getTime()){
+    result["day"+(i+1)] = task.taskName;
+}
 
         }
     }
@@ -1107,7 +1110,7 @@ function buildReviewDays(task){
         day7:""
     };
 
-    if(!task.start) return result;
+ if(!task.start || isNaN(new Date(task.start).getTime())) return result;
 
     const start=new Date(task.start);
 
@@ -1143,15 +1146,27 @@ console.log(task.taskType);
 
             break;
 
-        case "Ôn tập":
-
-            // Giữ nguyên thuật toán ôn tập hiện tại của bạn
-            return buildReviewSchedule(task);
+      case "Ôn tập":
+{
+    const res = buildReviewSchedule(task);
+    return res || {
+        day1:"",
+        day2:"",
+        day3:"",
+        day4:"",
+        day5:"",
+        day6:"",
+        day7:""
+    };
+}
 
     }
 
     return result;
 
+}
+function normalizeDate(d){
+    return new Date(d.getFullYear(), d.getMonth(), d.getDate());
 }
 // =======================
 // FORMAT EDAT

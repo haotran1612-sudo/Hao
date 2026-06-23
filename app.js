@@ -1314,6 +1314,17 @@ async function deleteBackupTask(id) {
 // autoResize
 // =======================
 function autoResize(el){
+
     el.style.height = "auto";
+
     el.style.height = el.scrollHeight + "px";
+
+    const tr = el.closest("tr");
+
+    if(tr){
+
+        tr.style.height = "auto";
+
+    }
+
 }

@@ -1297,20 +1297,16 @@ function hasReviewData(task){
 }
 function buildReviewDays(task){
 
-    // Nếu user đã nhập dữ liệu reviewDays
-    // thì giữ nguyên, không ghi đè
-    if(hasReviewData(task)){
-        return task.reviewDays;
-    }
+    const current = task.reviewDays || {};
 
     const result = {
-        day1:"",
-        day2:"",
-        day3:"",
-        day4:"",
-        day5:"",
-        day6:"",
-        day7:""
+        day1: current.day1 || "",
+        day2: current.day2 || "",
+        day3: current.day3 || "",
+        day4: current.day4 || "",
+        day5: current.day5 || "",
+        day6: current.day6 || "",
+        day7: current.day7 || ""
     };
 
     if(
@@ -1323,8 +1319,6 @@ function buildReviewDays(task){
     const start = new Date(task.start);
 
     let day = start.getDay();
-
-    // Sunday = 7
     day = (day === 0) ? 7 : day;
 
     switch(task.taskType){
@@ -1332,39 +1326,52 @@ function buildReviewDays(task){
         case "Daily":
 
             for(let i=1;i<=7;i++){
-                result["day"+i] = task.taskName || "";
+
+                if(!result["day"+i].trim()){
+
+                    result["day"+i] =
+                        task.taskName || "";
+
+                }
+
             }
 
             break;
 
         case "Weekly":
-
-            result["day"+day] =
-                task.taskName || "";
-
-            break;
-
         case "Monthly":
-
-            result["day"+day] =
-                task.taskName || "";
-
-            break;
-
         case "Yearly":
 
-            result["day"+day] =
-                task.taskName || "";
+            if(!result["day"+day].trim()){
+
+                result["day"+day] =
+                    task.taskName || "";
+
+            }
 
             break;
 
         case "Ôn tập":
 
-            return buildReviewSchedule(task);
+            const autoReview =
+                buildReviewSchedule(task);
 
+            for(let i=1;i<=7;i++){
+
+                if(!result["day"+i].trim()){
+
+                    result["day"+i] =
+                        autoReview["day"+i];
+
+                }
+
+            }
+
+            break;
     }
 
     return result;
+}
 
 }
 async function rebuildReviewDays(id){

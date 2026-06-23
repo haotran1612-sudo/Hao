@@ -515,6 +515,11 @@ class="review-cell">${reviewDays.day7 || ""}</textarea>
     onclick="createReviewCalendarForRow(this)">
     📅
   </button>
+
+  <button
+    onclick="rebuildReviewDays('${doc.id}')">
+    🔄
+  </button>
 </td>
 `;
 
@@ -1360,6 +1365,46 @@ function buildReviewDays(task){
     }
 
     return result;
+
+}
+async function rebuildReviewDays(id){
+
+    try{
+
+        const docRef =
+            await db.collection("tasks")
+            .doc(id)
+            .get();
+
+        if(!docRef.exists) return;
+
+        const task = docRef.data();
+
+        const emptyReviewDays = {
+            day1:"",
+            day2:"",
+            day3:"",
+            day4:"",
+            day5:"",
+            day6:"",
+            day7:""
+        };
+
+        await db.collection("tasks")
+        .doc(id)
+        .update({
+            reviewDays: emptyReviewDays
+        });
+
+        loadTasks();
+
+    }catch(err){
+
+        console.error(err);
+
+        alert("Rebuild thất bại");
+
+    }
 
 }
 function normalizeDate(d){

@@ -310,53 +310,48 @@ const reviewDays = buildReviewDays(task);
     onchange="updateTask('${doc.id}','taskName',this.value)">
 </td>
 <td>
-  <input type="text"
-value="${reviewDays.day1 || ""}"
-
-    onchange="updateTask('${doc.id}','day1',this.value)">
+<textarea
+oninput="autoResize(this)"
+onchange="updateTask('${doc.id}','day1',this.value)"
+rows="1"
+class="review-cell">${reviewDays.day1 || ""}</textarea>
 </td>
 
-<td>
-  <input type="text"
- value="${reviewDays.day2}"
+<textarea
+oninput="autoResize(this)"
+onchange="updateTask('${doc.id}','day2',this.value)"
+rows="1"
+class="review-cell">${reviewDays.day2 || ""}</textarea>
 
-    onchange="updateTask('${doc.id}','day2',this.value)">
-</td>
+<textarea
+oninput="autoResize(this)"
+onchange="updateTask('${doc.id}','day3',this.value)"
+rows="1"
+class="review-cell">${reviewDays.day3 || ""}</textarea>
 
-<td>
-  <input type="text"
-    value="${reviewDays.day3}"
+<textarea
+oninput="autoResize(this)"
+onchange="updateTask('${doc.id}','day4',this.value)"
+rows="1"
+class="review-cell">${reviewDays.day4 || ""}</textarea>
 
-    onchange="updateTask('${doc.id}','day3',this.value)">
-</td>
+<textarea
+oninput="autoResize(this)"
+onchange="updateTask('${doc.id}','day5',this.value)"
+rows="1"
+class="review-cell">${reviewDays.day5 || ""}</textarea>
 
-<td>
-  <input type="text"
-  value="${reviewDays.day4}"
+<textarea
+oninput="autoResize(this)"
+onchange="updateTask('${doc.id}','day6',this.value)"
+rows="1"
+class="review-cell">${reviewDays.day6 || ""}</textarea>
 
-    onchange="updateTask('${doc.id}','day4',this.value)">
-</td>
-
-<td>
-  <input type="text"
-  value="${reviewDays.day5}"
-
-    onchange="updateTask('${doc.id}','day5',this.value)">
-</td>
-
-<td>
-  <input type="text"
-  value="${reviewDays.day6}"
-
-    onchange="updateTask('${doc.id}','day6',this.value)">
-</td>
-
-<td>
-  <input type="text"
-    value="${reviewDays.day7}"
-
-    onchange="updateTask('${doc.id}','day7',this.value)">
-</td>
+<textarea
+oninput="autoResize(this)"
+onchange="updateTask('${doc.id}','day7',this.value)"
+rows="1"
+class="review-cell">${reviewDays.day7 || ""}</textarea>
 
 <td>
   <select onchange="updateTask('${doc.id}','priority',this.value)">
@@ -484,7 +479,7 @@ value="${reviewDays.day1 || ""}"
 `;
 
       tbody.appendChild(tr);
-
+tr.querySelectorAll(".review-cell").forEach(autoResize);
     });
 highlightTodayColumn();
 
@@ -936,6 +931,7 @@ type="checkbox"
 ${task.apply ? "checked" : ""}
 onchange="toggleCreateCalendar('${doc.id}',this)">
 </td>
+
 
       <td>${task.taskName || ""}</td>
       <td>${task.start || ""}</td>

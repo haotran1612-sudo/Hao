@@ -316,43 +316,48 @@ onchange="updateTask('${doc.id}','day1',this.value)"
 rows="1"
 class="review-cell">${reviewDays.day1 || ""}</textarea>
 </td>
-
+<td>
 <textarea
 oninput="autoResize(this)"
 onchange="updateTask('${doc.id}','day2',this.value)"
 rows="1"
 class="review-cell">${reviewDays.day2 || ""}</textarea>
-
+</td>
+<td>
 <textarea
 oninput="autoResize(this)"
 onchange="updateTask('${doc.id}','day3',this.value)"
 rows="1"
 class="review-cell">${reviewDays.day3 || ""}</textarea>
-
+</td>
+<td>
 <textarea
 oninput="autoResize(this)"
 onchange="updateTask('${doc.id}','day4',this.value)"
 rows="1"
 class="review-cell">${reviewDays.day4 || ""}</textarea>
-
+</td>
+<td>
 <textarea
 oninput="autoResize(this)"
 onchange="updateTask('${doc.id}','day5',this.value)"
 rows="1"
 class="review-cell">${reviewDays.day5 || ""}</textarea>
-
+</td>
+<td>
 <textarea
 oninput="autoResize(this)"
 onchange="updateTask('${doc.id}','day6',this.value)"
 rows="1"
 class="review-cell">${reviewDays.day6 || ""}</textarea>
-
+</td>
+<td>
 <textarea
 oninput="autoResize(this)"
 onchange="updateTask('${doc.id}','day7',this.value)"
 rows="1"
 class="review-cell">${reviewDays.day7 || ""}</textarea>
-
+</td>
 <td>
   <select onchange="updateTask('${doc.id}','priority',this.value)">
     <option value="Normal" ${task.priority==="Normal"?"selected":""}>Normal</option>

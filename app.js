@@ -1419,34 +1419,44 @@ function parseReviewTasks(text){
 
     if(!text) return [];
 
-    const tasks=[];
-
-    const lines=text.split("\n");
+    const tasks = [];
+    const lines = text.split("\n");
 
     for(const line of lines){
 
-        const t=line.trim();
+        const t = line.trim();
+        if(!t) continue;
 
-        if(t==="") continue;
+        // hh:mm-hh:mm title
+        let m = t.match(/^(\d{1,2}):(\d{2})-(\d{1,2}):(\d{2})\s+(.+)$/);
 
-        const m=t.match(/^(\d{1,2}):(\d{2})\s+(.+)$/);
+        if(m){
 
-        if(!m) continue;
+            tasks.push({
+                hour: Number(m[1]),
+                minute: Number(m[2]),
+                endHour: Number(m[3]),
+                endMinute: Number(m[4]),
+                title: m[5]
+            });
 
-        tasks.push({
+            continue;
+        }
 
-            hour:Number(m[1]),
+        // fallback hh:mm title
+        m = t.match(/^(\d{1,2}):(\d{2})\s+(.+)$/);
 
-            minute:Number(m[2]),
+        if(m){
 
-            title:m[3]
-
-        });
-
+            tasks.push({
+                hour: Number(m[1]),
+                minute: Number(m[2]),
+                title: m[3]
+            });
+        }
     }
 
     return tasks;
-
 }
 
 // =======================
@@ -1615,4 +1625,94 @@ async function refreshAllNotifications() {
     console.error(err);
     alert("Không thể cập nhật notification");
   }
+}
+//Bước 1: Tạo Calendar cho từng task trong cell
+
+async function createReviewCalendarTask(task,date){
+
+    const token =
+      localStorage.getItem("googleToken");
+
+    if(!token) return;
+
+    const startDate = new Date(
+        date.getFullYear(),
+        date.getMonth(),
+        date.getDate(),
+        task.hour,
+        task.minute
+    );
+
+    const endDate = new Date(
+        date.getFullYear(),
+        date.getMonth(),
+        date.getDate(),
+        task.endHour || task.hour,
+        task.endMinute || (task.minute + 30)
+    );
+
+    const body = {
+
+        summary: task.title,
+
+        start:{
+            dateTime:startDate.toISOString(),
+            timeZone:"Asia/Ho_Chi_Minh"
+        },
+
+        end:{
+            dateTime:endDate.toISOString(),
+            timeZone:"Asia/Ho_Chi_Minh"
+        }
+
+    };
+
+    await fetch(
+      "https://www.googleapis.com/calendar/v3/calendars/primary/events",
+      {
+        method:"POST",
+        headers:{
+          Authorization:`Bearer ${token}`,
+          "Content-Type":"application/json"
+        },
+        body:JSON.stringify(body)
+      }
+    );
+}
+
+
+//Bước 2: Quét toàn bộ cột Mon → Sun
+async function createCalendarFromReviewCells(){
+
+    const week = getCurrentWeekDates();
+
+    const rows =
+      document.querySelectorAll("#taskTableBody tr");
+
+    for(const row of rows){
+
+        const cells =
+          row.querySelectorAll(".review-cell");
+
+        for(let i=0;i<cells.length;i++){
+
+            const date = week[i];
+
+            const tasks =
+              parseReviewTasks(cells[i].value);
+
+            for(const t of tasks){
+
+                await createReviewCalendarTask(
+                    t,
+                    date
+                );
+
+            }
+
+        }
+
+    }
+
+    alert("Đã tạo Calendar từ Review Cells");
 }

@@ -15,7 +15,27 @@ firebase.initializeApp(firebaseConfig);
 const auth = firebase.auth();
 const db = firebase.firestore();
 const provider = new firebase.auth.GoogleAuthProvider();
+// =======================
+// NOTIFICATION
+// =======================
 
+async function requestNotificationPermission(){
+
+    if(!("Notification" in window)){
+
+        alert("Browser không hỗ trợ Notification");
+
+        return;
+
+    }
+
+    if(Notification.permission==="default"){
+
+        await Notification.requestPermission();
+
+    }
+
+}
 provider.addScope(
   "https://www.googleapis.com/auth/calendar"
 );
@@ -42,7 +62,7 @@ function registerUser() {
 // =======================
 // LOGIN
 // =======================
-function login() {
+async function login(){
 
   const email = document.getElementById("loginEmail").value.trim();
   const password = document.getElementById("loginPassword").value;
@@ -58,7 +78,9 @@ function login() {
     document.getElementById("appPage").style.display = "block";
     document.getElementById("welcomeUser").innerText = userEmail;
 
-    loadTasks();
+   await requestNotificationPermission();
+
+loadTasks();
 
 })          // <-- thiếu đoạn này
 
@@ -88,6 +110,7 @@ async function googleLogin() {
     );
 
     alert("Google Calendar Connected");
+    await requestNotificationPermission();
 
   } catch(err){
 
@@ -488,6 +511,8 @@ tr.querySelectorAll(".review-cell").forEach(autoResize);
     });
 highlightTodayColumn();
 
+scheduleTodayNotifications();
+
   } catch(err) {
 
     console.error(err);
@@ -660,12 +685,43 @@ th.innerHTML = `
   highlightTodayColumn();
 }
 // =======================
+// LẤY NGÀY CỦA TUẦN HIỆN TẠI
+// =======================
+function getCurrentWeekDates() {
+
+    const today = new Date();
+
+    const monday = new Date(today);
+
+    let dow = today.getDay();
+
+    // Chủ nhật = 7
+    dow = (dow === 0) ? 6 : dow - 1;
+
+    monday.setDate(today.getDate() - dow);
+
+    const dates = [];
+
+    for (let i = 0; i < 7; i++) {
+
+        const d = new Date(monday);
+
+        d.setDate(monday.getDate() + i);
+
+        dates.push(d);
+
+    }
+
+    return dates;
+
+}
+// =======================
 // AUTO LOGIN
 // =======================
 window.onload = function () {
 
   loadWeekHeader();
-
+console.log(getCurrentWeekDates());
   const user =
     localStorage.getItem("userEmail");
 
@@ -674,7 +730,7 @@ window.onload = function () {
     document.getElementById("loginPage").style.display = "none";
     document.getElementById("appPage").style.display = "block";
     document.getElementById("welcomeUser").innerText = user;
-
+requestNotificationPermission();
     loadTasks();
   }
 };
@@ -1343,5 +1399,127 @@ function autoResize(el){
         tr.style.height = "auto";
 
     }
+
+}
+
+// =======================
+// Hàm parse nhiều task
+// =======================
+function parseReviewTasks(text){
+
+    if(!text) return [];
+
+    const tasks=[];
+
+    const lines=text.split("\n");
+
+    for(const line of lines){
+
+        const t=line.trim();
+
+        if(t==="") continue;
+
+        const m=t.match(/^(\d{1,2}):(\d{2})\s+(.+)$/);
+
+        if(!m) continue;
+
+        tasks.push({
+
+            hour:Number(m[1]),
+
+            minute:Number(m[2]),
+
+            title:m[3]
+
+        });
+
+    }
+
+    return tasks;
+
+}
+
+// =======================
+// showTaskNotification
+// =======================
+function showTaskNotification(title){
+
+    if(Notification.permission!=="granted") return;
+
+    new Notification(title,{
+        body:"Đã đến giờ."
+    });
+
+}
+// =======================
+// scheduleNotification
+// =======================
+function scheduleNotification(task,date){
+
+    const target=new Date(
+
+        date.getFullYear(),
+
+        date.getMonth(),
+
+        date.getDate(),
+
+        task.hour,
+
+        task.minute,
+
+        0
+
+    );
+
+    const delay=target-Date.now();
+
+    if(delay<=0) return;
+
+    setTimeout(()=>{
+
+        showTaskNotification(task.title);
+
+    },delay);
+
+}
+function scheduleTodayNotifications(){
+
+    const week = getCurrentWeekDates();
+
+    const today = normalizeDate(new Date());
+
+    // tìm cột hôm nay
+    let todayIndex = -1;
+
+    for(let i=0;i<7;i++){
+
+        if(normalizeDate(week[i]).getTime()===today.getTime()){
+
+            todayIndex=i+1;
+
+            break;
+
+        }
+
+    }
+
+    if(todayIndex===-1) return;
+
+    document.querySelectorAll("#taskTableBody tr").forEach(row=>{
+
+        const textarea=row.querySelectorAll(".review-cell")[todayIndex-1];
+
+        if(!textarea) return;
+
+        const tasks=parseReviewTasks(textarea.value);
+
+        tasks.forEach(t=>{
+
+            scheduleNotification(t,new Date());
+
+        });
+
+    });
 
 }

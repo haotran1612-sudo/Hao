@@ -1373,7 +1373,7 @@ function buildReviewDays(task){
     return result;
 }
 
-}
+
 async function rebuildReviewDays(id){
 
     try{

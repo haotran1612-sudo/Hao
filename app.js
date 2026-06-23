@@ -335,49 +335,56 @@ const reviewDays = buildReviewDays(task);
 <td>
 <textarea
 oninput="autoResize(this)"
-onchange="updateTask('${doc.id}','reviewDays.day1',this.value)"
+onchange="updateTask('${doc.id}','reviewDays.day1',this.value);
+scheduleTodayNotifications();"
 rows="1"
 class="review-cell">${reviewDays.day1 || ""}</textarea>
 </td>
 <td>
 <textarea
 oninput="autoResize(this)"
-onchange="updateTask('${doc.id}','reviewDays.day2',this.value)"
+onchange="updateTask('${doc.id}','reviewDays.day2',this.value);
+scheduleTodayNotifications();"
 rows="1"
 class="review-cell">${reviewDays.day2 || ""}</textarea>
 </td>
 <td>
 <textarea
 oninput="autoResize(this)"
-onchange="updateTask('${doc.id}','reviewDays.day3',this.value)"
+onchange="updateTask('${doc.id}','reviewDays.day3',this.value);
+scheduleTodayNotifications();"
 rows="1"
 class="review-cell">${reviewDays.day3 || ""}</textarea>
 </td>
 <td>
 <textarea
 oninput="autoResize(this)"
-onchange="updateTask('${doc.id}','reviewDays.day4',this.value)"
+onchange="updateTask('${doc.id}','reviewDays.day4',this.value);
+scheduleTodayNotifications();"
 rows="1"
 class="review-cell">${reviewDays.day4 || ""}</textarea>
 </td>
 <td>
 <textarea
 oninput="autoResize(this)"
-onchange="updateTask('${doc.id}','reviewDays.day5',this.value)"
+onchange="updateTask('${doc.id}','reviewDays.day5',this.value);
+scheduleTodayNotifications();"
 rows="1"
 class="review-cell">${reviewDays.day5 || ""}</textarea>
 </td>
 <td>
 <textarea
 oninput="autoResize(this)"
-onchange="updateTask('${doc.id}','reviewDays.day6',this.value)"
+onchange="updateTask('${doc.id}','reviewDays.day6',this.value);
+scheduleTodayNotifications();"
 rows="1"
 class="review-cell">${reviewDays.day6 || ""}</textarea>
 </td>
 <td>
 <textarea
 oninput="autoResize(this)"
-onchange="updateTask('${doc.id}','reviewDays.day7',this.value)"
+onchange="updateTask('${doc.id}','reviewDays.day7',this.value);
+scheduleTodayNotifications();"
 rows="1"
 class="review-cell">${reviewDays.day7 || ""}</textarea>
 </td>
@@ -1444,12 +1451,30 @@ function parseReviewTasks(text){
 // =======================
 function showTaskNotification(title){
 
-    if(Notification.permission!=="granted") return;
+    if(Notification.permission !== "granted") return;
 
-    new Notification(title,{
-        body:"Đã đến giờ."
+    // 1. Push notification (popup hệ thống)
+    const notif = new Notification("⏰ Nhắc việc", {
+        body: title,
+        icon: "https://cdn-icons-png.flaticon.com/512/1827/1827392.png",
+        badge: "https://cdn-icons-png.flaticon.com/512/1827/1827392.png",
+        vibrate: [200, 100, 200], // rung (Android hỗ trợ)
+        requireInteraction: true
     });
 
+    // 2. RUNG ĐIỆN THOẠI (nếu hỗ trợ)
+    if (navigator.vibrate) {
+        navigator.vibrate([300, 100, 300]);
+    }
+
+    // 3. CLICK notification -> focus tab
+    notif.onclick = function () {
+        window.focus();
+        notif.close();
+    };
+
+    // 4. POPUP UI trong web (giả mobile popup đẹp)
+    showInAppPopup(title);
 }
 // =======================
 // scheduleNotification
@@ -1522,4 +1547,42 @@ function scheduleTodayNotifications(){
 
     });
 
+}
+// =======================
+ //THÊM POPUP GIAO DIỆN TRONG WEB
+// =======================
+
+function showInAppPopup(text){
+
+    let popup = document.getElementById("appPopup");
+
+    if(!popup){
+
+        popup = document.createElement("div");
+        popup.id = "appPopup";
+
+        popup.style.position = "fixed";
+        popup.style.top = "20px";
+        popup.style.right = "20px";
+        popup.style.background = "#111";
+        popup.style.color = "#fff";
+        popup.style.padding = "14px 18px";
+        popup.style.borderRadius = "12px";
+        popup.style.boxShadow = "0 10px 30px rgba(0,0,0,0.3)";
+        popup.style.zIndex = "999999";
+        popup.style.maxWidth = "260px";
+        popup.style.fontSize = "14px";
+        popup.style.animation = "fadeIn 0.3s ease";
+
+        document.body.appendChild(popup);
+    }
+
+    popup.innerHTML = "⏰ " + text;
+
+    popup.style.display = "block";
+
+    setTimeout(()=>{
+        popup.style.opacity = "0";
+        setTimeout(()=> popup.remove(), 300);
+    }, 4000);
 }

@@ -1282,17 +1282,23 @@ if(rr.getTime() === cc.getTime()){
 
     return result;
 }
+function hasReviewData(task){
+
+    if(!task.reviewDays) return false;
+
+    return Object.values(task.reviewDays)
+        .some(v => String(v || "").trim() !== "");
+
+}
 function buildReviewDays(task){
 
-    // Nếu đã có dữ liệu review thì dùng luôn
-  if(
-    task.reviewDays &&
-    Object.values(task.reviewDays).some(v => v !== "")
-){
-    return task.reviewDays;
-}
+    // Nếu user đã nhập dữ liệu reviewDays
+    // thì giữ nguyên, không ghi đè
+    if(hasReviewData(task)){
+        return task.reviewDays;
+    }
 
-    const result ={
+    const result = {
         day1:"",
         day2:"",
         day3:"",
@@ -1302,56 +1308,54 @@ function buildReviewDays(task){
         day7:""
     };
 
-    // phần code cũ giữ nguyên...
- if(!task.start || isNaN(new Date(task.start).getTime())) return result;
+    if(
+        !task.start ||
+        isNaN(new Date(task.start).getTime())
+    ){
+        return result;
+    }
 
-    const start=new Date(task.start);
+    const start = new Date(task.start);
 
-    // Monday = 1 ... Sunday = 7
-    let day=start.getDay();
-    day=(day===0)?7:day;
-console.log(task.taskType);
+    let day = start.getDay();
+
+    // Sunday = 7
+    day = (day === 0) ? 7 : day;
+
     switch(task.taskType){
 
         case "Daily":
 
             for(let i=1;i<=7;i++){
-                result["day"+i]=task.taskName;
+                result["day"+i] = task.taskName || "";
             }
 
             break;
 
         case "Weekly":
 
-            result["day"+day]=task.taskName;
+            result["day"+day] =
+                task.taskName || "";
 
             break;
 
         case "Monthly":
 
-            result["day"+day]=task.taskName;
+            result["day"+day] =
+                task.taskName || "";
 
             break;
 
         case "Yearly":
 
-            result["day"+day]=task.taskName;
+            result["day"+day] =
+                task.taskName || "";
 
             break;
 
-      case "Ôn tập":
-{
-    const res = buildReviewSchedule(task);
-    return res || {
-        day1:"",
-        day2:"",
-        day3:"",
-        day4:"",
-        day5:"",
-        day6:"",
-        day7:""
-    };
-}
+        case "Ôn tập":
+
+            return buildReviewSchedule(task);
 
     }
 

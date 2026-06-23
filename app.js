@@ -802,7 +802,27 @@ async function toggleCreateCalendar(id, checkbox){
 
                 const token =
                 localStorage.getItem("googleToken");
+if(task.calendarId && token){
 
+   try{
+
+      await fetch(
+        `https://www.googleapis.com/calendar/v3/calendars/primary/events/${task.calendarId}`,
+        {
+          method:"DELETE",
+          headers:{
+             Authorization:`Bearer ${token}`
+          }
+        }
+      );
+
+   }catch(err){
+
+      console.error(err);
+
+   }
+
+}
                if(
    task.reviewCalendarIds &&
    task.reviewCalendarIds.length

@@ -68,7 +68,7 @@ async function login(){
   const password = document.getElementById("loginPassword").value;
 
  auth.signInWithEmailAndPassword(email, password)
-.then(userCredential => {
+.then(async userCredential => {
 
     const userEmail = userCredential.user.email;
 
@@ -78,11 +78,10 @@ async function login(){
     document.getElementById("appPage").style.display = "block";
     document.getElementById("welcomeUser").innerText = userEmail;
 
-   await requestNotificationPermission();
+    await requestNotificationPermission();
+    loadTasks();
 
-loadTasks();
-
-})          // <-- thiếu đoạn này
+})       // <-- thiếu đoạn này
 
 .catch(err => {
 
@@ -891,8 +890,7 @@ async function createCalendarFromRow(id){
     alert("Tạo Calendar thất bại");
 
 }
-if (!id || !field) return;
-if (value === undefined) return;
+
 }
 
 // =======================

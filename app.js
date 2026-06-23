@@ -1314,3 +1314,10 @@ async function deleteBackupTask(id) {
     alert("Xóa thất bại");
   }
 }
+// =======================
+// autoResize
+// =======================
+function autoResize(el){
+    el.style.height = "auto";
+    el.style.height = el.scrollHeight + "px";
+}

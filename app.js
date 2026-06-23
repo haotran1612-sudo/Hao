@@ -511,8 +511,9 @@ class="review-cell">${reviewDays.day7 || ""}</textarea>
     onchange="updateTask('${doc.id}','autoDelete',this.checked)">
 </td>
 <td style="text-align:center;">
-  <button onclick="refreshAllNotifications()">
-    🔔 Bật Notification
+  <button
+    onclick="createReviewCalendarForRow(this)">
+    📅
   </button>
 </td>
 `;
@@ -1715,4 +1716,35 @@ async function createCalendarFromReviewCells(){
     }
 
     alert("Đã tạo Calendar từ Review Cells");
+}
+
+
+async function createReviewCalendarForRow(btn){
+
+    const row = btn.closest("tr");
+
+    const week = getCurrentWeekDates();
+
+    const cells =
+      row.querySelectorAll(".review-cell");
+
+    for(let i=0;i<cells.length;i++){
+
+        const tasks =
+          parseReviewTasks(cells[i].value);
+
+        const date = week[i];
+
+        for(const task of tasks){
+
+            await createReviewCalendarTask(
+                task,
+                date
+            );
+
+        }
+
+    }
+
+    alert("Đã tạo Calendar");
 }

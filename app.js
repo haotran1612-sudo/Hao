@@ -215,7 +215,7 @@ async function saveTask() {
       meetLink: "",
 
       calendarStatus: "Create",
-
+reviewCalendarIds: [],
       createdAt: new Date()
 
     };
@@ -602,7 +602,10 @@ calendarId: "",
 meetLink: "",
 calendarStatus: "Create",
 autoDelete: false,
-      createdAt: new Date()
+
+reviewCalendarIds: [],
+
+createdAt: new Date()
 
     });
 
@@ -800,25 +803,46 @@ async function toggleCreateCalendar(id, checkbox){
                 const token =
                 localStorage.getItem("googleToken");
 
-                await fetch(
-                `https://www.googleapis.com/calendar/v3/calendars/primary/events/${task.calendarId}`,
-                {
-                    method:"DELETE",
-                    headers:{
-                        Authorization:`Bearer ${token}`
-                    }
-                });
+               if(
+   task.reviewCalendarIds &&
+   task.reviewCalendarIds.length
+){
 
-                await db.collection("tasks")
-                .doc(id)
-                .update({
+   for(const eventId of task.reviewCalendarIds){
 
-                    calendarId:"",
-                    meetLink:"",
-                    calendarStatus:"Create",
-                    apply:false
+      try{
 
-                });
+         await fetch(
+           `https://www.googleapis.com/calendar/v3/calendars/primary/events/${eventId}`,
+           {
+             method:"DELETE",
+             headers:{
+               Authorization:`Bearer ${token}`
+             }
+           }
+         );
+
+      }catch(err){
+
+         console.error(err);
+
+      }
+
+   }
+
+}
+
+             await db.collection("tasks")
+.doc(id)
+.update({
+
+    calendarId:"",
+    reviewCalendarIds:[],
+    meetLink:"",
+    calendarStatus:"Create",
+    apply:false
+
+});
 
                 loadTasks();
 
@@ -858,8 +882,38 @@ async function createCalendarFromRow(id){
 
     const event =
       await createCalendarEvent(task);
+const reviewIds = [];
 
-    await db.collection("tasks")
+const reviewDays = task.reviewDays || {};
+
+const week = getCurrentWeekDates();
+
+for(let i=1;i<=7;i++){
+
+    const text =
+      reviewDays["day"+i] || "";
+
+    const reviewTasks =
+      parseReviewTasks(text);
+
+    for(const t of reviewTasks){
+
+        const eventId =
+          await createReviewCalendarTask(
+              t,
+              week[i-1]
+          );
+
+        if(eventId){
+
+            reviewIds.push(eventId);
+
+        }
+
+    }
+
+}
+  await db.collection("tasks")
 .doc(id)
 .update({
 
@@ -867,6 +921,9 @@ async function createCalendarFromRow(id){
 
     calendarId:
       event.id || "",
+
+    reviewCalendarIds:
+      reviewIds,
 
     meetLink:
       event.hangoutLink || "",
@@ -947,7 +1004,38 @@ if(
   }
 
 }
+if(
+  task.reviewCalendarIds &&
+  task.reviewCalendarIds.length &&
+  token
+){
 
+  for(const eventId of task.reviewCalendarIds){
+
+    try{
+
+      await fetch(
+        `https://www.googleapis.com/calendar/v3/calendars/primary/events/${eventId}`,
+        {
+          method:"DELETE",
+          headers:{
+            Authorization:`Bearer ${token}`
+          }
+        }
+      );
+
+    }catch(err){
+
+      console.error(
+        "Delete review calendar error",
+        err
+      );
+
+    }
+
+  }
+
+}
     await db.collection("backupTasks").add({
       ...task,
       email: localStorage.getItem("userEmail"),
@@ -1668,17 +1756,21 @@ async function createReviewCalendarTask(task,date){
 
     };
 
-    await fetch(
-      "https://www.googleapis.com/calendar/v3/calendars/primary/events",
-      {
-        method:"POST",
-        headers:{
+    const response = await fetch(
+  "https://www.googleapis.com/calendar/v3/calendars/primary/events",
+  {
+      method:"POST",
+      headers:{
           Authorization:`Bearer ${token}`,
           "Content-Type":"application/json"
-        },
-        body:JSON.stringify(body)
-      }
-    );
+      },
+      body:JSON.stringify(body)
+  }
+);
+
+const event = await response.json();
+
+return event.id;
 }
 
 

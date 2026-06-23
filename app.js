@@ -769,9 +769,29 @@ await db.collection("tasks")
 .update(data);
 
     // Nếu thay đổi Type hoặc Start thì cập nhật lại Tracker ngay
-    if (field === "taskType" || field === "start") {
-      await loadTasks();
-    }
+   if(field === "taskType"){
+
+    await db.collection("tasks")
+    .doc(id)
+    .update({
+        reviewDays:{
+            day1:"",
+            day2:"",
+            day3:"",
+            day4:"",
+            day5:"",
+            day6:"",
+            day7:""
+        }
+    });
+
+}
+
+if(field === "taskType" || field === "start"){
+
+    await loadTasks();
+
+}
 
   } catch(err) {
 
@@ -1325,18 +1345,21 @@ function buildReviewDays(task){
 
         case "Daily":
 
-            for(let i=1;i<=7;i++){
+    for(let i=1;i<=7;i++){
 
-                if(!result["day"+i].trim()){
+        if(
+            !result["day"+i] ||
+            result["day"+i].trim() === ""
+        ){
 
-                    result["day"+i] =
-                        task.taskName || "";
+            result["day"+i] =
+                task.taskName || "";
 
-                }
+        }
 
-            }
+    }
 
-            break;
+    break;
 
         case "Weekly":
         case "Monthly":

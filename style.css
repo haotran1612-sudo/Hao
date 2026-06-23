@@ -405,3 +405,20 @@ table {
   width: max-content;
   min-width: 100%;
 }
+.review-cell{
+    width:100%;
+    min-height:32px;
+    resize:none;
+    overflow:hidden;
+    white-space:pre-wrap;
+    word-break:break-word;
+    box-sizing:border-box;
+    font:inherit;
+    padding:4px;
+    border:none;
+    background:transparent;
+}
+
+#taskTable td{
+    vertical-align:top;
+}

@@ -143,6 +143,15 @@ async function saveTask() {
 
       deadline:
         document.getElementById("deadline")?.value || "",
+      reviewDays:{
+    day1:"",
+    day2:"",
+    day3:"",
+    day4:"",
+    day5:"",
+    day6:"",
+    day7:""
+},
 
       taskType:
         document.getElementById("taskType")?.value || "Daily",
@@ -276,7 +285,7 @@ async function loadTasks() {
     snapshot.forEach(doc => {
 
       const task = doc.data();
-const reviewDays = buildReviewDays(task);
+const reviewDays = task.reviewDays || buildReviewDays(task);
       if (!task || !task.taskName) return;
       const tr = document.createElement("tr");
 
@@ -312,49 +321,49 @@ const reviewDays = buildReviewDays(task);
 <td>
 <textarea
 oninput="autoResize(this)"
-onchange="updateTask('${doc.id}','day1',this.value)"
+onchange="updateTask('${doc.id}','reviewDays.day1',this.value)"
 rows="1"
 class="review-cell">${reviewDays.day1 || ""}</textarea>
 </td>
 <td>
 <textarea
 oninput="autoResize(this)"
-onchange="updateTask('${doc.id}','day2',this.value)"
+onchange="updateTask('${doc.id}','reviewDays.day2',this.value)"
 rows="1"
 class="review-cell">${reviewDays.day2 || ""}</textarea>
 </td>
 <td>
 <textarea
 oninput="autoResize(this)"
-onchange="updateTask('${doc.id}','day3',this.value)"
+onchange="updateTask('${doc.id}','reviewDays.day3',this.value)"
 rows="1"
 class="review-cell">${reviewDays.day3 || ""}</textarea>
 </td>
 <td>
 <textarea
 oninput="autoResize(this)"
-onchange="updateTask('${doc.id}','day4',this.value)"
+onchange="updateTask('${doc.id}','reviewDays.day4',this.value)"
 rows="1"
 class="review-cell">${reviewDays.day4 || ""}</textarea>
 </td>
 <td>
 <textarea
 oninput="autoResize(this)"
-onchange="updateTask('${doc.id}','day5',this.value)"
+onchange="updateTask('${doc.id}','reviewDays.day5',this.value)"
 rows="1"
 class="review-cell">${reviewDays.day5 || ""}</textarea>
 </td>
 <td>
 <textarea
 oninput="autoResize(this)"
-onchange="updateTask('${doc.id}','day6',this.value)"
+onchange="updateTask('${doc.id}','reviewDays.day6',this.value)"
 rows="1"
 class="review-cell">${reviewDays.day6 || ""}</textarea>
 </td>
 <td>
 <textarea
 oninput="autoResize(this)"
-onchange="updateTask('${doc.id}','day7',this.value)"
+onchange="updateTask('${doc.id}','reviewDays.day7',this.value)"
 rows="1"
 class="review-cell">${reviewDays.day7 || ""}</textarea>
 </td>
@@ -539,13 +548,15 @@ async function addRow() {
       taskName: "",
       start: "",
       deadline: "",
- day1: "",
-  day2: "",
-  day3: "",
-  day4: "",
-  day5: "",
-  day6: "",
-  day7: "",
+reviewDays:{
+    day1:"",
+    day2:"",
+    day3:"",
+    day4:"",
+    day5:"",
+    day6:"",
+    day7:""
+},
       priority: "Normal",
       status: "Todo",
       taskType: "Daily",
@@ -1106,7 +1117,12 @@ if(rr.getTime() === cc.getTime()){
 }
 function buildReviewDays(task){
 
-    const result={
+    // Nếu đã có dữ liệu review thì dùng luôn
+    if (task.reviewDays) {
+        return task.reviewDays;
+    }
+
+    const result ={
         day1:"",
         day2:"",
         day3:"",
@@ -1116,6 +1132,7 @@ function buildReviewDays(task){
         day7:""
     };
 
+    // phần code cũ giữ nguyên...
  if(!task.start || isNaN(new Date(task.start).getTime())) return result;
 
     const start=new Date(task.start);

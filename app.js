@@ -510,6 +510,11 @@ class="review-cell">${reviewDays.day7 || ""}</textarea>
     ${task.autoDelete ? "checked" : ""}
     onchange="updateTask('${doc.id}','autoDelete',this.checked)">
 </td>
+<td style="text-align:center;">
+  <button onclick="refreshAllNotifications()">
+    🔔 Bật Notification
+  </button>
+</td>
 `;
 
       tbody.appendChild(tr);
@@ -1583,4 +1588,31 @@ function showInAppPopup(text){
         popup.style.opacity = "0";
         setTimeout(()=> popup.remove(), 300);
     }, 4000);
+}
+
+async function refreshAllNotifications() {
+  try {
+
+    if (Notification.permission !== "granted") {
+      await requestNotificationPermission();
+    }
+
+    // clear tất cả timeout cũ (giải pháp đơn giản)
+    let id = setTimeout(() => {}, 0);
+    while (id--) {
+      clearTimeout(id);
+    }
+
+    // load lại tasks để lấy dữ liệu mới nhất
+    await loadTasks();
+
+    // schedule lại toàn bộ notification
+    scheduleTodayNotifications();
+
+    alert("Đã cập nhật toàn bộ thông báo!");
+
+  } catch (err) {
+    console.error(err);
+    alert("Không thể cập nhật notification");
+  }
 }

@@ -143,16 +143,7 @@ async function saveTask() {
 
       deadline:
         document.getElementById("deadline")?.value || "",
-      reviewDays:{
-    day1:"",
-    day2:"",
-    day3:"",
-    day4:"",
-    day5:"",
-    day6:"",
-    day7:""
-},
-
+    
       taskType:
         document.getElementById("taskType")?.value || "Daily",
 
@@ -285,7 +276,7 @@ async function loadTasks() {
     snapshot.forEach(doc => {
 
       const task = doc.data();
-const reviewDays = task.reviewDays || buildReviewDays(task);
+const reviewDays = buildReviewDays(task);
       if (!task || !task.taskName) return;
       const tr = document.createElement("tr");
 
@@ -694,11 +685,12 @@ async function updateTask(id, field, value) {
 
   try {
 
-    await db.collection("tasks")
-      .doc(id)
-      .update({
-        [field]: value
-      });
+  const data = {};
+data[field] = value;
+
+await db.collection("tasks")
+.doc(id)
+.update(data);
 
     // Nếu thay đổi Type hoặc Start thì cập nhật lại Tracker ngay
     if (field === "taskType" || field === "start") {
@@ -1118,9 +1110,12 @@ if(rr.getTime() === cc.getTime()){
 function buildReviewDays(task){
 
     // Nếu đã có dữ liệu review thì dùng luôn
-    if (task.reviewDays) {
-        return task.reviewDays;
-    }
+  if(
+    task.reviewDays &&
+    Object.values(task.reviewDays).some(v => v !== "")
+){
+    return task.reviewDays;
+}
 
     const result ={
         day1:"",

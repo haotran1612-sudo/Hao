@@ -1490,7 +1490,20 @@ function buildReviewDays(task){
     let day = start.getDay();
     day = (day === 0) ? 7 : day;
 
-    const line = `${formatHM(start)} ${taskName}`;
+   const startTime = new Date(task.start);
+const durationHours = Number(task.processingTime || 0);
+
+// start time
+const sh = String(startTime.getHours()).padStart(2, "0");
+const sm = String(startTime.getMinutes()).padStart(2, "0");
+
+// end time = start + processingTime
+const endTime = new Date(startTime.getTime() + durationHours * 60 * 60 * 1000);
+
+const eh = String(endTime.getHours()).padStart(2, "0");
+const em = String(endTime.getMinutes()).padStart(2, "0");
+
+const line = `${sh}:${sm}-${eh}:${em} ${taskName}`;
 
     switch(task.taskType){
 
@@ -1760,10 +1773,13 @@ function parseReviewTasks(text){
         if(m){
 
             tasks.push({
-                hour: Number(m[1]),
-                minute: Number(m[2]),
-                title: m[3]
-            });
+  hour: Number(m[1]),
+  minute: Number(m[2]),
+  endHour: Number(m[3]),
+  endMinute: Number(m[4]),
+  title: m[5],
+  raw: t   // 👈 THÊM DÒNG NÀY
+});
         }
     }
 
@@ -1939,60 +1955,80 @@ async function refreshAllNotifications() {
 }
 //Bước 1: Tạo Calendar cho từng task trong cell
 
-async function createReviewCalendarTask(task,date){
+async function createReviewCalendarTask(task, date) {
 
-    const token =
-      localStorage.getItem("googleToken");
+  const token = localStorage.getItem("googleToken");
+  if (!token) return;
 
-    if(!token) return;
+  // START: lấy từ hh:mm
+  const startDate = new Date(
+    date.getFullYear(),
+    date.getMonth(),
+    date.getDate(),
+    task.hour,
+    task.minute
+  );
 
-    const startDate = new Date(
-        date.getFullYear(),
-        date.getMonth(),
-        date.getDate(),
-        task.hour,
-        task.minute
+  // END: tính từ duration trong text (hh:mm-hh:mm)
+  let endDate;
+
+  if (task.endHour !== undefined && task.endMinute !== undefined) {
+
+    // nếu vẫn có dữ liệu cũ thì fallback
+    endDate = new Date(
+      date.getFullYear(),
+      date.getMonth(),
+      date.getDate(),
+      task.endHour,
+      task.endMinute
     );
 
-    const endDate = new Date(
-        date.getFullYear(),
-        date.getMonth(),
-        date.getDate(),
-        task.endHour || task.hour,
-        task.endMinute || (task.minute + 30)
-    );
+  } else {
 
-    const body = {
+    // chuẩn mới: end time đã nằm trong format text → tính duration
+    const startMinutes = task.hour * 60 + task.minute;
 
-        summary: task.title,
+    // nếu parse được end từ title format (fallback an toàn)
+    const match = `${task.raw || ""}`.match(/-(\d{1,2}):(\d{2})/);
 
-        start:{
-            dateTime:startDate.toISOString(),
-            timeZone:"Asia/Ho_Chi_Minh"
-        },
+    if (match) {
+      const endMinutes = Number(match[1]) * 60 + Number(match[2]);
+      const diff = Math.max(endMinutes - startMinutes, 0);
 
-        end:{
-            dateTime:endDate.toISOString(),
-            timeZone:"Asia/Ho_Chi_Minh"
-        }
+      endDate = new Date(startDate.getTime() + diff * 60 * 1000);
 
-    };
-
-    const response = await fetch(
-  "https://www.googleapis.com/calendar/v3/calendars/primary/events",
-  {
-      method:"POST",
-      headers:{
-          Authorization:`Bearer ${token}`,
-          "Content-Type":"application/json"
-      },
-      body:JSON.stringify(body)
+    } else {
+      // fallback mặc định 30 phút
+      endDate = new Date(startDate.getTime() + 30 * 60 * 1000);
+    }
   }
-);
 
-const event = await response.json();
+  const body = {
+    summary: task.title,
+    start: {
+      dateTime: startDate.toISOString(),
+      timeZone: "Asia/Ho_Chi_Minh"
+    },
+    end: {
+      dateTime: endDate.toISOString(),
+      timeZone: "Asia/Ho_Chi_Minh"
+    }
+  };
 
-return event.id;
+  const response = await fetch(
+    "https://www.googleapis.com/calendar/v3/calendars/primary/events",
+    {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify(body)
+    }
+  );
+
+  const event = await response.json();
+  return event.id;
 }
 
 

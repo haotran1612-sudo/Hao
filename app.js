@@ -1359,13 +1359,10 @@ function buildReviewSchedule(task) {
   const start = new Date(task.start);
   if (isNaN(start.getTime())) return result;
 
-  const deadline = task.deadline
-    ? new Date(task.deadline)
-    : new Date(task.start);
-
-  if (isNaN(deadline.getTime())) return result;
-
   const week = getCurrentWeekDates();
+
+  const processingHours = Number(task.processingTime || 0);
+  const durationMs = processingHours * 60 * 60 * 1000;
 
   function formatHM(date) {
     const hh = String(date.getHours()).padStart(2, "0");
@@ -1416,11 +1413,10 @@ function buildReviewSchedule(task) {
     const colDate = week[i];
 
     for (const r of reviewDates) {
-      if (
-        isSameDate(r, colDate) &&
-        isDateInRange(r, start, deadline)
-      ) {
-        const line = `${formatHM(r)} ${task.taskName}`;
+      if (isSameDate(r, colDate)) {
+        const end = new Date(r.getTime() + durationMs);
+
+        const line = `${formatHM(r)}-${formatHM(end)} ${task.taskName}`;
         addToDay(i + 1, line);
       }
     }
@@ -1632,23 +1628,33 @@ async function createCalendarEvent(task, docId) {
   const existed = await findCalendarEventByKey(eventKey);
 
   if (existed) {
-    return existed; // đã có rồi thì trả event cũ về, không tạo mới
+    return existed;
   }
+
+  // ===== TÍNH START / END THEO PROCESSING TIME =====
+  const startDate = new Date(task.start);
+  if (isNaN(startDate.getTime())) {
+    throw new Error("Start date không hợp lệ");
+  }
+
+  const processingHours = Number(task.processingTime || 0);
+  const endDate = new Date(
+    startDate.getTime() + processingHours * 60 * 60 * 1000
+  );
 
   const body = {
     summary: task.calendarTitle || task.taskName,
     location: task.location || "",
     description: task.description || "",
     start: {
-      dateTime: new Date(task.start).toISOString(),
+      dateTime: startDate.toISOString(),
       timeZone: "Asia/Ho_Chi_Minh"
     },
     end: {
-      dateTime: new Date(task.deadline).toISOString(),
+      dateTime: endDate.toISOString(),
       timeZone: "Asia/Ho_Chi_Minh"
     },
 
-    // gắn key chống trùng
     extendedProperties: {
       private: {
         appTaskKey: eventKey,
@@ -1667,7 +1673,6 @@ async function createCalendarEvent(task, docId) {
 
   if (task.repeat && task.repeat !== "None") {
     let freq = task.repeat.toUpperCase();
-
     let rule = `RRULE:FREQ=${freq};INTERVAL=${task.repeatInterval || 1}`;
 
     if (task.repeatUntil) {

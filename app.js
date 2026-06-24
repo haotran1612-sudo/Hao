@@ -1313,39 +1313,31 @@ function highlightTodayColumn() {
 
     for (let i = 1; i <= 7; i++) {
 
-      const th =
-        document.getElementById("day" + i);
+      const th = document.getElementById("day" + i);
 
       if (!th) continue;
 
       if (th.dataset.today === "true") {
-
         todayIndex = i;
         break;
-
       }
     }
 
     if (todayIndex === -1) return;
 
-    const rows =
-      document.querySelectorAll("#taskTableBody tr");
+    const rows = document.querySelectorAll("#taskTableBody tr");
 
     rows.forEach(row => {
 
-      const cells =
-        row.querySelectorAll("td");
+      const cells = row.querySelectorAll("td");
 
+      // ✅ FIX CHÍNH Ở ĐÂY
       const OFFSET = 5;
 
-      const targetCol =
-        OFFSET + (todayIndex - 1);
+      const targetCol = OFFSET + (todayIndex - 1);
 
       if (cells[targetCol]) {
-
-        cells[targetCol]
-          .classList.add("today-column");
-
+        cells[targetCol].classList.add("today-column");
       }
 
     });

@@ -622,10 +622,9 @@ class="review-cell">${reviewDays.day7 || ""}</textarea>
     onchange="updateTask('${doc.id}','autoDelete',this.checked)">
 </td>
 <td style="text-align:center;">
-  <button
-    onclick="createReviewCalendarForRow(this)">
-    📅
-  </button>
+  <button data-id="${doc.id}" onclick="syncFullCalendarFromRow(this)">
+  📅
+</button>
 
   <button
     onclick="rebuildReviewDays('${doc.id}')">

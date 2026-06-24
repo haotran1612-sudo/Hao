@@ -433,7 +433,7 @@ const reviewDays = buildReviewDays(task);
     type="number"
     min="0"
     step="0.5"
- value="${task.processingTime ?? ''}h"
+ value="${task.processingTime ?? ''}"
     onchange="updateTask('${doc.id}','processingTime',Number(this.value))">
 </td>
 <td>
@@ -1337,86 +1337,81 @@ function highlightTodayColumn() {
 // =======================
 // Hàm ôn tập
 // =======================
-function buildReviewSchedule(task){
+function buildReviewSchedule(task) {
+  const result = {
+    day1: "",
+    day2: "",
+    day3: "",
+    day4: "",
+    day5: "",
+    day6: "",
+    day7: ""
+  };
 
-    const result = {
-        day1:"",
-        day2:"",
-        day3:"",
-        day4:"",
-        day5:"",
-        day6:"",
-        day7:""
-    };
+  if (!task.start || !task.taskName) return result;
 
-    if(!task.start || !task.taskName) return result;
+  const start = new Date(task.start);
+  if (isNaN(start.getTime())) return result;
 
-    const start = new Date(task.start);
-    if (isNaN(start.getTime())) return result;
+  const deadline = task.deadline ? new Date(task.deadline) : new Date(task.start);
+  if (isNaN(deadline.getTime())) return result;
 
-    const now = new Date();
-    const monday = new Date(now);
+  const week = getCurrentWeekDates();
 
-    let dow = now.getDay();
-    dow = (dow === 0) ? 6 : dow - 1;
-    monday.setDate(now.getDate() - dow);
+  function formatHM(date) {
+    const hh = String(date.getHours()).padStart(2, "0");
+    const mm = String(date.getMinutes()).padStart(2, "0");
+    return `${hh}:${mm}`;
+  }
 
-    function formatHM(date){
-        const hh = String(date.getHours()).padStart(2, "0");
-        const mm = String(date.getMinutes()).padStart(2, "0");
-        return `${hh}:${mm}`;
+  function addToDay(dayIndex, text) {
+    const key = "day" + dayIndex;
+    if (result[key] && result[key].trim() !== "") {
+      result[key] += "\n" + text;
+    } else {
+      result[key] = text;
     }
+  }
 
-    function addToDay(dayIndex, text){
-        const key = "day" + dayIndex;
-        if(result[key] && result[key].trim() !== ""){
-            result[key] += "\n" + text;
-        }else{
-            result[key] = text;
-        }
+  const reviewDates = [];
+
+  // Mốc 1: đúng giờ start
+  reviewDates.push(new Date(start));
+
+  // Mốc 2: +10 phút
+  reviewDates.push(new Date(start.getTime() + 10 * 60 * 1000));
+
+  // Mốc 3: +24h
+  reviewDates.push(new Date(start.getTime() + 24 * 60 * 60 * 1000));
+
+  // Mốc 4: +7 ngày
+  const d7 = new Date(start);
+  d7.setDate(d7.getDate() + 7);
+  reviewDates.push(d7);
+
+  // Mốc 5: +30 ngày
+  const d30 = new Date(start);
+  d30.setMonth(d30.getMonth() + 1);
+  reviewDates.push(d30);
+
+  for (let i = 0; i < 7; i++) {
+    const colDate = week[i];
+
+    for (const r of reviewDates) {
+      // CHỈ add nếu:
+      // 1. review date nằm đúng ngày cột
+      // 2. review date nằm trong khoảng start -> deadline
+      if (
+        isSameDate(r, colDate) &&
+        isDateInRange(r, start, deadline)
+      ) {
+        const line = `${formatHM(r)} ${task.taskName}`;
+        addToDay(i + 1, line);
+      }
     }
+  }
 
-    // Các mốc ôn tập
-    const reviewDates = [];
-
-    // Mốc 1: đúng giờ start
-    reviewDates.push(new Date(start));
-
-    // Mốc 2: +10 phút
-    reviewDates.push(new Date(start.getTime() + 10 * 60 * 1000));
-
-    // Mốc 3: +24h
-    reviewDates.push(new Date(start.getTime() + 24 * 60 * 60 * 1000));
-
-    // Mốc 4: +7 ngày
-    const d7 = new Date(start);
-    d7.setDate(d7.getDate() + 7);
-    reviewDates.push(d7);
-
-    // Mốc 5: +30 ngày
-    const d30 = new Date(start);
-    d30.setMonth(d30.getMonth() + 1);
-    reviewDates.push(d30);
-
-    // Map vào tuần hiện tại
-    for(let i = 0; i < 7; i++){
-
-        const colDate = new Date(monday);
-        colDate.setDate(monday.getDate() + i);
-
-        for(const r of reviewDates){
-
-            const rr = normalizeDate(r);
-            const cc = normalizeDate(colDate);
-
-            if(rr.getTime() === cc.getTime()){
-                const line = `${formatHM(r)} ${task.taskName}`;
-                addToDay(i + 1, line);
-            }
-        }
-    }
-
-    return result;
+  return result;
 }
 function hasReviewData(task){
 
@@ -1426,100 +1421,135 @@ function hasReviewData(task){
         .some(v => String(v || "").trim() !== "");
 
 }
-function buildReviewDays(task){
+// =======================
+// DATE HELPERS
+// =======================
+function normalizeDate(d) {
+  return new Date(d.getFullYear(), d.getMonth(), d.getDate());
+}
 
-    const current = task.reviewDays || {};
+function isSameDate(a, b) {
+  return normalizeDate(a).getTime() === normalizeDate(b).getTime();
+}
 
-    const result = {
-        day1: current.day1 || "",
-        day2: current.day2 || "",
-        day3: current.day3 || "",
-        day4: current.day4 || "",
-        day5: current.day5 || "",
-        day6: current.day6 || "",
-        day7: current.day7 || ""
-    };
+function isDateInRange(date, start, end) {
+  const d = normalizeDate(date).getTime();
+  const s = normalizeDate(start).getTime();
+  const e = normalizeDate(end).getTime();
+  return d >= s && d <= e;
+}
 
-    if(!task.start || isNaN(new Date(task.start).getTime())){
-        return result;
-    }
+function diffDays(a, b) {
+  const ms = normalizeDate(a).getTime() - normalizeDate(b).getTime();
+  return Math.floor(ms / 86400000);
+}
 
-    const start = new Date(task.start);
-    const taskName = (task.taskName || "").trim();
+function diffMonths(a, b) {
+  return (a.getFullYear() - b.getFullYear()) * 12 + (a.getMonth() - b.getMonth());
+}
 
-    if(!taskName) return result;
+function isOccurrenceForTaskType(taskType, startDate, currentDate) {
+  const s = normalizeDate(startDate);
+  const c = normalizeDate(currentDate);
 
-    function formatHM(date){
-        const hh = String(date.getHours()).padStart(2, "0");
-        const mm = String(date.getMinutes()).padStart(2, "0");
-        return `${hh}:${mm}`;
-    }
+  switch (taskType) {
+    case "Daily":
+      return c.getTime() >= s.getTime();
 
-    function addToDay(dayIndex, text){
-        const key = "day" + dayIndex;
+    case "Weekly":
+      return c.getDay() === s.getDay() && diffDays(c, s) % 7 === 0 && c.getTime() >= s.getTime();
 
-        // Nếu ô đang trống -> điền luôn
-        if(!result[key] || result[key].trim() === ""){
-            result[key] = text;
-            return;
-        }
+    case "Monthly":
+      return c.getDate() === s.getDate() && diffMonths(c, s) >= 0;
 
-        // Nếu đã có đúng text này rồi thì không thêm trùng
-        const lines = result[key]
-            .split("\n")
-            .map(x => x.trim())
-            .filter(Boolean);
+    case "Yearly":
+      return (
+        c.getDate() === s.getDate() &&
+        c.getMonth() === s.getMonth() &&
+        c.getFullYear() >= s.getFullYear()
+      );
 
-        if(!lines.includes(text)){
-            result[key] += "\n" + text;
-        }
-    }
+    default:
+      return isSameDate(c, s);
+  }
+}
+function buildReviewDays(task) {
+  const current = task.reviewDays || {};
 
-    // JS getDay(): Sun=0, Mon=1 ... Sat=6
-    // convert về Mon=1 ... Sun=7
-    let day = start.getDay();
-    day = (day === 0) ? 7 : day;
+  const result = {
+    day1: current.day1 || "",
+    day2: current.day2 || "",
+    day3: current.day3 || "",
+    day4: current.day4 || "",
+    day5: current.day5 || "",
+    day6: current.day6 || "",
+    day7: current.day7 || ""
+  };
 
-   const startTime = new Date(task.start);
-const durationHours = Number(task.processingTime || 0);
-
-// start time
-const sh = String(startTime.getHours()).padStart(2, "0");
-const sm = String(startTime.getMinutes()).padStart(2, "0");
-
-// end time = start + processingTime
-const endTime = new Date(startTime.getTime() + durationHours * 60 * 60 * 1000);
-
-const eh = String(endTime.getHours()).padStart(2, "0");
-const em = String(endTime.getMinutes()).padStart(2, "0");
-
-const line = `${sh}:${sm}-${eh}:${em} ${taskName}`;
-
-    switch(task.taskType){
-
-        case "Daily":
-            for(let i = 1; i <= 7; i++){
-                addToDay(i, line);
-            }
-            break;
-
-        case "Weekly":
-        case "Monthly":
-        case "Yearly":
-            addToDay(day, line);
-            break;
-
-        case "Ôn tập":
-            // build theo các mốc review riêng
-            return buildReviewSchedule(task);
-
-        default:
-            // nếu taskType lạ thì coi như Weekly theo ngày start
-            addToDay(day, line);
-            break;
-    }
-
+  if (!task.start || isNaN(new Date(task.start).getTime())) {
     return result;
+  }
+
+  const start = new Date(task.start);
+  const deadline = task.deadline ? new Date(task.deadline) : new Date(task.start);
+
+  if (isNaN(deadline.getTime())) return result;
+
+  const taskName = (task.taskName || "").trim();
+  if (!taskName) return result;
+
+  function addToDay(dayIndex, text) {
+    const key = "day" + dayIndex;
+
+    if (!result[key] || result[key].trim() === "") {
+      result[key] = text;
+      return;
+    }
+
+    const lines = result[key]
+      .split("\n")
+      .map(x => x.trim())
+      .filter(Boolean);
+
+    if (!lines.includes(text)) {
+      result[key] += "\n" + text;
+    }
+  }
+
+  // giờ bắt đầu / kết thúc
+  const startTime = new Date(task.start);
+  const durationHours = Number(task.processingTime || 0);
+
+  const sh = String(startTime.getHours()).padStart(2, "0");
+  const sm = String(startTime.getMinutes()).padStart(2, "0");
+
+  const endTime = new Date(startTime.getTime() + durationHours * 60 * 60 * 1000);
+  const eh = String(endTime.getHours()).padStart(2, "0");
+  const em = String(endTime.getMinutes()).padStart(2, "0");
+
+  const line = `${sh}:${sm}-${eh}:${em} ${taskName}`;
+
+  // loại ôn tập dùng logic riêng
+  if (task.taskType === "Ôn tập") {
+    return buildReviewSchedule(task);
+  }
+
+  // lấy 7 ngày hiện tại của bảng Mon -> Sun
+  const week = getCurrentWeekDates();
+
+  for (let i = 0; i < 7; i++) {
+    const colDate = week[i];
+
+    // ngày cột phải nằm trong khoảng start -> deadline
+    if (!isDateInRange(colDate, start, deadline)) continue;
+
+    // kiểm tra có phải ngày xuất hiện của taskType hay không
+    if (isOccurrenceForTaskType(task.taskType, start, colDate)) {
+      addToDay(i + 1, line);
+    }
+  }
+
+  return result;
 }
 
 

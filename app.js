@@ -433,7 +433,7 @@ const reviewDays = buildReviewDays(task);
     type="number"
     min="0"
     step="0.5"
-    value="${task.processingTime ?? ''}"
+ value="${task.processingTime ?? ''}h"
     onchange="updateTask('${doc.id}','processingTime',Number(this.value))">
 </td>
 <td>

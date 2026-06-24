@@ -52,10 +52,47 @@ function registerUser() {
     .then(() => {
       alert("Đăng ký thành công");
     })
-    .catch(err => {
-      alert(err.message);
-      console.error(err);
-    });
+   .catch(async err => {
+
+    console.error("Login error:", err);
+
+    const email = document.getElementById("loginEmail").value.trim();
+
+    try {
+      const methods = await auth.fetchSignInMethodsForEmail(email);
+
+      if (!methods || methods.length === 0) {
+        alert("Email này chưa được đăng ký.");
+        return;
+      }
+
+      if (methods.includes("google.com") && !methods.includes("password")) {
+        alert("Email này đang đăng nhập bằng Google. Vui lòng bấm nút 'Đăng nhập bằng Google'.");
+        return;
+      }
+
+      if (
+        err.code === "auth/wrong-password" ||
+        err.code === "auth/invalid-credential" ||
+        err.code === "auth/invalid-login-credentials"
+      ) {
+        alert("Sai mật khẩu hoặc thông tin đăng nhập không hợp lệ.");
+        return;
+      }
+
+      if (err.code === "auth/invalid-email") {
+        alert("Email không đúng định dạng.");
+        return;
+      }
+
+      alert(err.message || "Đăng nhập thất bại");
+
+    } catch (checkErr) {
+      console.error("Provider check error:", checkErr);
+      alert(err.message || "Đăng nhập thất bại");
+    }
+
+});
 }
 
 
@@ -116,6 +153,72 @@ async function googleLogin() {
   } catch (err) {
     console.error("googleLogin error:", err);
     alert(err.message || "Google login failed");
+  }
+}
+// =======================
+// CHECK LOGIN PROVIDERS
+// =======================
+async function checkProviders() {
+  const email = document.getElementById("loginEmail").value.trim();
+
+  if (!email) {
+    alert("Vui lòng nhập email trước");
+    return;
+  }
+
+  try {
+    const methods = await auth.fetchSignInMethodsForEmail(email);
+
+    if (!methods || methods.length === 0) {
+      alert("Email này chưa được đăng ký.");
+      return;
+    }
+
+    const providerText = methods.join(", ");
+
+    if (methods.includes("password") && methods.includes("google.com")) {
+      alert("Email này có thể đăng nhập bằng cả Password và Google.");
+    } else if (methods.includes("password")) {
+      alert("Email này đăng nhập bằng Password.");
+    } else if (methods.includes("google.com")) {
+      alert("Email này đăng nhập bằng Google.");
+    } else {
+      alert("Phương thức đăng nhập: " + providerText);
+    }
+
+    console.log("Providers:", methods);
+
+  } catch (err) {
+    console.error("checkProviders error:", err);
+    alert(err.message || "Không kiểm tra được phương thức đăng nhập");
+  }
+}
+
+
+// =======================
+// RESET PASSWORD
+// =======================
+async function resetPassword() {
+  const email = document.getElementById("loginEmail").value.trim();
+
+  if (!email) {
+    alert("Vui lòng nhập email trước");
+    return;
+  }
+
+  try {
+    await auth.sendPasswordResetEmail(email);
+    alert("Đã gửi email đặt lại mật khẩu. Vui lòng kiểm tra hộp thư.");
+  } catch (err) {
+    console.error("resetPassword error:", err);
+
+    if (err.code === "auth/user-not-found") {
+      alert("Email này chưa được đăng ký.");
+    } else if (err.code === "auth/invalid-email") {
+      alert("Email không đúng định dạng.");
+    } else {
+      alert(err.message || "Không gửi được email reset mật khẩu");
+    }
   }
 }
 // =======================

@@ -1336,7 +1336,7 @@ function highlightTodayColumn() {
       const cells =
         row.querySelectorAll("td");
 
-      const OFFSET = 4;
+      const OFFSET = 5;
 
       const targetCol =
         OFFSET + (todayIndex - 1);

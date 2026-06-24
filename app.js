@@ -886,7 +886,13 @@ async function updateTask(id, field, value) {
 
     // Nếu đổi taskType / start / taskName thì reset reviewDays
     // để loadTasks() build lại theo logic mới
-    if(field === "taskType" || field === "start" || field === "taskName"){
+   if (
+  field === "taskType" ||
+  field === "start" ||
+  field === "deadline" ||
+  field === "taskName" ||
+  field === "processingTime"
+) {
 
       await db.collection("tasks")
         .doc(id)
@@ -1014,92 +1020,90 @@ if(task.calendarId && token){
     }
 
 }
-async function createCalendarFromRow(id){
-
-  
-
-  try{
-
-    const docRef =
-      await db.collection("tasks")
-      .doc(id)
-      .get();
-
-    const task =
-      docRef.data();
-
-    if(task.calendarId){
-
-      alert("Calendar đã tồn tại");
-
+async function createCalendarFromRow(id, rowEl = null) {
+  try {
+    const docRef = await db.collection("tasks").doc(id).get();
+    if (!docRef.exists) {
+      alert("Task không tồn tại");
       return;
     }
 
- const event = await createCalendarEvent(task, id);
-const reviewIds = [];
+    const task = docRef.data();
 
-const reviewDays = task.reviewDays || {};
+    // ===== MAIN EVENT =====
+    let mainEvent = null;
 
-const week = getCurrentWeekDates();
-
-for (let i = 1; i <= 7; i++) {
-  const text = reviewDays["day" + i] || "";
-  const reviewTasks = parseReviewTasks(text);
-
-  for (const t of reviewTasks) {
-    const eventId = await createReviewCalendarTask(
-      t,
-      week[i - 1],
-      id,   // docId
-      i     // dayIndex
-    );
-
-    if (eventId && !reviewIds.includes(eventId)) {
-      reviewIds.push(eventId);
+    if (!task.calendarId) {
+      mainEvent = await createCalendarEvent(task, id);
+    } else {
+      // đã có main event thì giữ lại
+      mainEvent = { id: task.calendarId, hangoutLink: task.meetLink || "" };
     }
-  }
-}
-  await db.collection("tasks")
-.doc(id)
-.update({
 
-    apply:true,
+    // ===== REVIEW CELLS =====
+    let reviewDays = {};
 
-    calendarId:
-      event.id || "",
+    // Ưu tiên lấy dữ liệu đang hiển thị trên row
+    if (rowEl) {
+      const cells = rowEl.querySelectorAll(".review-cell");
+      reviewDays = {
+        day1: cells[0]?.value || "",
+        day2: cells[1]?.value || "",
+        day3: cells[2]?.value || "",
+        day4: cells[3]?.value || "",
+        day5: cells[4]?.value || "",
+        day6: cells[5]?.value || "",
+        day7: cells[6]?.value || ""
+      };
+    } else {
+      // fallback nếu không có row thì build từ task
+      reviewDays = buildReviewDays(task);
+    }
 
-    reviewCalendarIds:
-      reviewIds,
+    const reviewIds = [];
+    const week = getCurrentWeekDates();
 
-    meetLink:
-      event.hangoutLink || "",
+    for (let i = 1; i <= 7; i++) {
+      const text = reviewDays["day" + i] || "";
+      const reviewTasks = parseReviewTasks(text);
 
-    calendarStatus:
-      "Created"
+      for (const t of reviewTasks) {
+        const eventId = await createReviewCalendarTask(
+          t,
+          week[i - 1],
+          id,
+          i
+        );
 
-});
+        if (eventId && !reviewIds.includes(eventId)) {
+          reviewIds.push(eventId);
+        }
+      }
+    }
 
-    loadTasks();
-
-}catch(err){
-
-    console.error(err);
-
-    await db.collection("tasks")
-    .doc(id)
-    .update({
-
-        apply:false,
-        calendarStatus:"Create"
-
+    // lưu lại reviewDays thực tế vừa sync để Firestore đồng bộ với form
+    await db.collection("tasks").doc(id).update({
+      apply: true,
+      calendarId: mainEvent?.id || task.calendarId || "",
+      reviewCalendarIds: reviewIds,
+      meetLink: mainEvent?.hangoutLink || task.meetLink || "",
+      calendarStatus: "Created",
+      reviewDays: reviewDays
     });
 
-    loadTasks();
+    await loadTasks();
 
+  } catch (err) {
+    console.error(err);
+
+    await db.collection("tasks").doc(id).update({
+      apply: false,
+      calendarStatus: "Create"
+    });
+
+    await loadTasks();
     alert("Tạo Calendar thất bại");
-
-}
-
+  }
 }
 
 // =======================
@@ -1338,14 +1342,16 @@ function highlightTodayColumn() {
 // Hàm ôn tập
 // =======================
 function buildReviewSchedule(task) {
+  const current = task.reviewDays || {};
+
   const result = {
-    day1: "",
-    day2: "",
-    day3: "",
-    day4: "",
-    day5: "",
-    day6: "",
-    day7: ""
+    day1: current.day1 || "",
+    day2: current.day2 || "",
+    day3: current.day3 || "",
+    day4: current.day4 || "",
+    day5: current.day5 || "",
+    day6: current.day6 || "",
+    day7: current.day7 || ""
   };
 
   if (!task.start || !task.taskName) return result;
@@ -1353,7 +1359,10 @@ function buildReviewSchedule(task) {
   const start = new Date(task.start);
   if (isNaN(start.getTime())) return result;
 
-  const deadline = task.deadline ? new Date(task.deadline) : new Date(task.start);
+  const deadline = task.deadline
+    ? new Date(task.deadline)
+    : new Date(task.start);
+
   if (isNaN(deadline.getTime())) return result;
 
   const week = getCurrentWeekDates();
@@ -1366,30 +1375,39 @@ function buildReviewSchedule(task) {
 
   function addToDay(dayIndex, text) {
     const key = "day" + dayIndex;
-    if (result[key] && result[key].trim() !== "") {
-      result[key] += "\n" + text;
-    } else {
+
+    if (!result[key] || result[key].trim() === "") {
       result[key] = text;
+      return;
+    }
+
+    const lines = result[key]
+      .split("\n")
+      .map(x => x.trim())
+      .filter(Boolean);
+
+    if (!lines.includes(text)) {
+      result[key] += "\n" + text;
     }
   }
 
   const reviewDates = [];
 
-  // Mốc 1: đúng giờ start
+  // 1) đúng giờ start
   reviewDates.push(new Date(start));
 
-  // Mốc 2: +10 phút
+  // 2) +10 phút
   reviewDates.push(new Date(start.getTime() + 10 * 60 * 1000));
 
-  // Mốc 3: +24h
+  // 3) +24h
   reviewDates.push(new Date(start.getTime() + 24 * 60 * 60 * 1000));
 
-  // Mốc 4: +7 ngày
+  // 4) +7 ngày
   const d7 = new Date(start);
   d7.setDate(d7.getDate() + 7);
   reviewDates.push(d7);
 
-  // Mốc 5: +30 ngày
+  // 5) +30 ngày
   const d30 = new Date(start);
   d30.setMonth(d30.getMonth() + 1);
   reviewDates.push(d30);
@@ -1398,9 +1416,6 @@ function buildReviewSchedule(task) {
     const colDate = week[i];
 
     for (const r of reviewDates) {
-      // CHỈ add nếu:
-      // 1. review date nằm đúng ngày cột
-      // 2. review date nằm trong khoảng start -> deadline
       if (
         isSameDate(r, colDate) &&
         isDateInRange(r, start, deadline)
@@ -1553,45 +1568,38 @@ function buildReviewDays(task) {
 }
 
 
-async function rebuildReviewDays(id){
+async function rebuildReviewDays(id) {
+  try {
+    const docRef = await db.collection("tasks").doc(id).get();
+    if (!docRef.exists) return;
 
-    try{
+    const task = docRef.data();
 
-        const docRef =
-            await db.collection("tasks")
-            .doc(id)
-            .get();
+    const clearedTask = {
+      ...task,
+      reviewDays: {
+        day1: "",
+        day2: "",
+        day3: "",
+        day4: "",
+        day5: "",
+        day6: "",
+        day7: ""
+      }
+    };
 
-        if(!docRef.exists) return;
+    const rebuilt = buildReviewDays(clearedTask);
 
-        const task = docRef.data();
+    await db.collection("tasks").doc(id).update({
+      reviewDays: rebuilt
+    });
 
-        const emptyReviewDays = {
-            day1:"",
-            day2:"",
-            day3:"",
-            day4:"",
-            day5:"",
-            day6:"",
-            day7:""
-        };
+    await loadTasks();
 
-        await db.collection("tasks")
-        .doc(id)
-        .update({
-            reviewDays: emptyReviewDays
-        });
-
-        loadTasks();
-
-    }catch(err){
-
-        console.error(err);
-
-        alert("Rebuild thất bại");
-
-    }
-
+  } catch (err) {
+    console.error(err);
+    alert("Rebuild thất bại");
+  }
 }
 function normalizeDate(d){
     return new Date(d.getFullYear(), d.getMonth(), d.getDate());
@@ -2105,7 +2113,8 @@ async function syncFullCalendarFromRow(btn) {
   const docId = btn.getAttribute("data-id");
   if (!docId) return alert("Missing task id");
 
-  await createCalendarFromRow(docId);
+  const row = btn.closest("tr");
+  await createCalendarFromRow(docId, row);
 
   alert("Đồng bộ Calendar hoàn tất");
 }

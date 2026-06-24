@@ -2099,3 +2099,27 @@ async function createReviewCalendarForRow(btn){
 
     alert("Đã tạo Calendar");
 }
+async function syncFullCalendarFromRow(btn){
+  const row = btn.closest("tr");
+
+  const docId = btn.getAttribute("data-id");
+  if(!docId) return alert("Missing task id");
+
+  // 1. Tạo main calendar + review calendar (logic cũ)
+  await createCalendarFromRow(docId);
+
+  // 2. Tạo thêm review cells calendar theo UI (đảm bảo sync lại)
+  const week = getCurrentWeekDates();
+  const cells = row.querySelectorAll(".review-cell");
+
+  for(let i = 0; i < cells.length; i++){
+    const tasks = parseReviewTasks(cells[i].value);
+    const date = week[i];
+
+    for(const task of tasks){
+      await createReviewCalendarTask(task, date);
+    }
+  }
+
+  alert("Đồng bộ Calendar + Review hoàn tất");
+}

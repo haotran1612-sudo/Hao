@@ -131,13 +131,9 @@ async function googleLogin() {
   try {
     const result = await auth.signInWithPopup(provider);
 
-    // Lấy token an toàn hơn, không dùng credentialFromResult
+    // Lấy credential trực tiếp từ result
     const credential = result.credential || null;
-    const token =
-      credential?.accessToken ||
-      result?.user?.stsTokenManager?.accessToken ||
-      "";
-
+    const token = credential?.accessToken || "";
     const user = result.user;
 
     if (token) {
@@ -156,6 +152,7 @@ async function googleLogin() {
     await loadTasks();
 
     alert("Google login + Calendar connected thành công");
+
   } catch (err) {
     console.error("googleLogin error:", err);
     alert(err.message || "Google login failed");

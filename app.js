@@ -130,8 +130,14 @@ async function login(){
 async function googleLogin() {
   try {
     const result = await auth.signInWithPopup(provider);
-    const credential = firebase.auth.GoogleAuthProvider.credentialFromResult(result);
-    const token = credential?.accessToken || "";
+
+    // Lấy token an toàn hơn, không dùng credentialFromResult
+    const credential = result.credential || null;
+    const token =
+      credential?.accessToken ||
+      result?.user?.stsTokenManager?.accessToken ||
+      "";
+
     const user = result.user;
 
     if (token) {

@@ -1768,19 +1768,18 @@ function parseReviewTasks(text){
         }
 
         // fallback hh:mm title
-        m = t.match(/^(\d{1,2}):(\d{2})\s+(.+)$/);
+       m = t.match(/^(\d{1,2}):(\d{2})\s+(.+)$/);
 
-        if(m){
-
-            tasks.push({
-  hour: Number(m[1]),
-  minute: Number(m[2]),
-  endHour: Number(m[3]),
-  endMinute: Number(m[4]),
-  title: m[5],
-  raw: t   // 👈 THÊM DÒNG NÀY
-});
-        }
+if (m) {
+    tasks.push({
+        hour: Number(m[1]),
+        minute: Number(m[2]),
+        endHour: null,
+        endMinute: null,
+        title: m[3],
+        raw: t
+    });
+}
     }
 
     return tasks;
@@ -1970,9 +1969,9 @@ async function createReviewCalendarTask(task, date) {
   );
 
   // END: tính từ duration trong text (hh:mm-hh:mm)
-  let endDate;
+ let endDate;
 
-  if (task.endHour !== undefined && task.endMinute !== undefined) {
+if (task.endHour != null && task.endMinute != null) {
 
     // nếu vẫn có dữ liệu cũ thì fallback
     endDate = new Date(
@@ -1993,7 +1992,9 @@ async function createReviewCalendarTask(task, date) {
 
     if (match) {
       const endMinutes = Number(match[1]) * 60 + Number(match[2]);
-      const diff = Math.max(endMinutes - startMinutes, 0);
+  const diff = endMinutes > startMinutes
+    ? endMinutes - startMinutes
+    : 30; // fallback 30 phút
 
       endDate = new Date(startDate.getTime() + diff * 60 * 1000);
 
@@ -2004,7 +2005,7 @@ async function createReviewCalendarTask(task, date) {
   }
 
   const body = {
-    summary: task.title,
+   summary: task.title || task.raw || "Task",
     start: {
       dateTime: startDate.toISOString(),
       timeZone: "Asia/Ho_Chi_Minh"

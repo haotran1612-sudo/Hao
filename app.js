@@ -428,7 +428,14 @@ const reviewDays = buildReviewDays(task);
     onkeydown="return false"
     onchange="updateTask('${doc.id}','deadline',this.value)">
 </td>
-
+<td>
+  <input
+    type="number"
+    min="0"
+    step="0.5"
+    value="${task.processingTime ?? ''}"
+    onchange="updateTask('${doc.id}','processingTime',Number(this.value))">
+</td>
 <td>
   <input
     type="text"
@@ -685,6 +692,7 @@ async function addRow() {
       taskName: "",
       start: "",
       deadline: "",
+      processingTime: 0,
 reviewDays:{
     day1:"",
     day2:"",

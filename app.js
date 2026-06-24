@@ -867,20 +867,21 @@ async function updateTask(id, field, value) {
 
   try {
 
-  const data = {};
-data[field] = value;
-
-await db.collection("tasks")
-.doc(id)
-.update(data);
-
-    // Nếu thay đổi Type hoặc Start thì cập nhật lại Tracker ngay
-   if(field === "taskType"){
+    const data = {};
+    data[field] = value;
 
     await db.collection("tasks")
-    .doc(id)
-    .update({
-        reviewDays:{
+      .doc(id)
+      .update(data);
+
+    // Nếu đổi taskType / start / taskName thì reset reviewDays
+    // để loadTasks() build lại theo logic mới
+    if(field === "taskType" || field === "start" || field === "taskName"){
+
+      await db.collection("tasks")
+        .doc(id)
+        .update({
+          reviewDays: {
             day1:"",
             day2:"",
             day3:"",
@@ -888,23 +889,16 @@ await db.collection("tasks")
             day5:"",
             day6:"",
             day7:""
-        }
-    });
+          }
+        });
 
-}
-
-if(field === "taskType" || field === "start"){
-
-    await loadTasks();
-
-}
+      await loadTasks();
+      return;
+    }
 
   } catch(err) {
-
     console.error(err);
-
   }
-
 }
 async function toggleCreateCalendar(id, checkbox){
 
@@ -1364,50 +1358,68 @@ function buildReviewSchedule(task){
 
     if(!task.start || !task.taskName) return result;
 
- const start = new Date(task.start);
-if (isNaN(start.getTime())) return result;
+    const start = new Date(task.start);
+    if (isNaN(start.getTime())) return result;
 
     const now = new Date();
-
     const monday = new Date(now);
+
     let dow = now.getDay();
     dow = (dow === 0) ? 6 : dow - 1;
     monday.setDate(now.getDate() - dow);
 
-    // các mốc ôn tập
+    function formatHM(date){
+        const hh = String(date.getHours()).padStart(2, "0");
+        const mm = String(date.getMinutes()).padStart(2, "0");
+        return `${hh}:${mm}`;
+    }
+
+    function addToDay(dayIndex, text){
+        const key = "day" + dayIndex;
+        if(result[key] && result[key].trim() !== ""){
+            result[key] += "\n" + text;
+        }else{
+            result[key] = text;
+        }
+    }
+
+    // Các mốc ôn tập
     const reviewDates = [];
 
-    // 10 phút
+    // Mốc 1: đúng giờ start
+    reviewDates.push(new Date(start));
+
+    // Mốc 2: +10 phút
     reviewDates.push(new Date(start.getTime() + 10 * 60 * 1000));
 
-    // 24h
+    // Mốc 3: +24h
     reviewDates.push(new Date(start.getTime() + 24 * 60 * 60 * 1000));
 
-    // 7 ngày
+    // Mốc 4: +7 ngày
     const d7 = new Date(start);
     d7.setDate(d7.getDate() + 7);
     reviewDates.push(d7);
 
-    // 30 ngày
+    // Mốc 5: +30 ngày
     const d30 = new Date(start);
     d30.setMonth(d30.getMonth() + 1);
     reviewDates.push(d30);
 
-    // map vào 7 ngày tuần hiện tại
-    for(let i=0;i<7;i++){
+    // Map vào tuần hiện tại
+    for(let i = 0; i < 7; i++){
 
         const colDate = new Date(monday);
         colDate.setDate(monday.getDate() + i);
 
         for(const r of reviewDates){
 
-           const rr = normalizeDate(r);
-const cc = normalizeDate(colDate);
+            const rr = normalizeDate(r);
+            const cc = normalizeDate(colDate);
 
-if(rr.getTime() === cc.getTime()){
-    result["day"+(i+1)] = task.taskName;
-}
-
+            if(rr.getTime() === cc.getTime()){
+                const line = `${formatHM(r)} ${task.taskName}`;
+                addToDay(i + 1, line);
+            }
         }
     }
 
@@ -1435,67 +1447,69 @@ function buildReviewDays(task){
         day7: current.day7 || ""
     };
 
-    if(
-        !task.start ||
-        isNaN(new Date(task.start).getTime())
-    ){
+    if(!task.start || isNaN(new Date(task.start).getTime())){
         return result;
     }
 
     const start = new Date(task.start);
+    const taskName = (task.taskName || "").trim();
 
+    if(!taskName) return result;
+
+    function formatHM(date){
+        const hh = String(date.getHours()).padStart(2, "0");
+        const mm = String(date.getMinutes()).padStart(2, "0");
+        return `${hh}:${mm}`;
+    }
+
+    function addToDay(dayIndex, text){
+        const key = "day" + dayIndex;
+
+        // Nếu ô đang trống -> điền luôn
+        if(!result[key] || result[key].trim() === ""){
+            result[key] = text;
+            return;
+        }
+
+        // Nếu đã có đúng text này rồi thì không thêm trùng
+        const lines = result[key]
+            .split("\n")
+            .map(x => x.trim())
+            .filter(Boolean);
+
+        if(!lines.includes(text)){
+            result[key] += "\n" + text;
+        }
+    }
+
+    // JS getDay(): Sun=0, Mon=1 ... Sat=6
+    // convert về Mon=1 ... Sun=7
     let day = start.getDay();
     day = (day === 0) ? 7 : day;
+
+    const line = `${formatHM(start)} ${taskName}`;
 
     switch(task.taskType){
 
         case "Daily":
-
-    for(let i=1;i<=7;i++){
-
-        if(
-            !result["day"+i] ||
-            result["day"+i].trim() === ""
-        ){
-
-            result["day"+i] =
-                task.taskName || "";
-
-        }
-
-    }
-
-    break;
+            for(let i = 1; i <= 7; i++){
+                addToDay(i, line);
+            }
+            break;
 
         case "Weekly":
         case "Monthly":
         case "Yearly":
-
-            if(!result["day"+day].trim()){
-
-                result["day"+day] =
-                    task.taskName || "";
-
-            }
-
+            addToDay(day, line);
             break;
 
         case "Ôn tập":
+            // build theo các mốc review riêng
+            return buildReviewSchedule(task);
 
-            const autoReview =
-                buildReviewSchedule(task);
-
-            for(let i=1;i<=7;i++){
-
-                if(!result["day"+i].trim()){
-
-                    result["day"+i] =
-                        autoReview["day"+i];
-
-                }
-
-            }
-
+        default:
+            // nếu taskType lạ thì coi như Weekly theo ngày start
+            addToDay(day, line);
             break;
     }
 

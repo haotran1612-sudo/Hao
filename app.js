@@ -91,34 +91,32 @@ async function login(){
 });
 } 
 async function googleLogin() {
-
   try {
+    const result = await auth.signInWithPopup(provider);
+    const credential = firebase.auth.GoogleAuthProvider.credentialFromResult(result);
+    const token = credential?.accessToken || "";
+    const user = result.user;
 
-    const result =
-      await auth.signInWithPopup(provider);
+    if (token) {
+      localStorage.setItem("googleToken", token);
+    }
 
-    const credential =
-      result.credential;
+    if (user?.email) {
+      localStorage.setItem("userEmail", user.email);
+      document.getElementById("welcomeUser").innerText = user.email;
+    }
 
-    const token =
-      credential.accessToken;
+    document.getElementById("loginPage").style.display = "none";
+    document.getElementById("appPage").style.display = "block";
 
-    localStorage.setItem(
-      "googleToken",
-      token
-    );
-
-    alert("Google Calendar Connected");
     await requestNotificationPermission();
+    await loadTasks();
 
-  } catch(err){
-
-    console.error(err);
-
-    alert(err.message);
-
+    alert("Google login + Calendar connected thành công");
+  } catch (err) {
+    console.error("googleLogin error:", err);
+    alert(err.message || "Google login failed");
   }
-
 }
 // =======================
 // LOGOUT
@@ -739,20 +737,25 @@ function getCurrentWeekDates() {
 // AUTO LOGIN
 // =======================
 window.onload = function () {
-
   loadWeekHeader();
-console.log(getCurrentWeekDates());
-  const user =
-    localStorage.getItem("userEmail");
 
-  if (user) {
+  auth.onAuthStateChanged(async (user) => {
+    if (user) {
+      localStorage.setItem("userEmail", user.email || "");
 
-    document.getElementById("loginPage").style.display = "none";
-    document.getElementById("appPage").style.display = "block";
-    document.getElementById("welcomeUser").innerText = user;
-requestNotificationPermission();
-    loadTasks();
-  }
+      document.getElementById("loginPage").style.display = "none";
+      document.getElementById("appPage").style.display = "block";
+      document.getElementById("welcomeUser").innerText = user.email || "";
+
+      await requestNotificationPermission();
+      await loadTasks();
+    } else {
+      localStorage.removeItem("userEmail");
+
+      document.getElementById("loginPage").style.display = "block";
+      document.getElementById("appPage").style.display = "none";
+    }
+  });
 };
 // =======================
 // update

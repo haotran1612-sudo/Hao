@@ -63,45 +63,38 @@ function registerUser() {
     alert("Đăng ký thành công");
   })
    .catch(async err => {
+  console.error("Register error:", err);
 
-    console.error("Login error:", err);
+  const email = document.getElementById("registerEmail").value.trim();
 
-    const email = document.getElementById("loginEmail").value.trim();
+  try {
+    const methods = await auth.fetchSignInMethodsForEmail(email);
 
-    try {
-      const methods = await auth.fetchSignInMethodsForEmail(email);
-
-      if (!methods || methods.length === 0) {
-        alert("Email này chưa được đăng ký.");
-        return;
-      }
-
-      if (methods.includes("google.com") && !methods.includes("password")) {
-        alert("Email này đang đăng nhập bằng Google. Vui lòng bấm nút 'Đăng nhập bằng Google'.");
-        return;
-      }
-
-      if (
-        err.code === "auth/wrong-password" ||
-        err.code === "auth/invalid-credential" ||
-        err.code === "auth/invalid-login-credentials"
-      ) {
-        alert("Sai mật khẩu hoặc thông tin đăng nhập không hợp lệ.");
-        return;
-      }
-
-      if (err.code === "auth/invalid-email") {
-        alert("Email không đúng định dạng.");
-        return;
-      }
-
-      alert(err.message || "Đăng nhập thất bại");
-
-    } catch (checkErr) {
-      console.error("Provider check error:", checkErr);
-      alert(err.message || "Đăng nhập thất bại");
+    if (methods.includes("password")) {
+      alert("Email này đã được đăng ký bằng mật khẩu.");
+      return;
     }
 
+    if (methods.includes("google.com")) {
+      alert("Email này đã tồn tại và đang dùng đăng nhập Google.");
+      return;
+    }
+
+    if (err.code === "auth/invalid-email") {
+      alert("Email không đúng định dạng.");
+      return;
+    }
+
+    if (err.code === "auth/weak-password") {
+      alert("Mật khẩu quá yếu.");
+      return;
+    }
+
+    alert(err.message || "Đăng ký thất bại");
+  } catch (checkErr) {
+    console.error("Register provider check error:", checkErr);
+    alert(err.message || "Đăng ký thất bại");
+  }
 });
 }
 

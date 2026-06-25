@@ -104,7 +104,7 @@ async function login(){
   const email = document.getElementById("loginEmail").value.trim();
   const password = document.getElementById("loginPassword").value;
 
- auth.signInWithEmailAndPassword(email, password)
+auth.signInWithEmailAndPassword(email, password)
 .then(async userCredential => {
 
     const userEmail = userCredential.user.email;
@@ -116,9 +116,10 @@ async function login(){
     document.getElementById("welcomeUser").innerText = userEmail;
 
     await requestNotificationPermission();
-    loadTasks();
+    await loadTasks();
+    await loadUserMusicSettings();
 
-})       // <-- thiếu đoạn này
+})   // <-- thiếu đoạn này
 
 .catch(err => {
 
@@ -2185,4 +2186,162 @@ async function findCalendarEventByKey(eventKey) {
   }
 
   return null;
+}
+
+
+// =======================
+// MUSIC
+// =======================
+
+// lấy videoId từ nhiều dạng link youtube
+function extractYoutubeVideoId(url) {
+  if (!url) return "";
+
+  try {
+    const u = new URL(url);
+
+    // dạng youtu.be/xxxxx
+    if (u.hostname.includes("youtu.be")) {
+      return u.pathname.replace("/", "").trim();
+    }
+
+    // dạng youtube.com/watch?v=xxxxx
+    if (u.searchParams.get("v")) {
+      return u.searchParams.get("v");
+    }
+
+    // dạng youtube.com/embed/xxxxx
+    if (u.pathname.includes("/embed/")) {
+      return u.pathname.split("/embed/")[1].split("/")[0];
+    }
+
+    // dạng youtube.com/shorts/xxxxx
+    if (u.pathname.includes("/shorts/")) {
+      return u.pathname.split("/shorts/")[1].split("/")[0];
+    }
+
+    return "";
+  } catch (e) {
+    return "";
+  }
+}
+
+// tạo link embed để phát
+function buildYoutubeEmbedUrl(videoId, autoplay = true) {
+  if (!videoId) return "";
+  return `https://www.youtube.com/embed/${videoId}?autoplay=${autoplay ? 1 : 0}&rel=0`;
+}
+
+// lưu link nhạc của user
+async function saveMusicUrl() {
+  try {
+    const email = localStorage.getItem("userEmail");
+    if (!email) {
+      alert("Bạn chưa đăng nhập");
+      return;
+    }
+
+    const musicUrl = document.getElementById("musicUrl")?.value.trim() || "";
+    const autoPlay = document.getElementById("autoPlayMusic")?.checked || false;
+
+    if (!musicUrl) {
+      alert("Vui lòng nhập link YouTube");
+      return;
+    }
+
+    const videoId = extractYoutubeVideoId(musicUrl);
+    if (!videoId) {
+      alert("Link YouTube không hợp lệ");
+      return;
+    }
+
+    await db.collection("users").doc(email).set({
+      email,
+      musicUrl,
+      autoPlayMusic: autoPlay,
+      updatedAt: new Date()
+    }, { merge: true });
+
+    alert("Đã lưu nhạc thành công");
+  } catch (err) {
+    console.error("saveMusicUrl error:", err);
+    alert("Không lưu được nhạc");
+  }
+}
+
+// load cài đặt nhạc sau khi login
+async function loadUserMusicSettings() {
+  try {
+    const email = localStorage.getItem("userEmail");
+    if (!email) return;
+
+    const docRef = await db.collection("users").doc(email).get();
+    if (!docRef.exists) return;
+
+    const data = docRef.data() || {};
+
+    if (document.getElementById("musicUrl")) {
+      document.getElementById("musicUrl").value = data.musicUrl || "";
+    }
+
+    if (document.getElementById("autoPlayMusic")) {
+      document.getElementById("autoPlayMusic").checked = !!data.autoPlayMusic;
+    }
+
+    if (data.musicUrl && data.autoPlayMusic) {
+      playMusicFromUrl(data.musicUrl);
+    }
+  } catch (err) {
+    console.error("loadUserMusicSettings error:", err);
+  }
+}
+
+// bật / tắt auto play
+async function toggleAutoPlayMusic(checkbox) {
+  try {
+    const email = localStorage.getItem("userEmail");
+    if (!email) return;
+
+    await db.collection("users").doc(email).set({
+      email,
+      autoPlayMusic: checkbox.checked,
+      updatedAt: new Date()
+    }, { merge: true });
+  } catch (err) {
+    console.error("toggleAutoPlayMusic error:", err);
+  }
+}
+
+// phát nhạc từ input hiện tại hoặc từ Firestore
+function playMusicFromUrl(url) {
+  const videoId = extractYoutubeVideoId(url);
+  if (!videoId) {
+    alert("Link YouTube không hợp lệ");
+    return;
+  }
+
+  const iframe = document.getElementById("musicPlayer");
+  const wrap = document.getElementById("musicPlayerWrap");
+
+  if (!iframe || !wrap) return;
+
+  iframe.src = buildYoutubeEmbedUrl(videoId, true);
+  wrap.style.display = "block";
+}
+
+// phát nhạc đang lưu ở ô input
+function playSavedMusic() {
+  const url = document.getElementById("musicUrl")?.value.trim() || "";
+  if (!url) {
+    alert("Chưa có link nhạc");
+    return;
+  }
+  playMusicFromUrl(url);
+}
+
+// dừng nhạc
+function stopMusic() {
+  const iframe = document.getElementById("musicPlayer");
+  if (!iframe) return;
+  iframe.src = "";
 }

@@ -99,21 +99,40 @@
 
     </div>
 
-    <div>
+    <div class="header-actions">
 
-        <span id="welcomeUser"></span>
+    <span id="welcomeUser"></span>
 
-        <button onclick="openTaskModal()">
-            + Task
-        </button>
-<button onclick="googleLogin()">
-    Connect Google
-</button>
-        <button onclick="logout()">
-            Logout
-        </button>
+    <input
+        id="musicUrl"
+        type="text"
+        placeholder="Dán link YouTube bài yêu thích">
 
-    </div>
+    <button onclick="saveFavoriteMusic()">
+        Lưu nhạc
+    </button>
+
+    <button onclick="playFavoriteMusic()">
+        ▶ Phát nhạc
+    </button>
+
+    <button onclick="stopFavoriteMusic()">
+        ⏹ Tắt nhạc
+    </button>
+
+    <button onclick="openTaskModal()">
+        + Task
+    </button>
+
+    <button onclick="googleLogin()">
+        Connect Google
+    </button>
+
+    <button onclick="logout()">
+        Logout
+    </button>
+
+</div>
 
 </header>
 <!-- MUSIC PANEL -->
@@ -447,7 +466,19 @@
 </div>
 
 <button id="fabAdd" onclick="openTaskModal()">+</button>
-
+<!-- PLAYER YOUTUBE ẨN -->
+<div id="musicPlayerBox" style="display:none; margin:10px 0;">
+  <iframe
+    id="musicPlayer"
+    width="320"
+    height="180"
+    src=""
+    title="YouTube music player"
+    frameborder="0"
+    allow="autoplay; encrypted-media"
+    allowfullscreen>
+  </iframe>
+</div>
 <!-- APP.JS LUÔN ĐẶT CUỐI -->
 <script src="app.js"></script>
 

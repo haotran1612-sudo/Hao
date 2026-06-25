@@ -422,3 +422,32 @@ table {
 #taskTable td{
     vertical-align:top;
 }
+
+.music-panel{
+  background:#fff;
+  padding:16px;
+  border-radius:14px;
+  box-shadow:0 4px 16px rgba(0,0,0,0.08);
+  margin:20px;
+}
+
+.music-row{
+  display:flex;
+  gap:10px;
+  flex-wrap:wrap;
+}
+
+.music-row input{
+  flex:1;
+  min-width:280px;
+  padding:10px 12px;
+  border:1px solid #ddd;
+  border-radius:10px;
+}
+
+.music-row button{
+  padding:10px 14px;
+  border:none;
+  border-radius:10px;
+  cursor:pointer;
+}

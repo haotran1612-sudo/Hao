@@ -48,10 +48,20 @@ function registerUser() {
   const email = document.getElementById("registerEmail").value.trim();
   const password = document.getElementById("registerPassword").value;
 
-  auth.createUserWithEmailAndPassword(email, password)
-    .then(() => {
-      alert("Đăng ký thành công");
-    })
+ auth.createUserWithEmailAndPassword(email, password)
+  .then(async (userCredential) => {
+    const user = userCredential.user;
+
+   await db.collection("users").doc(email).set({
+  email: email,
+  musicUrl: "",
+  autoPlayMusic: false,
+  createdAt: new Date(),
+  updatedAt: new Date()
+}, { merge: true });
+
+    alert("Đăng ký thành công");
+  })
    .catch(async err => {
 
     console.error("Login error:", err);
@@ -118,7 +128,7 @@ auth.signInWithEmailAndPassword(email, password)
     await requestNotificationPermission();
     await loadTasks();
     await loadUserMusicSettings();
-
+   
 })   // <-- thiếu đoạn này
 
 .catch(err => {
@@ -148,11 +158,10 @@ async function googleLogin() {
 
     document.getElementById("loginPage").style.display = "none";
     document.getElementById("appPage").style.display = "block";
-
-    await requestNotificationPermission();
-    await loadTasks();
-
-    alert("Google login + Calendar connected thành công");
+await requestNotificationPermission();
+await loadTasks();
+await loadUserMusicSettings();
+alert("Google login + Calendar connected thành công");
 
   } catch (err) {
     console.error("googleLogin error:", err);
@@ -863,6 +872,8 @@ window.onload = function () {
 
       await requestNotificationPermission();
       await loadTasks();
+      await loadFavoriteMusic();
+await autoPlayMusicAfterLogin();
     } else {
       localStorage.removeItem("userEmail");
 

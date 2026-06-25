@@ -43,43 +43,59 @@ provider.addScope(
 // =======================
 // REGISTER
 // =======================
-function registerUser() {
+async function registerUser() {
+  const email = document.getElementById("registerEmail")?.value.trim();
+  const password = document.getElementById("registerPassword")?.value || "";
 
-  const email = document.getElementById("registerEmail").value.trim();
-  const password = document.getElementById("registerPassword").value;
+  // 1) Validate input trước
+  if (!email) {
+    alert("Vui lòng nhập email");
+    return;
+  }
 
- auth.createUserWithEmailAndPassword(email, password)
-  .then(async (userCredential) => {
-    const user = userCredential.user;
+  if (!password) {
+    alert("Vui lòng nhập mật khẩu");
+    return;
+  }
 
-   await db.collection("users").doc(email).set({
-  email: email,
-  musicUrl: "",
-  autoPlayMusic: false,
-  createdAt: new Date(),
-  updatedAt: new Date()
-}, { merge: true });
-
-    alert("Đăng ký thành công");
-  })
-   .catch(async err => {
-  console.error("Register error:", err);
-
-  const email = document.getElementById("registerEmail").value.trim();
+  if (password.length < 6) {
+    alert("Mật khẩu phải có ít nhất 6 ký tự");
+    return;
+  }
 
   try {
-    const methods = await auth.fetchSignInMethodsForEmail(email);
+    // 2) Tạo tài khoản Firebase Auth
+    const userCredential = await auth.createUserWithEmailAndPassword(email, password);
+    const user = userCredential.user;
 
-    if (methods.includes("password")) {
-      alert("Email này đã được đăng ký bằng mật khẩu.");
-      return;
-    }
+    // 3) Lưu profile user vào Firestore
+    await db.collection("users").doc(user.uid).set({
+      uid: user.uid,
+      email: user.email || email,
+      provider: "password",
+      musicUrl: "",
+      autoPlayMusic: false,
+      createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+      updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+    }, { merge: true });
 
-    if (methods.includes("google.com")) {
-      alert("Email này đã tồn tại và đang dùng đăng nhập Google.");
-      return;
-    }
+    // 4) Auto login vào app luôn
+    localStorage.setItem("userEmail", user.email || email);
 
+    document.getElementById("loginPage").style.display = "none";
+    document.getElementById("appPage").style.display = "block";
+    document.getElementById("welcomeUser").innerText = user.email || email;
+
+    await requestNotificationPermission();
+    await loadTasks();
+    await loadUserMusicSettings();
+
+    alert("Đăng ký thành công");
+
+  } catch (err) {
+    console.error("Register error:", err);
+
+    // 5) Xử lý lỗi theo mã lỗi trước
     if (err.code === "auth/invalid-email") {
       alert("Email không đúng định dạng.");
       return;
@@ -90,14 +106,37 @@ function registerUser() {
       return;
     }
 
-    alert(err.message || "Đăng ký thất bại");
-  } catch (checkErr) {
-    console.error("Register provider check error:", checkErr);
+    if (err.code === "auth/email-already-in-use") {
+      try {
+        const methods = await auth.fetchSignInMethodsForEmail(email);
+
+        if (methods.includes("password") && methods.includes("google.com")) {
+          alert("Email này đã tồn tại và có thể đăng nhập bằng cả Password và Google.");
+          return;
+        }
+
+        if (methods.includes("password")) {
+          alert("Email này đã được đăng ký bằng mật khẩu.");
+          return;
+        }
+
+        if (methods.includes("google.com")) {
+          alert("Email này đã tồn tại và đang dùng đăng nhập Google.");
+          return;
+        }
+
+        alert("Email này đã tồn tại.");
+        return;
+      } catch (checkErr) {
+        console.error("Provider check error:", checkErr);
+        alert("Email này đã tồn tại.");
+        return;
+      }
+    }
+
     alert(err.message || "Đăng ký thất bại");
   }
-});
 }
-
 
 // =======================
 // LOGIN

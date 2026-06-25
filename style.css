@@ -12,11 +12,13 @@ body {
 /* =======================
    LOGIN
 ======================= */
-#loginPage {
-  height: 100vh;
-  display: flex;
-  justify-content: center;
-  align-items: center;
+.login-box {
+  width: 100%;
+  max-width: 380px;
+  background: white;
+  padding: 34px 30px;
+  border-radius: 16px;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.08);
 }
 
 .login-box {
@@ -26,7 +28,16 @@ body {
   border-radius: 14px;
   box-shadow: 0 5px 20px rgba(0,0,0,0.1);
 }
+@media (max-width: 768px) {
+  #loginPage {
+    justify-content: center;
+    padding: 20px;
+  }
 
+  .login-box {
+    max-width: 100%;
+  }
+}
 .login-box h1 {
   text-align: center;
   color: #2563eb;

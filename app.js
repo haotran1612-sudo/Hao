@@ -865,7 +865,7 @@ window.onload = function () {
 
       await requestNotificationPermission();
       await loadTasks();
-      await loadFavoriteMusic();
+   
 await autoPlayMusicAfterLogin();
     } else {
       localStorage.removeItem("userEmail");

@@ -200,6 +200,53 @@ alert("Google login + Calendar connected thành công");
     alert(err.message || "Google login failed");
   }
 }
+function getCurrentUserEmail(){
+
+    return (localStorage.getItem("userEmail")||"").toLowerCase();
+
+}
+
+function isOwner(task){
+
+    return getCurrentUserEmail()===String(task.email||"").toLowerCase();
+
+}
+
+function isEditor(task){
+
+    const me=getCurrentUserEmail();
+
+    return String(task.editor||"")
+        .toLowerCase()
+        .split(",")
+        .map(x=>x.trim())
+        .includes(me);
+
+}
+
+function isViewer(task){
+
+    const me=getCurrentUserEmail();
+
+    return String(task.viewer||"")
+        .toLowerCase()
+        .split(",")
+        .map(x=>x.trim())
+        .includes(me);
+
+}
+
+function getPermission(task){
+
+    if(isOwner(task)) return "owner";
+
+    if(isEditor(task)) return "editor";
+
+    if(isViewer(task)) return "viewer";
+
+    return "none";
+
+}
 // =======================
 // CHECK LOGIN PROVIDERS
 // =======================
@@ -329,6 +376,11 @@ async function saveTask() {
 
       attendees:
         document.getElementById("attendees")?.value || "",
+      viewer:
+document.getElementById("viewer")?.value || "",
+
+editor:
+document.getElementById("editor")?.value || "",
 
       addMeet:
         document.getElementById("addMeet")?.checked || false,
@@ -444,6 +496,9 @@ async function loadTasks() {
     snapshot.forEach(doc => {
 
       const task = doc.data();
+      const permission=getPermission(task);
+
+const readonly=permission==="viewer";
 const reviewDays = buildReviewDays(task);
       if (!task || !task.taskName) return;
       const tr = document.createElement("tr");
@@ -584,7 +639,19 @@ class="review-cell">${reviewDays.day7 || ""}</textarea>
     value="${task.attendees || ''}"
     onchange="updateTask('${doc.id}','attendees',this.value)">
 </td>
+<td>
+<input
+type="text"
+value="${task.viewer||''}"
+onchange="updateTask('${doc.id}','viewer',this.value)">
+</td>
 
+<td>
+<input
+type="text"
+value="${task.editor||''}"
+onchange="updateTask('${doc.id}','editor',this.value)">
+</td>
 <td style="text-align:center;">
   <input
     type="checkbox"
@@ -676,6 +743,43 @@ class="review-cell">${reviewDays.day7 || ""}</textarea>
 `;
 
       tbody.appendChild(tr);
+      const permission = getPermission(task);
+
+if(permission === "viewer"){
+
+    tr.querySelectorAll("input").forEach(el=>{
+
+        el.disabled = true;
+
+    });
+
+    tr.querySelectorAll("textarea").forEach(el=>{
+
+        el.disabled = true;
+
+    });
+
+    tr.querySelectorAll("select").forEach(el=>{
+
+        el.disabled = true;
+
+    });
+
+}
+
+    tr.querySelectorAll("textarea").forEach(el=>{
+
+        el.disabled = true;
+
+    });
+
+    tr.querySelectorAll("select").forEach(el=>{
+
+        el.disabled = true;
+
+    });
+
+}
 tr.querySelectorAll(".review-cell").forEach(autoResize);
     });
 highlightTodayColumn();
@@ -752,6 +856,8 @@ repeatUntil: "",
 calendarTitle: "",
 calendarType: "Event",
 attendees: "",
+      viewer:"",
+editor:"",
 addMeet: false,
 location: "",
 description: "",

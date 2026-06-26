@@ -393,14 +393,52 @@ header button {
 /* =======================
    INPUT TABLE
 ======================= */
-#taskTable input[type="text"],
-#taskTable input[type="datetime-local"] {
-  width: 100%;
-  border: none;
-  outline: none;
-  background: transparent;
-}
 
+#taskTable input,
+#taskTable select,
+#taskTable textarea{
+
+    width:100%;
+    min-height:32px;
+
+    padding:6px 8px;
+
+    border:1px solid transparent;
+    border-radius:6px;
+
+    background:transparent;
+
+    font-size:12px;
+
+    transition:all .2s ease;
+
+    outline:none;
+
+}
+#taskTable input:hover,
+#taskTable select:hover,
+#taskTable textarea:hover{
+
+    background:#f8fafc;
+    border-color:#d1d5db;
+
+}
+#taskTable input:focus,
+#taskTable select:focus,
+#taskTable textarea:focus{
+
+    background:white;
+
+    border-color:#2563eb;
+
+    box-shadow:0 0 0 2px rgba(37,99,235,.15);
+
+}
+#taskTable input[type="datetime-local"]{
+
+    min-width:160px;
+
+}
 /* =======================
    MODAL
 ======================= */
@@ -528,13 +566,7 @@ header button {
 #taskTable td.today-column{
     background:#fef3c7 !important;
 }
-#taskTable td input[type="text"]{
-    width:100%;
-    border:none;
-    outline:none;
-    background:transparent;
-    text-align:center;
-}
+
 .week-day{
     font-size:13px;
     font-weight:bold;
@@ -554,10 +586,15 @@ header button {
 }
 
 #taskTable th{
-    min-width:110px;
+    background:#2563eb;
+    color:#fff;
+    font-size:13px;
+    font-weight:600;
+    padding:14px 10px;
     text-align:center;
-    vertical-align:top;
-    line-height:1.6;
+    vertical-align:middle;
+    white-space:nowrap;
+    border-right:1px solid rgba(255,255,255,.15);
 }
 button {
   padding: 4px 8px;
@@ -596,23 +633,34 @@ table {
   min-width: 100%;
 }
 .review-cell{
+
     width:100%;
-    min-height:32px;
+
+    min-height:50px;
+
+    padding:6px 8px;
+
     resize:none;
-    overflow:hidden;
-    white-space:pre-wrap;
-    word-break:break-word;
-    box-sizing:border-box;
-    font:inherit;
-    padding:4px;
-    border:none;
+
+    border-radius:6px;
+
+    border:1px solid transparent;
+
     background:transparent;
+
+    line-height:1.5;
+
 }
 
 #taskTable td{
+    border:1px solid #eee;
+    padding:2px;
+    background:#fff;
     vertical-align:top;
 }
-
+#taskTable tbody tr:hover{
+    background:#f8fbff;
+}
 .music-panel{
   background:#fff;
   padding:16px;

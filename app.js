@@ -452,15 +452,24 @@ async function loadTasks() {
     snapshot.forEach(doc => {
 
       const task = doc.data();
+      const permission = getTaskPermission(task);
+
+const canEdit =
+permission==="owner" ||
+permission==="editor";
+
+const isOwner =
+permission==="owner";
 const reviewDays = buildReviewDays(task);
       if (!task || !task.taskName) return;
       const tr = document.createElement("tr");
 
       tr.innerHTML = `
 <td style="text-align:center;">
-  <input
-    type="checkbox"
-    onchange="archiveTask('${doc.id}', this)">
+ <input
+type="checkbox"
+${isOwner ? "" : "disabled"}
+onchange="archiveTask('${doc.id}', this)">
 </td>
 
 <td>
@@ -487,13 +496,14 @@ const reviewDays = buildReviewDays(task);
     onchange="updateTask('${doc.id}','processingTime',Number(this.value))">
 </td>
 <td>
-  <input
-    type="text"
-    value="${task.taskName || ''}"
-    onchange="updateTask('${doc.id}','taskName',this.value)">
+ <input
+type="text"
+value="${task.taskName || ''}"
+${canEdit ? "" : "disabled"}
+onchange="updateTask('${doc.id}','taskName',this.value)">
 </td>
 <td>
-<textarea
+<textarea ${canEdit ? "" : "disabled"}
 oninput="autoResize(this)"
 onchange="updateTask('${doc.id}','reviewDays.day1',this.value);
 scheduleTodayNotifications();"
@@ -501,7 +511,7 @@ rows="1"
 class="review-cell">${reviewDays.day1 || ""}</textarea>
 </td>
 <td>
-<textarea
+<textarea ${canEdit ? "" : "disabled"}
 oninput="autoResize(this)"
 onchange="updateTask('${doc.id}','reviewDays.day2',this.value);
 scheduleTodayNotifications();"
@@ -509,7 +519,7 @@ rows="1"
 class="review-cell">${reviewDays.day2 || ""}</textarea>
 </td>
 <td>
-<textarea
+<textarea ${canEdit ? "" : "disabled"}
 oninput="autoResize(this)"
 onchange="updateTask('${doc.id}','reviewDays.day3',this.value);
 scheduleTodayNotifications();"
@@ -517,7 +527,7 @@ rows="1"
 class="review-cell">${reviewDays.day3 || ""}</textarea>
 </td>
 <td>
-<textarea
+<textarea ${canEdit ? "" : "disabled"}
 oninput="autoResize(this)"
 onchange="updateTask('${doc.id}','reviewDays.day4',this.value);
 scheduleTodayNotifications();"
@@ -525,7 +535,7 @@ rows="1"
 class="review-cell">${reviewDays.day4 || ""}</textarea>
 </td>
 <td>
-<textarea
+<textarea ${canEdit ? "" : "disabled"}
 oninput="autoResize(this)"
 onchange="updateTask('${doc.id}','reviewDays.day5',this.value);
 scheduleTodayNotifications();"
@@ -533,7 +543,7 @@ rows="1"
 class="review-cell">${reviewDays.day5 || ""}</textarea>
 </td>
 <td>
-<textarea
+<textarea ${canEdit ? "" : "disabled"}
 oninput="autoResize(this)"
 onchange="updateTask('${doc.id}','reviewDays.day6',this.value);
 scheduleTodayNotifications();"
@@ -541,7 +551,7 @@ rows="1"
 class="review-cell">${reviewDays.day6 || ""}</textarea>
 </td>
 <td>
-<textarea
+<textarea ${canEdit ? "" : "disabled"}
 oninput="autoResize(this)"
 onchange="updateTask('${doc.id}','reviewDays.day7',this.value);
 scheduleTodayNotifications();"
@@ -556,7 +566,9 @@ class="review-cell">${reviewDays.day7 || ""}</textarea>
 </td>
 
 <td>
-  <select onchange="updateTask('${doc.id}','status',this.value)">
+<select
+${canEdit ? "" : "disabled"}
+onchange="updateTask('${doc.id}','status',this.value)">
     <option value="Todo" ${task.status==="Todo"?"selected":""}>Todo</option>
     <option value="Processing" ${task.status==="Processing"?"selected":""}>Processing</option>
     <option value="Done" ${task.status==="Done"?"selected":""}>Done</option>
@@ -683,12 +695,16 @@ class="review-cell">${reviewDays.day7 || ""}</textarea>
     onchange="updateTask('${doc.id}','autoDelete',this.checked)">
 </td>
 <td style="text-align:center;">
-  <button data-id="${doc.id}" onclick="syncFullCalendarFromRow(this)">
+<button
+${canEdit ? "" : "disabled"}
+data-id="${doc.id}"
+onclick="syncFullCalendarFromRow(this)">
   📅
 </button>
 
-  <button
-    onclick="rebuildReviewDays('${doc.id}')">
+<button
+${canEdit ? "" : "disabled"}
+onclick="rebuildReviewDays('${doc.id}')">
     🔄
   </button>
 </td>
@@ -2409,4 +2425,39 @@ function stopMusic() {
   const iframe = document.getElementById("musicPlayer");
   if (!iframe) return;
   iframe.src = "";
+}
+function getTaskPermission(task){
+
+    const me=(localStorage.getItem("userEmail")||"").toLowerCase();
+
+    if((task.owner||"").toLowerCase()===me){
+
+        return "owner";
+
+    }
+
+    const editors=(task.editor||"")
+        .split(",")
+        .map(x=>x.trim().toLowerCase())
+        .filter(Boolean);
+
+    if(editors.includes(me)){
+
+        return "editor";
+
+    }
+
+    const viewers=(task.viewer||"")
+        .split(",")
+        .map(x=>x.trim().toLowerCase())
+        .filter(Boolean);
+
+    if(viewers.includes(me)){
+
+        return "viewer";
+
+    }
+
+    return "none";
+
 }

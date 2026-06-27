@@ -16,6 +16,8 @@ firebase.initializeApp(firebaseConfig);
 const auth = firebase.auth();
 const db = firebase.firestore();
 const provider = new firebase.auth.GoogleAuthProvider();
+provider.addScope("https://www.googleapis.com/auth/calendar");
+provider.addScope("https://www.googleapis.com/auth/tasks");
 const SYNC_DELAY = 300;
 let syncQueue = Promise.resolve();
 

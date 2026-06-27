@@ -370,6 +370,7 @@ owner:
 
       calendarStatus: "Create",
 reviewCalendarIds: [],
+reviewCalendarMap: [],
       createdAt: new Date()
 
     };
@@ -461,6 +462,7 @@ permission==="editor";
 const isOwner =
 permission==="owner";
 const reviewDays = buildReviewDays(task);
+      const reviewMap=task.reviewCalendarMap||[];
       if (!task || !task.taskName) return;
       const tr = document.createElement("tr");
 
@@ -503,61 +505,133 @@ ${canEdit ? "" : "disabled"}
 onchange="updateTask('${doc.id}','taskName',this.value)">
 </td>
 <td>
-<textarea ${canEdit ? "" : "disabled"}
-oninput="autoResize(this)"
-onchange="updateTask('${doc.id}','reviewDays.day1',this.value);
-scheduleTodayNotifications();"
-rows="1"
-class="review-cell">${reviewDays.day1 || ""}</textarea>
+  <div>
+    <textarea
+      ${canEdit ? "" : "disabled"}
+      oninput="autoResize(this)"
+      onchange="updateReviewCell('${doc.id}',1,this)"
+      rows="1"
+      class="review-cell"
+    >${reviewDays.day1 || ""}</textarea>
+
+    <div>
+      ${task.apply
+        ? renderMiniTasks(doc.id, 1, reviewDays.day1, reviewMap)
+        : ""}
+    </div>
+  </div>
 </td>
+
+
 <td>
-<textarea ${canEdit ? "" : "disabled"}
-oninput="autoResize(this)"
-onchange="updateTask('${doc.id}','reviewDays.day2',this.value);
-scheduleTodayNotifications();"
-rows="1"
-class="review-cell">${reviewDays.day2 || ""}</textarea>
+  <div>
+    <textarea
+      ${canEdit ? "" : "disabled"}
+      oninput="autoResize(this)"
+      onchange="updateReviewCell('${doc.id}',2,this)"
+      rows="1"
+      class="review-cell"
+    >${reviewDays.day2 || ""}</textarea>
+
+    <div>
+      ${task.apply
+        ? renderMiniTasks(doc.id, 2, reviewDays.day2, reviewMap)
+        : ""}
+    </div>
+  </div>
 </td>
+
 <td>
-<textarea ${canEdit ? "" : "disabled"}
-oninput="autoResize(this)"
-onchange="updateTask('${doc.id}','reviewDays.day3',this.value);
-scheduleTodayNotifications();"
-rows="1"
-class="review-cell">${reviewDays.day3 || ""}</textarea>
+  <div>
+    <textarea
+      ${canEdit ? "" : "disabled"}
+      oninput="autoResize(this)"
+      onchange="updateReviewCell('${doc.id}',3,this)"
+      rows="1"
+      class="review-cell"
+    >${reviewDays.day3 || ""}</textarea>
+
+    <div>
+      ${task.apply
+        ? renderMiniTasks(doc.id, 3, reviewDays.day3, reviewMap)
+        : ""}
+    </div>
+  </div>
 </td>
+
+
 <td>
-<textarea ${canEdit ? "" : "disabled"}
-oninput="autoResize(this)"
-onchange="updateTask('${doc.id}','reviewDays.day4',this.value);
-scheduleTodayNotifications();"
-rows="1"
-class="review-cell">${reviewDays.day4 || ""}</textarea>
+  <div>
+    <textarea
+      ${canEdit ? "" : "disabled"}
+      oninput="autoResize(this)"
+      onchange="updateReviewCell('${doc.id}',4,this)"
+      rows="1"
+      class="review-cell"
+    >${reviewDays.day4 || ""}</textarea>
+
+    <div>
+      ${task.apply
+        ? renderMiniTasks(doc.id, 4, reviewDays.day4, reviewMap)
+        : ""}
+    </div>
+  </div>
 </td>
+
 <td>
-<textarea ${canEdit ? "" : "disabled"}
-oninput="autoResize(this)"
-onchange="updateTask('${doc.id}','reviewDays.day5',this.value);
-scheduleTodayNotifications();"
-rows="1"
-class="review-cell">${reviewDays.day5 || ""}</textarea>
+  <div>
+    <textarea
+      ${canEdit ? "" : "disabled"}
+      oninput="autoResize(this)"
+      onchange="updateReviewCell('${doc.id}',5,this)"
+      rows="1"
+      class="review-cell"
+    >${reviewDays.day5 || ""}</textarea>
+
+    <div>
+      ${task.apply
+        ? renderMiniTasks(doc.id, 5, reviewDays.day5, reviewMap)
+        : ""}
+    </div>
+  </div>
 </td>
+
 <td>
-<textarea ${canEdit ? "" : "disabled"}
-oninput="autoResize(this)"
-onchange="updateTask('${doc.id}','reviewDays.day6',this.value);
-scheduleTodayNotifications();"
-rows="1"
-class="review-cell">${reviewDays.day6 || ""}</textarea>
+  <div>
+    <textarea
+      ${canEdit ? "" : "disabled"}
+      oninput="autoResize(this)"
+      onchange="updateReviewCell('${doc.id}',6,this)"
+      rows="1"
+      class="review-cell"
+    >${reviewDays.day6 || ""}</textarea>
+
+    <div>
+      ${task.apply
+        ? renderMiniTasks(doc.id, 6, reviewDays.day6, reviewMap)
+        : ""}
+    </div>
+  </div>
 </td>
+
 <td>
-<textarea ${canEdit ? "" : "disabled"}
-oninput="autoResize(this)"
-onchange="updateTask('${doc.id}','reviewDays.day7',this.value);
-scheduleTodayNotifications();"
-rows="1"
-class="review-cell">${reviewDays.day7 || ""}</textarea>
+  <div>
+    <textarea
+      ${canEdit ? "" : "disabled"}
+      oninput="autoResize(this)"
+      onchange="updateReviewCell('${doc.id}',7,this)"
+      rows="1"
+      class="review-cell"
+    >${reviewDays.day7 || ""}</textarea>
+
+    <div>
+      ${task.apply
+        ? renderMiniTasks(doc.id, 7, reviewDays.day7, reviewMap)
+        : ""}
+    </div>
+  </div>
 </td>
+
 <td>
   <select onchange="updateTask('${doc.id}','priority',this.value)">
     <option value="Normal" ${task.priority==="Normal"?"selected":""}>Normal</option>
@@ -716,7 +790,10 @@ tr.querySelectorAll(".review-cell").forEach(autoResize);
 highlightTodayColumn();
 
 scheduleTodayNotifications();
-
+window.latestTasks = snapshot.docs.map(doc => ({
+  id: doc.id,
+  ...doc.data()
+}));
   } catch(err) {
 
     console.error(err);
@@ -800,6 +877,7 @@ calendarStatus: "Create",
 autoDelete: false,
 
 reviewCalendarIds: [],
+reviewCalendarMap: [],
 
 createdAt: new Date()
 
@@ -998,6 +1076,21 @@ async function updateTask(id, field, value) {
     console.error(err);
   }
 }
+async function updateReviewCell(docId, day, textarea){
+
+    await updateTask(
+        docId,
+        "reviewDays.day"+day,
+        textarea.value
+    );
+
+    scheduleTodayNotifications();
+softReloadTasks();
+    const row = textarea.closest("tr");
+
+    await createCalendarFromRow(docId,row);
+
+}
 async function toggleCreateCalendar(id, checkbox){
 
     try{
@@ -1075,12 +1168,13 @@ if(task.calendarId && token){
 
 }
 
-             await db.collection("tasks")
+           await db.collection("tasks")
 .doc(id)
 .update({
 
     calendarId:"",
     reviewCalendarIds:[],
+    reviewCalendarMap:[],
     meetLink:"",
     calendarStatus:"Create",
     apply:false
@@ -1142,36 +1236,70 @@ async function createCalendarFromRow(id, rowEl = null) {
       reviewDays = buildReviewDays(task);
     }
 
-    const reviewIds = [];
+   const reviewIds = [];
+const reviewMap = [];
     const week = getCurrentWeekDates();
 
-    for (let i = 1; i <= 7; i++) {
-      const text = reviewDays["day" + i] || "";
-      const reviewTasks = parseReviewTasks(text);
+  for (let day = 1; day <= 7; day++) {
 
-      for (const t of reviewTasks) {
-        const eventId = await createReviewCalendarTask(
-          t,
-          week[i - 1],
-          id,
-          i
+    const text = reviewDays["day"+day] || "";
+
+    const reviewTasks = parseReviewTasks(text);
+
+    for(let line=0; line<reviewTasks.length; line++){
+
+        const task = reviewTasks[line];
+
+        const eventId =
+        await createReviewCalendarTask(
+            task,
+            week[day-1],
+            id,
+            day
         );
 
-        if (eventId && !reviewIds.includes(eventId)) {
-          reviewIds.push(eventId);
+        if(eventId){
+
+            reviewIds.push(eventId);
+
+            reviewMap.push({
+
+                day:day,
+
+                line:line,
+
+                title:task.title,
+
+                eventId:eventId,
+
+                completed:false
+
+            });
+
         }
-      }
+
     }
 
+}
+
     // lưu lại reviewDays thực tế vừa sync để Firestore đồng bộ với form
-    await db.collection("tasks").doc(id).update({
+  await db.collection("tasks").doc(id).update({
+
       apply: true,
+
       calendarId: mainEvent?.id || task.calendarId || "",
+
       reviewCalendarIds: reviewIds,
+
+      reviewCalendarMap: reviewMap,
+
       meetLink: mainEvent?.hangoutLink || task.meetLink || "",
+
       calendarStatus: "Created",
+
       reviewDays: reviewDays
-    });
+
+});
 
     await loadTasks();
 
@@ -1827,7 +1955,50 @@ function autoResize(el){
     }
 
 }
+function renderMiniTasks(docId, dayIndex, text, reviewMap){
 
+    if(!text) return "";
+
+    const tasks = parseReviewTasks(text);
+
+    // 🔥 4.5.4 PROGRESS UI
+    const progress = renderDayProgress(reviewMap, dayIndex, text);
+
+    return `
+        ${progress}
+        ${tasks.map((task,index)=>{
+
+            const item = (reviewMap || []).find(x =>
+                x.day === dayIndex &&
+                x.line === index
+            );
+
+            const checked = item?.completed ? "checked" : "";
+
+            return `
+                <div class="mini-task">
+                    <label>
+                        <input
+                            type="checkbox"
+                            ${checked}
+                            onchange="toggleMiniTaskCompleted(
+                                '${docId}',
+                                ${dayIndex},
+                                ${index},
+                                this.checked
+                            )"
+                        >
+
+                        ${task.hour.toString().padStart(2,"0")}:${task.minute.toString().padStart(2,"0")}
+                        -
+                        ${task.endHour.toString().padStart(2,"0")}:${task.endMinute.toString().padStart(2,"0")}
+                        ${task.title}
+                    </label>
+                </div>
+            `;
+        }).join("")}
+    `;
+}
 // =======================
 // Hàm parse nhiều task
 // =======================
@@ -2460,4 +2631,164 @@ function getTaskPermission(task){
 
     return "none";
 
+}
+
+function calculateDayProgress(reviewMap, dayIndex, text) {
+  if (!text) return 0;
+
+  const tasks = parseReviewTasks(text);
+  if (!tasks.length) return 0;
+
+  const completed = (reviewMap || []).filter(
+    x => x.day === dayIndex && x.completed
+  ).length;
+
+  return Math.round((completed / tasks.length) * 100);
+}
+function renderDayProgress(reviewMap, dayIndex, text) {
+  const percent = calculateDayProgress(reviewMap, dayIndex, text);
+
+  return `
+    <div class="day-progress">
+      <div class="bar">
+        <div class="fill" style="width:${percent}%"></div>
+      </div>
+      <small>${percent}%</small>
+    </div>
+  `;
+}
+async function autoMarkTaskDoneIfCompleted(docId, reviewMap, reviewDays) {
+  try {
+    let total = 0;
+
+    for (let i = 1; i <= 7; i++) {
+      const text = reviewDays["day" + i] || "";
+      const tasks = parseReviewTasks(text);
+      total += tasks.length;
+    }
+
+    if (total === 0) return;
+
+    const done = (reviewMap || []).filter(x => x.completed).length;
+
+    if (done >= total) {
+      await db.collection("tasks").doc(docId).update({
+        status: "Done"
+      });
+
+      showInAppPopup("🎉 Task Completed!");
+       softReloadTasks();  
+    }
+
+  } catch (err) {
+    console.error(err);
+  }
+}
+
+async function toggleMiniTaskCompleted(docId, dayIndex, lineIndex, checked) {
+  try {
+    const docRef = db.collection("tasks").doc(docId);
+    const snap = await docRef.get();
+    if (!snap.exists) return;
+
+    const task = snap.data();
+    let map = task.reviewCalendarMap || [];
+
+    // tìm đúng item
+    let item = map.find(x =>
+      x.day === dayIndex &&
+      x.line === lineIndex
+    );
+
+    // nếu chưa có → tạo mới
+    if (!item) {
+      item = {
+        day: dayIndex,
+        line: lineIndex,
+        completed: checked,
+        eventId: null
+      };
+      map.push(item);
+    } else {
+      item.completed = checked;
+    }
+
+    await docRef.update({
+      reviewCalendarMap: map
+    });
+
+    // sync google calendar
+    if (item.eventId) {
+      await updateGoogleCalendarEventStatus(item.eventId, checked);
+    }
+
+    // reload latest data
+    const updatedSnap = await docRef.get();
+    const updatedTask = updatedSnap.data();
+
+    await autoMarkTaskDoneIfCompleted(
+      docId,
+      map,
+      updatedTask.reviewDays
+    );
+
+    showInAppPopup(checked ? "✔ Done" : "↩ Undone");
+refreshRowProgress(docId);
+softReloadTasks();
+    await autoMarkTaskDoneIfCompleted(
+  docId,
+  map,
+  updatedTask.reviewDays
+);
+  } catch (err) {
+    console.error(err);
+  }
+}
+async function updateGoogleCalendarEventStatus(eventId, checked) {
+  const token = localStorage.getItem("googleToken");
+  if (!token || !eventId) return;
+
+  try {
+    await fetch(
+      `https://www.googleapis.com/calendar/v3/calendars/primary/events/${eventId}`,
+      {
+        method: "PATCH",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          description: checked ? "✅ Completed" : "⏳ Pending"
+        })
+      }
+    );
+  } catch (err) {
+    console.error("updateGoogleCalendarEventStatus error:", err);
+  }
+}
+function refreshRowProgress(docId) {
+  const row = document.querySelector(`button[data-id="${docId}"]`)?.closest("tr");
+  if (!row) return;
+
+  const task = window.latestTasks?.find(t => t.id === docId);
+  if (!task) return;
+
+  const reviewMap = task.reviewCalendarMap || [];
+
+  row.querySelectorAll(".review-cell").forEach((cell, i) => {
+    const progressEl = cell.parentElement.querySelector(".day-progress");
+    if (!progressEl) return;
+
+    const text = cell.value;
+    progressEl.outerHTML = renderDayProgress(reviewMap, i + 1, text);
+  });
+}
+let reloadTimer = null;
+
+function softReloadTasks() {
+  clearTimeout(reloadTimer);
+
+  reloadTimer = setTimeout(() => {
+    loadTasks();
+  }, 500);
 }

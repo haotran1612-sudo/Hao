@@ -329,14 +329,6 @@ async function saveTask() {
 
       attendees:
         document.getElementById("attendees")?.value || "",
-      viewer:
-    document.getElementById("viewer")?.value.trim() || "",
-
-editor:
-    document.getElementById("editor")?.value.trim() || "",
-
-owner:
-    localStorage.getItem("userEmail"),
 
       addMeet:
         document.getElementById("addMeet")?.checked || false,
@@ -592,18 +584,7 @@ class="review-cell">${reviewDays.day7 || ""}</textarea>
     value="${task.attendees || ''}"
     onchange="updateTask('${doc.id}','attendees',this.value)">
 </td>
-<td>
-  <input
-    type="text"
-    value="${task.viewer || ''}"
-    onchange="updateTask('${doc.id}','viewer',this.value)">
-</td>
-<td>
-  <input
-    type="text"
-    value="${task.editor || ''}"
-    onchange="updateTask('${doc.id}','editor',this.value)">
-</td>
+
 <td style="text-align:center;">
   <input
     type="checkbox"
@@ -771,9 +752,6 @@ repeatUntil: "",
 calendarTitle: "",
 calendarType: "Event",
 attendees: "",
-      viewer: "",
-editor: "",
-owner: localStorage.getItem("userEmail"),
 addMeet: false,
 location: "",
 description: "",

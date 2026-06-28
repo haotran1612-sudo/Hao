@@ -1756,50 +1756,75 @@ function buildReviewDays(task) {
 
 async function rebuildReviewDays(id){
 
-  const docRef =
-    await db.collection("tasks")
+  try{
+
+    const docRef =
+      await db.collection("tasks")
+        .doc(id)
+        .get();
+
+    if(!docRef.exists)
+      return null;
+
+    const task =
+      docRef.data();
+
+    const rebuilt =
+      buildReviewDays({
+
+        ...task,
+
+        reviewDays:{
+          day1:"",
+          day2:"",
+          day3:"",
+          day4:"",
+          day5:"",
+          day6:"",
+          day7:""
+        }
+
+      });
+
+    await db
+      .collection("tasks")
       .doc(id)
-      .get();
+      .update({
 
-  if(!docRef.exists)
-    return;
+        reviewDays: rebuilt
 
-  const task =
-    docRef.data();
+      });
 
-  const rebuilt =
-    buildReviewDays({
-      ...task,
-      reviewDays:{
-        day1:"",
-        day2:"",
-        day3:"",
-        day4:"",
-        day5:"",
-        day6:"",
-        day7:""
-      }
-    });
+    return rebuilt;
 
-  await db
-    .collection("tasks")
-    .doc(id)
-    .update({
-      reviewDays:rebuilt
-    });
-
-  return rebuilt;
-
-}
-
-catch (err) {
-    console.error(err);
-    alert("Rebuild thất bại");
   }
+
+  catch(err){
+
+    console.error(
+      err
+    );
+
+    alert(
+      "Rebuild thất bại"
+    );
+
+    return null;
+
+  }
+
 }
+
 function normalizeDate(d){
-    return new Date(d.getFullYear(), d.getMonth(), d.getDate());
+
+  return new Date(
+    d.getFullYear(),
+    d.getMonth(),
+    d.getDate()
+  );
+
 }
+
 // =======================
 // FORMAT EDAT
 // =======================

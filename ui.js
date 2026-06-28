@@ -144,3 +144,23 @@ window.openTaskModal = openTaskModal;
 
 window.googleLogin = googleLogin;
 window.logout = logout;
+
+
+import { loadTasks } from "./task.js";
+
+export function initUI() {
+  window.showTracker = () => {
+    document.getElementById("trackerPage").style.display = "block";
+    loadTasks();
+  };
+
+  window.showKanban = () => {
+    document.querySelector(".kanban").style.display = "flex";
+  };
+
+  window.openTaskModal = () =>
+    document.getElementById("taskModal").style.display = "block";
+
+  window.closeTaskModal = () =>
+    document.getElementById("taskModal").style.display = "none";
+}

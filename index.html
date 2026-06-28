@@ -90,11 +90,21 @@
 
     <div class="menu">
 
-<button onclick="showKanban()">Kanban</button>
+<button onclick="showKanban()">
+Kanban
+</button>
 
-<button onclick="showTracker()">Tracker</button>
+<button onclick="showTracker()">
+Tracker
+</button>
 
-<button onclick="showBackup()">Backup</button>
+<button onclick="showCalendar()">
+Calendar
+</button>
+
+<button onclick="showBackup()">
+Backup
+</button>
 
     </div>
 
@@ -237,7 +247,18 @@
 
 </div>
 
-<!-- WEEK CALENDAR -->
+<!-- CALENDAR -->
+
+<div
+id="calendarPage"
+style="display:none;"
+>
+
+<div
+id="calendarRoot">
+</div>
+
+</div>
 
 
 
@@ -451,7 +472,10 @@
 <!-- PLAYER YOUTUBE ẨN -->
 
 <!-- APP.JS LUÔN ĐẶT CUỐI -->
-<script src="app.js"></script>
+<script
+type="module"
+src="./app.js">
+</script>
 
 </body>
 </html>

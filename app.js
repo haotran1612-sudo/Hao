@@ -20,7 +20,7 @@ provider.addScope("https://www.googleapis.com/auth/calendar");
 provider.addScope("https://www.googleapis.com/auth/tasks");
 const SYNC_DELAY = 300;
 let syncQueue = Promise.resolve();
-
+const creatingCalendar = new Set();
 function enqueueSync(fn) {
   syncQueue = syncQueue.then(() => new Promise(async (resolve) => {
     try {
@@ -379,6 +379,8 @@ async function saveTask() {
 
       calendarStatus: "Create",
 reviewCalendarIds: [],
+googleTaskId:"",
+reviewGoogleTaskIds:[],
       createdAt: new Date()
 
     };
@@ -780,6 +782,9 @@ autoDelete: false,
 
 reviewCalendarIds: [],
 
+googleTaskId:"",
+reviewGoogleTaskIds:[],
+
 createdAt: new Date()
 
     });
@@ -981,11 +986,19 @@ async function toggleCreateCalendar(id, checkbox){
 
     try{
 
-        await db.collection("tasks")
-        .doc(id)
-        .update({
-            apply: checkbox.checked
-        });
+       await db.collection("tasks")
+.doc(id)
+.update({
+
+    calendarId:"",
+    reviewCalendarIds:[],
+    googleTaskId:"",
+    reviewGoogleTaskIds:[],
+    meetLink:"",
+    calendarStatus:"Create",
+    apply:false
+
+});
 
         if(checkbox.checked){
 
@@ -1086,6 +1099,16 @@ async function createCalendarFromRow(id, rowEl = null) {
   if (!doc.exists) return;
 
   const task = doc.data();
+  // Đã tạo rồi thì không tạo nữa
+if (task.calendarType === "Event" && task.calendarId) {
+    console.log("Event đã tồn tại");
+    return;
+}
+
+if (task.calendarType === "Task" && task.googleTaskId) {
+    console.log("Google Task đã tồn tại");
+    return;
+}
   const week = getCurrentWeekDates();
 
   const cells = rowEl
@@ -1108,13 +1131,38 @@ async function createCalendarFromRow(id, rowEl = null) {
 
     if (isTaskMode) {
 
-      await createGoogleTask(task.taskName, task.start);
+    const createdTask =
+await createGoogleTask(
+    task.taskName,
+    task.start
+);
+
+await db.collection("tasks")
+.doc(id)
+.update({
+    googleTaskId: createdTask.id
+});
 
       for (let i = 0; i < 7; i++) {
         const items = parseReviewTasks(reviewDays["day" + (i + 1)]);
 
         for (const t of items) {
-          await createGoogleTask(t.title, week[i]);
+         const gt =
+await createGoogleTask(
+    t.title,
+    week[i]
+);
+
+const ids =
+task.reviewGoogleTaskIds || [];
+
+ids.push(gt.id);
+
+await db.collection("tasks")
+.doc(id)
+.update({
+    reviewGoogleTaskIds: ids
+});
         }
       }
 
@@ -1125,7 +1173,18 @@ async function createCalendarFromRow(id, rowEl = null) {
         startMain.getTime() + (task.processingTime || 1) * 3600000
       );
 
-      await createGoogleEvent(task.taskName, startMain, endMain);
+     const createdEvent =
+await createGoogleEvent(
+    task.taskName,
+    startMain,
+    endMain
+);
+
+await db.collection("tasks")
+.doc(id)
+.update({
+    calendarId: createdEvent.id
+});
 
       for (let i = 0; i < 7; i++) {
         const items = parseReviewTasks(reviewDays["day" + (i + 1)]);
@@ -1138,7 +1197,21 @@ async function createCalendarFromRow(id, rowEl = null) {
 
           const end = new Date(start.getTime() + 30 * 60000);
 
-          await createGoogleEvent(t.title, start, end);
+        const event =
+await createGoogleEvent(
+    t.title,
+    start,
+    end
+);
+
+const ids = task.reviewCalendarIds || [];
+ids.push(event.id);
+
+await db.collection("tasks")
+.doc(id)
+.update({
+    reviewCalendarIds: ids
+});
         }
       }
     }
@@ -1235,7 +1308,14 @@ if(
       email: localStorage.getItem("userEmail"),
       archivedAt: new Date()
     });
-
+await db.collection("tasks")
+.doc(id)
+.update({
+    calendarId:"",
+    reviewCalendarIds:[],
+    googleTaskId:"",
+    reviewGoogleTaskIds:[]
+});
     await db.collection("tasks").doc(id).delete();
 
     loadTasks();

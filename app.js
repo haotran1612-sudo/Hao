@@ -335,131 +335,157 @@ function closeTaskModal() {
 // =======================
 async function saveTask() {
 
-  try {
+try{
 
-    const taskData = {
+const taskData={
 
-      email: localStorage.getItem("userEmail"),
+email:
+localStorage.getItem(
+"userEmail"
+),
 
-      taskName:
-        document.getElementById("taskName")?.value || "",
+taskName:
+document.getElementById(
+"taskName"
+)?.value || "",
 
-      start:
-        document.getElementById("startDate")?.value || "",
+start:
+document.getElementById(
+"startDate"
+)?.value || "",
 
-      deadline:
-        document.getElementById("deadline")?.value || "",
-    
-      taskType:
-        document.getElementById("taskType")?.value || "Daily",
+deadline:
+document.getElementById(
+"deadline"
+)?.value || "",
 
-      priority:
-        document.getElementById("priority")?.value || "Normal",
+taskType:
+document.getElementById(
+"taskType"
+)?.value || "Daily",
 
-      status:
-        document.getElementById("status")?.value || "Todo",
+priority:
+document.getElementById(
+"priority"
+)?.value || "Normal",
 
-      calendarTitle:
-        document.getElementById("calendarTitle")?.value || "",
+status:
+document.getElementById(
+"status"
+)?.value || "Todo",
 
-      calendarType:
-        document.getElementById("calendarType")?.value || "Event",
+calendarTitle:
+document.getElementById(
+"calendarTitle"
+)?.value || "",
 
-      attendees:
-        document.getElementById("attendees")?.value || "",
+calendarType:
+document.getElementById(
+"calendarType"
+)?.value || "Event",
 
-      addMeet:
-        document.getElementById("addMeet")?.checked || false,
+attendees:
+document.getElementById(
+"attendees"
+)?.value || "",
 
-      location:
-        document.getElementById("location")?.value || "",
+addMeet:
+document.getElementById(
+"addMeet"
+)?.checked || false,
 
-      description:
-        document.getElementById("description")?.value || "",
+location:
+document.getElementById(
+"location"
+)?.value || "",
 
-      repeat:
-        document.getElementById("repeat")?.value || "None",
+description:
+document.getElementById(
+"description"
+)?.value || "",
 
-      repeatInterval:
-        Number(document.getElementById("repeatInterval")?.value) || 1,
+repeat:
+document.getElementById(
+"repeat"
+)?.value || "None",
 
-      repeatUntil:
-        document.getElementById("repeatUntil")?.value || "",
+repeatInterval:
+Number(
+document.getElementById(
+"repeatInterval"
+)?.value
+)||1,
 
-      autoDelete:
-        document.getElementById("autoDelete")?.checked || false,
+repeatUntil:
+document.getElementById(
+"repeatUntil"
+)?.value || "",
 
-      apply: false,
+processingTime:
+Number(
+document.getElementById(
+"processingTime"
+)?.value
+)||1,
 
-      sendMail:
-        document.getElementById("sendMail")?.checked || false,
+apply:false,
 
-      calendarId: "",
+calendarId:"",
 
-      meetLink: "",
+reviewCalendarIds:[],
 
-      calendarStatus: "Create",
-reviewCalendarIds: [],
-      createdAt: new Date()
+meetLink:"",
 
-    };
-// lưu task
-const doc = await db.collection("tasks").add(taskData);
+calendarStatus:"Create",
 
-// tự tạo calendar nếu có start date
-if (taskData.start) {
+createdAt:
+new Date()
 
-    try {
+};
 
-        // bật trạng thái apply
-        await db.collection("tasks")
-        .doc(doc.id)
-        .update({
-            apply: true
-        });
+const doc =
+await db
+.collection("tasks")
+.add(taskData);
 
-        // tạo calendar
-        await createCalendarFromRow(doc.id);
+// tạo main task calendar
+if(
+taskData.start &&
+localStorage.getItem(
+"googleToken"
+)
+){
 
-    } catch(err){
-
-        console.error(
-            "Calendar create error",
-            err
-        );
-
-        alert(
-            "Task tạo rồi nhưng Calendar lỗi"
-        );
-
-    }
+await createCalendarFromRow(
+doc.id
+);
 
 }
 
-alert("Tạo task thành công");
-
-closeTaskModal();
-
-resetForm();
-
 await loadTasks();
-   await db.collection("tasks").add(taskData);
-
-alert("Tạo task thành công");
 
 closeTaskModal();
 
 resetForm();
 
-loadTasks();
+alert(
+"Tạo task thành công"
+);
 
-  } catch (err) {
+}catch(err){
 
-    console.error(err);
+console.error(
+"saveTask",
+err
+);
 
-    alert("Lỗi tạo task");
+alert(
+err.message ||
+"Lỗi tạo task"
+);
 
-  }
+}
+
 }
 // =======================
 // RESET FORM
@@ -1798,7 +1824,13 @@ async function createCalendarEvent(task, docId) {
     throw new Error("Start date không hợp lệ");
   }
 
-  const processingHours = Number(task.processingTime || 0);
+ const processingHours =
+Math.max(
+Number(
+task.processingTime || 1
+),
+0.5
+);
   const endDate = new Date(
     startDate.getTime() + processingHours * 60 * 60 * 1000
   );

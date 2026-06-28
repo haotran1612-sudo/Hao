@@ -38,6 +38,10 @@ window.showTracker = showTracker;
 window.showBackup = showBackup;
 window.showKanban = showKanban;
 window.openTaskModal = openTaskModal;
-
+import {
+ googleLogin,
+ logout
+}
+from "./googleSync.js";
 window.googleLogin = googleLogin;
 window.logout = logout;

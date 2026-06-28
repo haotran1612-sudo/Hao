@@ -2604,16 +2604,31 @@ async function removeTaskFromCalendar(task){
   const token = localStorage.getItem("googleToken");
   if(!token) return;
 
-  // delete main
-  if(task.calendarId){
-    await fetch(
-      `https://www.googleapis.com/calendar/v3/calendars/primary/events/${task.calendarId}`,
-      {
-        method:"DELETE",
-        headers:{ Authorization:`Bearer ${token}` }
-      }
-    ).catch(()=>{});
+  try {
+    if(task.calendarId){
+      await fetch(
+        `https://www.googleapis.com/calendar/v3/calendars/primary/events/${task.calendarId}`,
+        {
+          method:"DELETE",
+          headers:{ Authorization:`Bearer ${token}` }
+        }
+      );
+    }
+
+    for(const id of (task.reviewCalendarIds || [])){
+      await fetch(
+        `https://www.googleapis.com/calendar/v3/calendars/primary/events/${id}`,
+        {
+          method:"DELETE",
+          headers:{ Authorization:`Bearer ${token}` }
+        }
+      );
+    }
+
+  } catch(err){
+    console.error("Calendar delete failed", err);
   }
+}
 
   // delete review
   for(const id of (task.reviewCalendarIds||[])){
@@ -2626,10 +2641,6 @@ async function removeTaskFromCalendar(task){
     ).catch(()=>{});
   }
 
-  // ❗ FIX QUAN TRỌNG: xóa luôn task trong Firestore
-  if(task.id){
-    await db.collection("tasks").doc(task.id).delete();
-  }
 }
 // =======================
 // AUTO SYNC CALENDAR
@@ -2654,7 +2665,7 @@ function queueCalendarSync(docId){
               .collection("tasks")
               .doc(docId)
               .get();
-
+if (task.autoDelete) return;
           if(!ref.exists)
             return;
 
@@ -2770,4 +2781,29 @@ console.log(
 
 }
 
+}
+
+
+async function scanAndForceDeleteAutoTasks() {
+  const email = localStorage.getItem("userEmail");
+  const token = localStorage.getItem("googleToken");
+
+  if (!email || !token) return;
+
+  const snapshot = await db
+    .collection("tasks")
+    .where("email", "==", email)
+    .where("autoDelete", "==", true)
+    .get();
+
+  for (const doc of snapshot.docs) {
+    const task = { id: doc.id, ...doc.data() };
+
+    await removeTaskFromCalendar(task);
+
+    // 🔥 đảm bảo cleanup Firestore luôn
+    await db.collection("tasks").doc(task.id).delete();
+  }
+
+  console.log("AUTO DELETE CLEAN DONE");
 }

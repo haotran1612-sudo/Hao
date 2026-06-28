@@ -1,6 +1,6 @@
 // modules/calendar.js
 
-import { db } from "../firebase.js";
+import { db } from "./firebase.js";
 
 export async function createEvent(event){
 

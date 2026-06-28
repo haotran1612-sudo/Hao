@@ -768,16 +768,18 @@ scheduleTodayNotifications();
 // =======================
 // SHOW TRACKER
 // =======================
-window.showTracker = showTracker;
-window.addRow = addRow;
-window.saveTask = saveTask;
+function showTracker() {
 
-window.openTaskModal = openTaskModal;
-window.closeTaskModal = closeTaskModal;
+  document.getElementById("trackerPage").style.display = "block";
 
-window.login = login;
-window.googleLogin = googleLogin;
-window.logout = logout;
+  document.getElementById("backupPage").style.display = "none";
+
+  const kanban = document.querySelector(".kanban");
+  if (kanban) kanban.style.display = "none";
+
+  loadWeekHeader();
+  loadTasks();
+}
 // =======================
 // SHOW KANBAN
 // =======================

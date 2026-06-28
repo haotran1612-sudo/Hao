@@ -971,9 +971,28 @@ async function updateTask(id, field, value) {
     const data = {};
     data[field] = value;
 
+  // AUTO DELETE
+if (
+  field === "autoDelete" &&
+  value === true
+) {
+
+  const docRef =
     await db.collection("tasks")
       .doc(id)
-      .update(data);
+      .get();
+
+  const task = {
+    id,
+    ...docRef.data()
+  };
+
+  await removeTaskFromCalendar(task);
+
+  await loadTasks();
+
+  return;
+}
 
     // Nếu đổi taskType / start / taskName thì reset reviewDays
     // để loadTasks() build lại theo logic mới
@@ -1138,7 +1157,15 @@ async function createCalendarFromRow(id, rowEl = null) {
     }
 
     const task = docRef.data();
+if (task.autoDelete) {
 
+  console.log(
+    "Auto delete ON -> skip create calendar"
+  );
+
+  return;
+
+}
     // ===== MAIN EVENT =====
     let mainEvent = null;
 
@@ -1735,7 +1762,9 @@ function formatDate(d){
 // =======================
 async function createCalendarEvent(task, docId) {
   const token = localStorage.getItem("googleToken");
-
+if (task.autoDelete) {
+  return null;
+}
   if (!token) {
     throw new Error("Google chưa kết nối");
   }
@@ -2090,7 +2119,23 @@ async function refreshAllNotifications() {
 async function createReviewCalendarTask(task, date, docId = "", dayIndex = "") {
   const token = localStorage.getItem("googleToken");
   if (!token) return null;
+if (docId) {
 
+  const doc =
+    await db.collection("tasks")
+      .doc(docId)
+      .get();
+
+  if (
+    doc.exists &&
+    doc.data().autoDelete
+  ) {
+
+    return null;
+
+  }
+
+}
   // START
   const startDate = new Date(
     date.getFullYear(),
@@ -2468,3 +2513,68 @@ function stopMusic() {
   iframe.src = "";
 }
 
+// Delete
+async function removeTaskFromCalendar(task) {
+
+  const token = localStorage.getItem("googleToken");
+
+  if (!token) return;
+
+  // xóa main event
+  if (task.calendarId) {
+    try {
+
+      await fetch(
+        `https://www.googleapis.com/calendar/v3/calendars/primary/events/${task.calendarId}`,
+        {
+          method: "DELETE",
+          headers: {
+            Authorization: `Bearer ${token}`
+          }
+        }
+      );
+
+    } catch (err) {
+      console.log("Delete main fail");
+    }
+  }
+
+  // xóa review events
+  if (task.reviewCalendarIds?.length) {
+
+    for (const id of task.reviewCalendarIds) {
+
+      try {
+
+        await fetch(
+          `https://www.googleapis.com/calendar/v3/calendars/primary/events/${id}`,
+          {
+            method: "DELETE",
+            headers: {
+              Authorization: `Bearer ${token}`
+            }
+          }
+        );
+
+      } catch (err) {
+        console.log("Delete review fail");
+      }
+
+    }
+
+  }
+
+  // reset firestore
+  await db.collection("tasks")
+    .doc(task.id)
+    .update({
+
+      apply: false,
+      calendarId: "",
+      reviewCalendarIds: [],
+      meetLink: "",
+      calendarStatus: "Delete"
+
+    });
+
+}

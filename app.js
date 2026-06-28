@@ -768,17 +768,28 @@ scheduleTodayNotifications();
 // =======================
 // SHOW TRACKER
 // =======================
-function showTracker() {
+window.showTracker=function(){
+}
 
-  document.getElementById("trackerPage").style.display = "block";
+window.addRow=function(){
+}
 
-  document.getElementById("backupPage").style.display = "none";
+window.saveTask=function(){
+}
 
-  const kanban = document.querySelector(".kanban");
-  if (kanban) kanban.style.display = "none";
+window.openTaskModal=function(){
+}
 
-  loadWeekHeader();
-  loadTasks();
+window.closeTaskModal=function(){
+}
+
+window.login=function(){
+}
+
+window.googleLogin=function(){
+}
+
+window.logout=function(){
 }
 // =======================
 // SHOW KANBAN

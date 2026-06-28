@@ -943,59 +943,57 @@ async function updateTask(id, field, value) {
 
   try {
 
-    const data = {};
-    data[field] = value;
-// FIX reviewDays update đúng cách
-if (field.startsWith("reviewDays.")) {
+    const ref = db.collection("tasks").doc(id);
 
-  const day = field.split(".")[1];
+    // =========================
+    // FIX REVIEW DAYS (QUAN TRỌNG)
+    // =========================
+    if (field.startsWith("reviewDays.")) {
 
-  const docRef = await db.collection("tasks").doc(id).get();
-  const task = docRef.data();
+      await ref.update({
+        [field]: value
+      });
 
-  await db.collection("tasks").doc(id).set({
-    reviewDays: {
-      ...(task.reviewDays || {}),
-      [day]: value
-    }
-  }, { merge: true });
-
-  return;
-}
-    await db.collection("tasks")
-      .doc(id)
-      .update(data);
-
-    // Nếu đổi taskType / start / taskName thì reset reviewDays
-    // để loadTasks() build lại theo logic mới
-   if (
-  field === "taskType" ||
-  field === "start" ||
-  field === "deadline" ||
-  field === "taskName" ||
-  field === "processingTime"
-) {
-
-      await db.collection("tasks")
-        .doc(id)
-        .update({
-          reviewDays: {
-            day1:"",
-            day2:"",
-            day3:"",
-            day4:"",
-            day5:"",
-            day6:"",
-            day7:""
-          }
-        });
-
-      await loadTasks();
       return;
     }
 
-  } catch(err) {
-    console.error(err);
+    // =========================
+    // UPDATE FIELD BÌNH THƯỜNG
+    // =========================
+    await ref.update({
+      [field]: value
+    });
+
+    // =========================
+    // RESET REVIEW DAYS (CHỈ KHI CẦN)
+    // =========================
+    const resetFields = [
+      "taskType",
+      "start",
+      "deadline",
+      "taskName",
+      "processingTime"
+    ];
+
+    if (resetFields.includes(field)) {
+
+      await ref.update({
+        reviewDays: {
+          day1: "",
+          day2: "",
+          day3: "",
+          day4: "",
+          day5: "",
+          day6: "",
+          day7: ""
+        }
+      });
+
+      await loadTasks();
+    }
+
+  } catch (err) {
+    console.error("updateTask error:", err);
   }
 }
 async function toggleCreateCalendar(id, checkbox){
@@ -1149,7 +1147,7 @@ const reviewDays = rowEl
   : (task.reviewDays || {});
       console.log("ReviewDays =", reviewDays);
 
- const isTaskMode = freshTask.calendarType === "Task";
+ const isTaskMode = task.calendarType === "Task";
 
   await enqueueSync(async () => {
 
@@ -1188,7 +1186,7 @@ await db.collection("tasks")
 
     } else {
 
-     const startMain = new Date(freshTask.start);
+ const startMain = new Date(task.start);
      const hours = Math.max(
     0.5,
     Number(task.processingTime || 1)
@@ -1198,7 +1196,8 @@ const endMain = new Date(
     startMain.getTime() + hours * 3600000
 );
 
-     const createdEvent =
+     const createdEvent 
+       
 await createGoogleEvent(
     task.taskName,
     startMain,

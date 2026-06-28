@@ -1857,15 +1857,7 @@ async function rebuildReviewDays(id){
 
 }
 
-function normalizeDate(d){
 
-  return new Date(
-    d.getFullYear(),
-    d.getMonth(),
-    d.getDate()
-  );
-
-}
 
 // =======================
 // FORMAT EDAT

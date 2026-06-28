@@ -2807,3 +2807,21 @@ async function scanAndForceDeleteAutoTasks() {
 
   console.log("AUTO DELETE CLEAN DONE");
 }
+//debug delete
+
+async function debugAutoDeleteTasks(){
+
+  const email = localStorage.getItem("userEmail");
+
+  const snapshot = await db
+    .collection("tasks")
+    .where("email","==",email)
+    .where("autoDelete","==",true)
+    .get();
+
+  console.log("AUTO DELETE TASKS:");
+
+  snapshot.forEach(doc=>{
+    console.log(doc.id, doc.data());
+  });
+}

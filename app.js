@@ -1095,6 +1095,15 @@ if(task.calendarId && token){
 
 }
 async function createCalendarFromRow(id, rowEl = null) {
+
+    if (creatingCalendar.has(id)) {
+        console.log("Đang đồng bộ...");
+        return;
+    }
+
+    creatingCalendar.add(id);
+
+    try {
   const doc = await db.collection("tasks").doc(id).get();
   if (!doc.exists) return;
 
@@ -1216,13 +1225,19 @@ await db.collection("tasks")
       }
     }
 
-    await db.collection("tasks").doc(id).update({
+  await db.collection("tasks").doc(id).update({
       calendarStatus: "Created"
     });
 
   });
-}
 
+    } finally {
+
+        creatingCalendar.delete(id);
+
+    }
+
+}
 // =======================
 // ARCHIVE TASK
 // =======================
@@ -2092,107 +2107,115 @@ async function createReviewCalendarTask(
     reviewTask,
     parentTask,
     date,
-    docId="",
-    dayIndex=""
+    docId = "",
+    dayIndex = ""
 ) {
-  if(parentTask.calendarType==="Task"){
 
-    return await createGoogleReviewTask(
-        reviewTask,
-        parentTask,
-        date,
-        docId,
-        dayIndex
-    );
+    if (parentTask.calendarType === "Task") {
+        return await createGoogleReviewTask(
+            reviewTask,
+            parentTask,
+            date,
+            docId,
+            dayIndex
+        );
+    }
 
-}
-  const token = localStorage.getItem("googleToken");
-  if (!token) return null;
+    const token = localStorage.getItem("googleToken");
+    if (!token) return null;
 
-  // START
-  const startDate = new Date(
-    date.getFullYear(),
-    date.getMonth(),
-    date.getDate(),
-    task.hour,
-    task.minute
-  );
-
-  // END
-  let endDate;
-
-  if (task.endHour != null && task.endMinute != null) {
-    endDate = new Date(
-      date.getFullYear(),
-      date.getMonth(),
-      date.getDate(),
-      task.endHour,
-      task.endMinute
-    );
-  } else {
-    const match = `${task.raw || ""}`.match(/-(\d{1,2}):(\d{2})/);
-
-    if (match) {
-      endDate = new Date(
+    const startDate = new Date(
         date.getFullYear(),
         date.getMonth(),
         date.getDate(),
-        Number(match[1]),
-        Number(match[2])
-      );
+        reviewTask.hour,
+        reviewTask.minute
+    );
+
+    let endDate;
+
+    if (
+        reviewTask.endHour != null &&
+        reviewTask.endMinute != null
+    ) {
+
+        endDate = new Date(
+            date.getFullYear(),
+            date.getMonth(),
+            date.getDate(),
+            reviewTask.endHour,
+            reviewTask.endMinute
+        );
+
     } else {
-      endDate = new Date(startDate.getTime() + 30 * 60 * 1000);
+
+        endDate = new Date(
+            startDate.getTime() + 30 * 60000
+        );
+
     }
-  }
 
-  // ===== CHẶN TRÙNG REVIEW TASK =====
-  const eventKey = buildReviewEventKey(docId, dayIndex, task, date);
-  const existed = await findCalendarEventByKey(eventKey);
+    const eventKey = buildReviewEventKey(
+        docId,
+        dayIndex,
+        reviewTask,
+        date
+    );
 
-  if (existed) {
-    return existed.id; // đã có rồi thì trả id cũ
-  }
+    const existed = await findCalendarEventByKey(eventKey);
 
-  const body = {
-    summary: task.title || task.raw || "Task",
-    start: {
-      dateTime: startDate.toISOString(),
-      timeZone: "Asia/Ho_Chi_Minh"
-    },
-    end: {
-      dateTime: endDate.toISOString(),
-      timeZone: "Asia/Ho_Chi_Minh"
-    },
-    extendedProperties: {
-      private: {
-        appTaskKey: eventKey,
-        appTaskType: "review"
-      }
+    if (existed) {
+        return existed.id;
     }
-  };
 
-  const response = await fetch(
-    "https://www.googleapis.com/calendar/v3/calendars/primary/events",
-    {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${token}`,
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify(body)
+    const body = {
+
+        summary: reviewTask.title || reviewTask.raw || "Task",
+
+        start: {
+            dateTime: startDate.toISOString(),
+            timeZone: "Asia/Ho_Chi_Minh"
+        },
+
+        end: {
+            dateTime: endDate.toISOString(),
+            timeZone: "Asia/Ho_Chi_Minh"
+        },
+
+        extendedProperties: {
+            private: {
+                appTaskKey: eventKey,
+                appTaskType: "review"
+            }
+        }
+
+    };
+
+    const response = await fetch(
+        "https://www.googleapis.com/calendar/v3/calendars/primary/events",
+        {
+            method: "POST",
+            headers: {
+                Authorization: `Bearer ${token}`,
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify(body)
+        }
+    );
+
+    if (!response.ok) {
+
+        console.error(await response.text());
+
+        return null;
+
     }
-  );
 
-  if (!response.ok) {
-    const err = await response.text();
-    console.error("createReviewCalendarTask error:", err);
-    return null;
-  }
+    const event = await response.json();
 
-  const event = await response.json();
-  return event.id;
+    return event.id;
+
 }
-
 
 //Bước 2: Quét toàn bộ cột Mon → Sun
 async function createCalendarFromReviewCells(){
@@ -2255,14 +2278,39 @@ await createReviewCalendarTask(task, date, docId, i + 1);
 
     alert("Đã tạo Calendar");
 }
-async function syncFullCalendarFromRow(btn) {
-  const docId = btn.getAttribute("data-id");
-  if (!docId) return alert("Missing task id");
+async function syncFullCalendarFromRow(btn){
 
-  const row = btn.closest("tr");
-  await createCalendarFromRow(docId, row);
+    if(btn.disabled){
+        return;
+    }
 
-  alert("Đồng bộ Calendar hoàn tất");
+    btn.disabled=true;
+
+    try{
+
+        const docId=btn.getAttribute("data-id");
+
+        if(!docId){
+            alert("Missing task id");
+            return;
+        }
+
+        const row=btn.closest("tr");
+
+        await createCalendarFromRow(docId,row);
+
+        alert("Đồng bộ Calendar hoàn tất");
+
+    }catch(err){
+
+        console.error(err);
+
+    }finally{
+
+        btn.disabled=false;
+
+    }
+
 }
 
 // =======================
@@ -2328,11 +2376,41 @@ async function findCalendarEventByKey(eventKey) {
   return null;
 }
 
+// 
+async function findGoogleTask(title){
+
+    const token=localStorage.getItem("googleToken");
+
+    if(!token) return null;
+
+    const res=await fetch(
+        "https://tasks.googleapis.com/tasks/v1/lists/@default/tasks",
+        {
+            headers:{
+                Authorization:`Bearer ${token}`
+            }
+        }
+    );
+
+    const data=await res.json();
+
+    if(!data.items) return null;
+
+    return data.items.find(t=>t.title===title)||null;
+
+}
 // =======================
 // Tasks
 // =======================
 async function createGoogleTask(title, due = null) {
   const token = localStorage.getItem("googleToken");
+  const existed=await findGoogleTask(title);
+
+if(existed){
+
+    return existed;
+
+}
 
   const body = {
     title,

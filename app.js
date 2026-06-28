@@ -36,20 +36,14 @@ window.addEventListener(
 // =======================
 // FIREBASE INIT
 // =======================
-const firebaseConfig = {
-  apiKey: "AIzaSyDCI_kxfza5lY1tdFPsMSEQKC2xqFpbMpM",
-  authDomain: "whoami-73408.firebaseapp.com",
-  projectId: "whoami-73408",
-  storageBucket: "whoami-73408.firebasestorage.app",
-  messagingSenderId: "755566064562",
-  appId: "1:755566064562:web:15d0ec2626cf8aa4feeaab"
-};
+import {
+ db,
+ auth
+}
+from "./firebase.js";
 
-firebase.initializeApp(firebaseConfig);
-
-const auth = firebase.auth();
-const db = firebase.firestore();
-const provider = new firebase.auth.GoogleAuthProvider();
+const provider =
+new firebase.auth.GoogleAuthProvider();
 // =======================
 // NOTIFICATION
 // =======================

@@ -708,7 +708,7 @@ class="review-cell">${reviewDays.day7 || ""}</textarea>
   <input
     type="checkbox"
     ${task.autoDelete ? "checked" : ""}
-    oninput="updateTask('${doc.id}','autoDelete',this.checked)">
+   oninput="toggleAutoDelete('${doc.id}', this.checked)"">
 </td>
 <td style="text-align:center;">
   <button data-id="${doc.id}" onclick="syncFullCalendarFromRow(this)">
@@ -1114,7 +1114,10 @@ if(!docRef.exists) return;
 const task =
 docRef.data();
 
-if(task.autoDelete) return;
+if(task.autoDelete){
+  await removeTaskFromCalendar(task);
+  return;
+}
 
 
 // ===================
@@ -2824,4 +2827,22 @@ async function debugAutoDeleteTasks(){
   snapshot.forEach(doc=>{
     console.log(doc.id, doc.data());
   });
+}
+// dele
+async function toggleAutoDelete(id, checked){
+
+  await db.collection("tasks").doc(id).update({
+    autoDelete: checked
+  });
+
+  if(checked){
+
+    const doc = await db.collection("tasks").doc(id).get();
+    const task = doc.data();
+
+    await removeTaskFromCalendar(task);
+
+  }
+
+  await loadTasks();
 }

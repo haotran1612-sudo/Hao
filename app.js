@@ -945,7 +945,23 @@ async function updateTask(id, field, value) {
 
     const data = {};
     data[field] = value;
+// FIX reviewDays update đúng cách
+if (field.startsWith("reviewDays.")) {
 
+  const day = field.split(".")[1];
+
+  const docRef = await db.collection("tasks").doc(id).get();
+  const task = docRef.data();
+
+  await db.collection("tasks").doc(id).set({
+    reviewDays: {
+      ...(task.reviewDays || {}),
+      [day]: value
+    }
+  }, { merge: true });
+
+  return;
+}
     await db.collection("tasks")
       .doc(id)
       .update(data);
@@ -1121,19 +1137,19 @@ if (task.calendarType === "Task" && task.googleTaskId) {
   const week = getCurrentWeekDates();
 
 const reviewDays = rowEl
-    ? {
-        day1: rowEl.querySelectorAll(".review-cell")[0]?.value || "",
-        day2: rowEl.querySelectorAll(".review-cell")[1]?.value || "",
-        day3: rowEl.querySelectorAll(".review-cell")[2]?.value || "",
-        day4: rowEl.querySelectorAll(".review-cell")[3]?.value || "",
-        day5: rowEl.querySelectorAll(".review-cell")[4]?.value || "",
-        day6: rowEl.querySelectorAll(".review-cell")[5]?.value || "",
-        day7: rowEl.querySelectorAll(".review-cell")[6]?.value || ""
-      }
-    : (task.reviewDays || {});
+  ? {
+      day1: rowEl.querySelectorAll(".review-cell")[0]?.value || "",
+      day2: rowEl.querySelectorAll(".review-cell")[1]?.value || "",
+      day3: rowEl.querySelectorAll(".review-cell")[2]?.value || "",
+      day4: rowEl.querySelectorAll(".review-cell")[3]?.value || "",
+      day5: rowEl.querySelectorAll(".review-cell")[4]?.value || "",
+      day6: rowEl.querySelectorAll(".review-cell")[5]?.value || "",
+      day7: rowEl.querySelectorAll(".review-cell")[6]?.value || ""
+    }
+  : (task.reviewDays || {});
       console.log("ReviewDays =", reviewDays);
 
-  const isTaskMode = task.calendarType === "Task";
+ const isTaskMode = freshTask.calendarType === "Task";
 
   await enqueueSync(async () => {
 
@@ -1141,7 +1157,7 @@ const reviewDays = rowEl
 
     const createdTask =
 await createGoogleTask(
-    task.taskName,
+freshTask.taskName
     task.start
 );
 
@@ -1172,7 +1188,7 @@ await db.collection("tasks")
 
     } else {
 
-      const startMain = new Date(task.start);
+     const startMain = new Date(freshTask.start);
      const hours = Math.max(
     0.5,
     Number(task.processingTime || 1)
@@ -2284,7 +2300,10 @@ async function createReviewCalendarForRow(btn){
     const row = btn.closest("tr");
 
     const week = getCurrentWeekDates();
-
+const freshTask = {
+  ...task,
+  reviewDays: buildReviewDays(task)
+};
     const cells =
       row.querySelectorAll(".review-cell");
 

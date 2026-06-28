@@ -1,6 +1,6 @@
 // modules/task.js
 
-import { db } from "../firebase.js";
+import { db } from "/Hao/firebase.js";
 
 export async function createTask(data){
 

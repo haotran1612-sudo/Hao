@@ -1,4 +1,4 @@
-import "./firebase.js";
+import "/Hao/firebase.js";
 
 import "./eventBus.js";
 

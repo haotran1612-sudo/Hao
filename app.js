@@ -1131,6 +1131,7 @@ const reviewDays = rowEl
         day7: rowEl.querySelectorAll(".review-cell")[6]?.value || ""
       }
     : (task.reviewDays || {});
+      console.log("ReviewDays =", reviewDays);
 
   const isTaskMode = task.calendarType === "Task";
 
@@ -1172,9 +1173,14 @@ await db.collection("tasks")
     } else {
 
       const startMain = new Date(task.start);
-      const endMain = new Date(
-        startMain.getTime() + (task.processingTime || 1) * 3600000
-      );
+     const hours = Math.max(
+    0.5,
+    Number(task.processingTime || 1)
+);
+
+const endMain = new Date(
+    startMain.getTime() + hours * 3600000
+);
 
      const createdEvent =
 await createGoogleEvent(
@@ -1231,11 +1237,7 @@ await db.collection("tasks")
         firebase.firestore.FieldValue.arrayUnion(event.id)
 });
 
-await db.collection("tasks")
-.doc(id)
-.update({
-    reviewCalendarIds: ids
-});
+
         }
       }
     }
@@ -2255,7 +2257,17 @@ async function createCalendarFromReviewCells(){
             for(const t of tasks){
 
                const docId = row.querySelector("button[data-id]")?.getAttribute("data-id") || "";
-await createReviewCalendarTask(t, date, docId, i + 1);
+const snap = await db.collection("tasks").doc(docId).get();
+
+const parentTask = snap.data();
+
+await createReviewCalendarTask(
+    t,
+    parentTask,
+    date,
+    docId,
+    i + 1
+);
 
             }
 
@@ -2286,7 +2298,17 @@ async function createReviewCalendarForRow(btn){
         for(const task of tasks){
 
           const docId = btn.getAttribute("data-id") || "";
-await createReviewCalendarTask(task, date, docId, i + 1);
+const snap = await db.collection("tasks").doc(docId).get();
+
+const parentTask = snap.data();
+
+await createReviewCalendarTask(
+    task,
+    parentTask,
+    date,
+    docId,
+    i + 1
+);
         }
 
     }
@@ -2392,7 +2414,7 @@ async function findCalendarEventByKey(eventKey) {
 }
 
 // 
-async function findGoogleTask(title){
+async function findGoogleTask(title, due = null){
 
     const token=localStorage.getItem("googleToken");
 
@@ -2413,22 +2435,18 @@ async function findGoogleTask(title){
 
  return data.items.find(t => {
 
-    // khác tiêu đề
     if (t.title !== title) {
         return false;
     }
 
-    // không truyền due thì chỉ cần title giống
     if (!due) {
         return true;
     }
 
-    // không có ngày
     if (!t.due) {
         return false;
     }
 
-    // so sánh yyyy-mm-dd
     return (
         t.due.substring(0,10) ===
         new Date(due)

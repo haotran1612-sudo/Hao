@@ -1120,19 +1120,17 @@ if (task.calendarType === "Task" && task.googleTaskId) {
 }
   const week = getCurrentWeekDates();
 
-  const cells = rowEl
-    ? rowEl.querySelectorAll(".review-cell")
-    : [];
-
-  const reviewDays = {
-    day1: cells[0]?.value || "",
-    day2: cells[1]?.value || "",
-    day3: cells[2]?.value || "",
-    day4: cells[3]?.value || "",
-    day5: cells[4]?.value || "",
-    day6: cells[5]?.value || "",
-    day7: cells[6]?.value || ""
-  };
+const reviewDays = rowEl
+    ? {
+        day1: rowEl.querySelectorAll(".review-cell")[0]?.value || "",
+        day2: rowEl.querySelectorAll(".review-cell")[1]?.value || "",
+        day3: rowEl.querySelectorAll(".review-cell")[2]?.value || "",
+        day4: rowEl.querySelectorAll(".review-cell")[3]?.value || "",
+        day5: rowEl.querySelectorAll(".review-cell")[4]?.value || "",
+        day6: rowEl.querySelectorAll(".review-cell")[5]?.value || "",
+        day7: rowEl.querySelectorAll(".review-cell")[6]?.value || ""
+      }
+    : (task.reviewDays || {});
 
   const isTaskMode = task.calendarType === "Task";
 
@@ -1162,15 +1160,11 @@ await createGoogleTask(
     week[i]
 );
 
-const ids =
-task.reviewGoogleTaskIds || [];
-
-ids.push(gt.id);
-
 await db.collection("tasks")
 .doc(id)
 .update({
-    reviewGoogleTaskIds: ids
+    reviewGoogleTaskIds:
+        firebase.firestore.FieldValue.arrayUnion(gt.id)
 });
         }
       }
@@ -1201,20 +1195,41 @@ await db.collection("tasks")
         for (const t of items) {
           const d = week[i];
 
-          const start = new Date(d);
-          start.setHours(t.hour, t.minute, 0);
+         const start = new Date(d);
+start.setHours(t.hour, t.minute, 0);
 
-          const end = new Date(start.getTime() + 30 * 60000);
+let end;
 
-        const event =
+if (t.endHour != null && t.endMinute != null) {
+
+    end = new Date(d);
+    end.setHours(
+        t.endHour,
+        t.endMinute,
+        0
+    );
+
+} else {
+
+    end = new Date(
+        start.getTime() + 30 * 60000
+    );
+
+}
+
+const event =
 await createGoogleEvent(
     t.title,
     start,
     end
 );
 
-const ids = task.reviewCalendarIds || [];
-ids.push(event.id);
+await db.collection("tasks")
+.doc(id)
+.update({
+    reviewCalendarIds:
+        firebase.firestore.FieldValue.arrayUnion(event.id)
+});
 
 await db.collection("tasks")
 .doc(id)
@@ -2396,15 +2411,39 @@ async function findGoogleTask(title){
 
     if(!data.items) return null;
 
-    return data.items.find(t=>t.title===title)||null;
+ return data.items.find(t => {
 
+    // khác tiêu đề
+    if (t.title !== title) {
+        return false;
+    }
+
+    // không truyền due thì chỉ cần title giống
+    if (!due) {
+        return true;
+    }
+
+    // không có ngày
+    if (!t.due) {
+        return false;
+    }
+
+    // so sánh yyyy-mm-dd
+    return (
+        t.due.substring(0,10) ===
+        new Date(due)
+            .toISOString()
+            .substring(0,10)
+    );
+
+}) || null;
 }
 // =======================
 // Tasks
 // =======================
 async function createGoogleTask(title, due = null) {
   const token = localStorage.getItem("googleToken");
-  const existed=await findGoogleTask(title);
+const existed = await findGoogleTask(title, due);
 
 if(existed){
 

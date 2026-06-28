@@ -50,3 +50,10 @@ export function initGoogleSync(){
  );
 
 }
+export function googleLogin(){
+ console.log("google login");
+}
+
+export function logout(){
+ firebase.auth().signOut();
+}

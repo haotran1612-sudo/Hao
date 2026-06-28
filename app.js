@@ -335,9 +335,9 @@ function closeTaskModal() {
 // =======================
 async function saveTask() {
 
-try{
+try {
 
-const taskData={
+const taskData = {
 
 email:
 localStorage.getItem(
@@ -347,79 +347,17 @@ localStorage.getItem(
 taskName:
 document.getElementById(
 "taskName"
-)?.value || "",
+).value,
 
 start:
 document.getElementById(
 "startDate"
-)?.value || "",
+).value,
 
 deadline:
 document.getElementById(
 "deadline"
-)?.value || "",
-
-taskType:
-document.getElementById(
-"taskType"
-)?.value || "Daily",
-
-priority:
-document.getElementById(
-"priority"
-)?.value || "Normal",
-
-status:
-document.getElementById(
-"status"
-)?.value || "Todo",
-
-calendarTitle:
-document.getElementById(
-"calendarTitle"
-)?.value || "",
-
-calendarType:
-document.getElementById(
-"calendarType"
-)?.value || "Event",
-
-attendees:
-document.getElementById(
-"attendees"
-)?.value || "",
-
-addMeet:
-document.getElementById(
-"addMeet"
-)?.checked || false,
-
-location:
-document.getElementById(
-"location"
-)?.value || "",
-
-description:
-document.getElementById(
-"description"
-)?.value || "",
-
-repeat:
-document.getElementById(
-"repeat"
-)?.value || "None",
-
-repeatInterval:
-Number(
-document.getElementById(
-"repeatInterval"
-)?.value
-)||1,
-
-repeatUntil:
-document.getElementById(
-"repeatUntil"
-)?.value || "",
+).value,
 
 processingTime:
 Number(
@@ -432,11 +370,7 @@ apply:false,
 
 calendarId:"",
 
-reviewCalendarIds:[],
-
-meetLink:"",
-
-calendarStatus:"Create",
+calendarStatus:"",
 
 createdAt:
 new Date()
@@ -448,7 +382,6 @@ await db
 .collection("tasks")
 .add(taskData);
 
-// tạo main task calendar
 if(
 taskData.start &&
 localStorage.getItem(
@@ -472,16 +405,16 @@ alert(
 "Tạo task thành công"
 );
 
-}catch(err){
+}
+
+catch(err){
 
 console.error(
-"saveTask",
 err
 );
 
 alert(
-err.message ||
-"Lỗi tạo task"
+err.message
 );
 
 }

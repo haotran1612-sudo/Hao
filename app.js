@@ -949,9 +949,13 @@ window.onload = function () {
       document.getElementById("appPage").style.display = "block";
       document.getElementById("welcomeUser").innerText = user.email || "";
 
-      await requestNotificationPermission();
-      await loadTasks();
-   
+    await requestNotificationPermission();
+await ensureGoogleToken();
+      
+await clearAutoDeleteTasks();
+
+await loadTasks();
+
 await autoPlayMusicAfterLogin();
     } else {
       localStorage.removeItem("userEmail");
@@ -2595,68 +2599,62 @@ function stopMusic() {
 }
 
 // Delete
-async function removeTaskFromCalendar(task) {
+async function removeTaskFromCalendar(task){
 
-  const token = localStorage.getItem("googleToken");
+const token =
+localStorage.getItem(
+"googleToken"
+);
 
-  if (!token) return;
+if(!token) return;
 
-  // xóa main event
-  if (task.calendarId) {
-    try {
+// delete main
+if(task.calendarId){
 
-      await fetch(
-        `https://www.googleapis.com/calendar/v3/calendars/primary/events/${task.calendarId}`,
-        {
-          method: "DELETE",
-          headers: {
-            Authorization: `Bearer ${token}`
-          }
-        }
-      );
+await fetch(
+`https://www.googleapis.com/calendar/v3/calendars/primary/events/${task.calendarId}`,
+{
+method:"DELETE",
+headers:{
+Authorization:
+`Bearer ${token}`
+}
+}
+).catch(()=>{});
 
-    } catch (err) {
-      console.log("Delete main fail");
-    }
-  }
+}
 
-  // xóa review events
-  if (task.reviewCalendarIds?.length) {
+// delete review
+for(
+const id of
+(task.reviewCalendarIds||[])
+){
 
-    for (const id of task.reviewCalendarIds) {
+await fetch(
+`https://www.googleapis.com/calendar/v3/calendars/primary/events/${id}`,
+{
+method:"DELETE",
+headers:{
+Authorization:
+`Bearer ${token}`
+}
+}
+).catch(()=>{});
 
-      try {
+}
 
-        await fetch(
-          `https://www.googleapis.com/calendar/v3/calendars/primary/events/${id}`,
-          {
-            method: "DELETE",
-            headers: {
-              Authorization: `Bearer ${token}`
-            }
-          }
-        );
+await db
+.collection("tasks")
+.doc(task.id)
+.update({
 
-      } catch (err) {
-        console.log("Delete review fail");
-      }
+apply:false,
+calendarId:"",
+reviewCalendarIds:[],
+meetLink:"",
+calendarStatus:"Delete"
 
-    }
-
-  }
-
-  // reset firestore
-  await db.collection("tasks")
-    .doc(task.id)
-    .update({
-
-      apply: false,
-      calendarId: "",
-      reviewCalendarIds: [],
-      meetLink: "",
-      calendarStatus: "Delete"
-
-    });
+});
 
 }
 // =======================
@@ -2717,5 +2715,85 @@ function queueCalendarSync(docId){
       },
       1500
     );
+
+}
+
+
+async function clearAutoDeleteTasks(){
+
+try{
+
+const email =
+localStorage.getItem("userEmail");
+
+if(!email) return;
+
+const token =
+localStorage.getItem("googleToken");
+
+if(!token) return;
+
+const snapshot =
+await db
+.collection("tasks")
+.where("email","==",email)
+.where("autoDelete","==",true)
+.get();
+
+for(const doc of snapshot.docs){
+
+const task = {
+id:doc.id,
+...doc.data()
+};
+
+await removeTaskFromCalendar(task);
+
+}
+
+console.log("Auto delete done");
+
+}catch(err){
+
+console.error(
+"clearAutoDeleteTasks",
+err
+);
+
+}
+
+}
+
+async function ensureGoogleToken(){
+
+try{
+
+const result=
+await auth
+.signInWithPopup(
+provider
+);
+
+const token=
+result
+.credential
+?.accessToken;
+
+if(token){
+
+localStorage.setItem(
+"googleToken",
+token
+);
+
+}
+
+}catch(e){
+
+console.log(
+"Token refresh fail"
+);
+
+}
 
 }

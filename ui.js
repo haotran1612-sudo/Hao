@@ -36,3 +36,11 @@ div
 });
 
 }
+
+export function initUI(){
+
+ console.log(
+   "ui started"
+ );
+
+}

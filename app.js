@@ -2601,61 +2601,35 @@ function stopMusic() {
 // Delete
 async function removeTaskFromCalendar(task){
 
-const token =
-localStorage.getItem(
-"googleToken"
-);
+  const token = localStorage.getItem("googleToken");
+  if(!token) return;
 
-if(!token) return;
+  // delete main
+  if(task.calendarId){
+    await fetch(
+      `https://www.googleapis.com/calendar/v3/calendars/primary/events/${task.calendarId}`,
+      {
+        method:"DELETE",
+        headers:{ Authorization:`Bearer ${token}` }
+      }
+    ).catch(()=>{});
+  }
 
-// delete main
-if(task.calendarId){
+  // delete review
+  for(const id of (task.reviewCalendarIds||[])){
+    await fetch(
+      `https://www.googleapis.com/calendar/v3/calendars/primary/events/${id}`,
+      {
+        method:"DELETE",
+        headers:{ Authorization:`Bearer ${token}` }
+      }
+    ).catch(()=>{});
+  }
 
-await fetch(
-`https://www.googleapis.com/calendar/v3/calendars/primary/events/${task.calendarId}`,
-{
-method:"DELETE",
-headers:{
-Authorization:
-`Bearer ${token}`
-}
-}
-).catch(()=>{});
-
-}
-
-// delete review
-for(
-const id of
-(task.reviewCalendarIds||[])
-){
-
-await fetch(
-`https://www.googleapis.com/calendar/v3/calendars/primary/events/${id}`,
-{
-method:"DELETE",
-headers:{
-Authorization:
-`Bearer ${token}`
-}
-}
-).catch(()=>{});
-
-}
-
-await db
-.collection("tasks")
-.doc(task.id)
-.update({
-
-apply:false,
-calendarId:"",
-reviewCalendarIds:[],
-meetLink:"",
-calendarStatus:"Delete"
-
-});
-
+  // ❗ FIX QUAN TRỌNG: xóa luôn task trong Firestore
+  if(task.id){
+    await db.collection("tasks").doc(task.id).delete();
+  }
 }
 // =======================
 // AUTO SYNC CALENDAR

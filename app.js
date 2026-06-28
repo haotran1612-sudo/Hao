@@ -335,89 +335,78 @@ function closeTaskModal() {
 // =======================
 async function saveTask() {
 
-try {
+    try {
 
-const taskData = {
+        const taskData = {
+            email: localStorage.getItem("userEmail"),
 
-email:
-localStorage.getItem(
-"userEmail"
-),
+            taskName:
+                document.getElementById("taskName")?.value || "",
 
-taskName:
-document.getElementById(
-"taskName"
-).value,
+            start:
+                document.getElementById("startDate")?.value || "",
 
-start:
-document.getElementById(
-"startDate"
-).value,
+            deadline:
+                document.getElementById("deadline")?.value || "",
 
-deadline:
-document.getElementById(
-"deadline"
-).value,
+            processingTime:
+                Number(
+                    document.getElementById(
+                        "processingTime"
+                    )?.value
+                ) || 1,
 
-processingTime:
-Number(
-document.getElementById(
-"processingTime"
-)?.value
-)||1,
+            apply: false,
 
-apply:false,
+            calendarId: "",
 
-calendarId:"",
+            calendarStatus: "",
 
-calendarStatus:"",
+            createdAt: new Date()
+        };
 
-createdAt:
-new Date()
+        const doc =
+            await db
+            .collection("tasks")
+            .add(taskData);
 
-};
+        if (
+            taskData.start &&
+            localStorage.getItem(
+                "googleToken"
+            )
+        ) {
 
-const doc =
-await db
-.collection("tasks")
-.add(taskData);
+            await createCalendarFromRow(
+                doc.id
+            );
 
-if(
-taskData.start &&
-localStorage.getItem(
-"googleToken"
-)
-){
+        }
 
-await createCalendarFromRow(
-doc.id
-);
+        await loadTasks();
 
-}
+        closeTaskModal();
 
-await loadTasks();
+        resetForm();
 
-closeTaskModal();
+        alert(
+            "Tạo task thành công"
+        );
 
-resetForm();
+    }
 
-alert(
-"Tạo task thành công"
-);
+    catch (err) {
 
-}
+        console.error(
+            "saveTask error",
+            err
+        );
 
-catch(err){
+        alert(
+            err.message
+        );
 
-console.error(
-err
-);
-
-alert(
-err.message
-);
-
-}
+    }
 
 }
 // =======================
@@ -2469,4 +2458,41 @@ function stopMusic() {
   const iframe = document.getElementById("musicPlayer");
   if (!iframe) return;
   iframe.src = "";
+}
+async function googleLogin() {
+
+    const provider =
+        new firebase
+        .auth
+        .GoogleAuthProvider();
+
+    provider.addScope(
+        "https://www.googleapis.com/auth/calendar"
+    );
+
+    const result =
+        await auth
+        .signInWithPopup(
+            provider
+        );
+
+    const credential =
+        firebase
+        .auth
+        .GoogleAuthProvider
+        .credentialFromResult(
+            result
+        );
+
+    if (
+        credential?.accessToken
+    ) {
+
+        localStorage.setItem(
+            "googleToken",
+            credential.accessToken
+        );
+
+    }
+
 }

@@ -41,3 +41,12 @@ export async function pushToGoogle(event){
  });
 
 }
+
+
+export function initGoogleSync(){
+
+ console.log(
+   "google sync started"
+ );
+
+}

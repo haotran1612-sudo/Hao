@@ -51,9 +51,21 @@ export function initGoogleSync(){
 
 }
 export function googleLogin(){
+
  console.log("google login");
+
 }
 
 export function logout(){
+
  firebase.auth().signOut();
+
+}
+
+export function initGoogleSync(){
+
+ console.log(
+   "google sync started"
+ );
+
 }

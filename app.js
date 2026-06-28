@@ -2863,3 +2863,6 @@ async function toggleAutoDelete(id, checked){
 
   await loadTasks();
 }
+
+
+window.showTracker = showTracker;

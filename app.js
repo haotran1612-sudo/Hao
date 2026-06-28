@@ -768,29 +768,16 @@ scheduleTodayNotifications();
 // =======================
 // SHOW TRACKER
 // =======================
-window.showTracker=function(){
-}
+window.showTracker = showTracker;
+window.addRow = addRow;
+window.saveTask = saveTask;
 
-window.addRow=function(){
-}
+window.openTaskModal = openTaskModal;
+window.closeTaskModal = closeTaskModal;
 
-window.saveTask=function(){
-}
-
-window.openTaskModal=function(){
-}
-
-window.closeTaskModal=function(){
-}
-
-window.login=function(){
-}
-
-window.googleLogin=function(){
-}
-
-window.logout=function(){
-}
+window.login = login;
+window.googleLogin = googleLogin;
+window.logout = logout;
 // =======================
 // SHOW KANBAN
 // =======================

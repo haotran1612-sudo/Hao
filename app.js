@@ -987,140 +987,124 @@ async function updateTask(id, field, value) {
 }
 async function toggleCreateCalendar(id, checkbox){
 
-    try{
+  try{
 
+    await db.collection("tasks")
+      .doc(id)
+      .update({
+        apply: checkbox.checked
+      });
+
+    if(checkbox.checked){
+
+      await createCalendarFromRow(id);
+
+    }else{
+
+      const docRef =
         await db.collection("tasks")
-        .doc(id)
-        .update({
-            apply: checkbox.checked
-        });
+          .doc(id)
+          .get();
 
-        if(checkbox.checked){
+      const task =
+        docRef.data();
 
-            await createCalendarFromRow(id);
+      const token =
+        localStorage.getItem(
+          "googleToken"
+        );
 
-        }else{
+      if(
+        task.calendarId &&
+        token
+      ){
 
-            const docRef =
-            await db.collection("tasks")
-            .doc(id)
-            .get();
+        try{
 
-            const task = docRef.data();
+          await fetch(
+            `https://www.googleapis.com/calendar/v3/calendars/primary/events/${task.calendarId}`,
+            {
+              method:"DELETE",
+              headers:{
+                Authorization:`Bearer ${token}`
+              }
+            }
+          );
 
-           if(task.calendarId && token){
+        }catch(err){
 
-try{
+          console.log(
+            "Main calendar delete fail"
+          );
 
-const res =
-await fetch(
-`https://www.googleapis.com/calendar/v3/calendars/primary/events/${task.calendarId}`,
-{
-method:"DELETE",
-headers:{
-Authorization:`Bearer ${token}`
-}
-}
-);
-
-if(
-res.status!==404 &&
-res.status!==410 &&
-!res.ok
-){
-throw new Error(
-await res.text()
-);
-}
-
-}catch(err){
-
-console.log(
-"Event đã mất:",
-task.calendarId
-);
-
-}
-
-}
-
-                const token =
-                localStorage.getItem("googleToken");
-if(task.calendarId && token){
-
-   try{
-
-      await fetch(
-        `https://www.googleapis.com/calendar/v3/calendars/primary/events/${task.calendarId}`,
-        {
-          method:"DELETE",
-          headers:{
-             Authorization:`Bearer ${token}`
-          }
         }
-      );
-
-   }catch(err){
-
-      console.error(err);
-
-   }
-
-}
-               if(
-   task.reviewCalendarIds &&
-   task.reviewCalendarIds.length
-){
-
-   for(const eventId of task.reviewCalendarIds){
-
-      try{
-
-         await fetch(
-           `https://www.googleapis.com/calendar/v3/calendars/primary/events/${eventId}`,
-           {
-             method:"DELETE",
-             headers:{
-               Authorization:`Bearer ${token}`
-             }
-           }
-         );
-
-      }catch(err){
-
-         console.error(err);
 
       }
 
-   }
+      if(
+        task.reviewCalendarIds &&
+        task.reviewCalendarIds.length &&
+        token
+      ){
 
-}
+        for(
+          const eventId
+          of task.reviewCalendarIds
+        ){
 
-             await db.collection("tasks")
-.doc(id)
-.update({
+          try{
 
-    calendarId:"",
-    reviewCalendarIds:[],
-    meetLink:"",
-    calendarStatus:"Create",
-    apply:false
+            await fetch(
+              `https://www.googleapis.com/calendar/v3/calendars/primary/events/${eventId}`,
+              {
+                method:"DELETE",
+                headers:{
+                  Authorization:
+                    `Bearer ${token}`
+                }
+              }
+            );
 
-});
+          }catch(err){
 
-                loadTasks();
+            console.log(
+              "Review delete fail"
+            );
 
-            }
+          }
 
         }
 
-    }catch(err){
+      }
 
-        console.error(err);
+      await db
+        .collection("tasks")
+        .doc(id)
+        .update({
 
-        checkbox.checked=false;
+          calendarId:"",
+          reviewCalendarIds:[],
+          meetLink:"",
+          calendarStatus:"Create",
+          apply:false
+
+        });
+
+      await loadTasks();
 
     }
+
+  }catch(err){
+
+    console.error(
+      "toggleCreateCalendar",
+      err
+    );
+
+    checkbox.checked =
+      !checkbox.checked;
+
+  }
 
 }
 async function createCalendarFromRow(id, rowEl = null) {
@@ -2459,40 +2443,4 @@ function stopMusic() {
   if (!iframe) return;
   iframe.src = "";
 }
-async function googleLogin() {
 
-    const provider =
-        new firebase
-        .auth
-        .GoogleAuthProvider();
-
-    provider.addScope(
-        "https://www.googleapis.com/auth/calendar"
-    );
-
-    const result =
-        await auth
-        .signInWithPopup(
-            provider
-        );
-
-    const credential =
-        firebase
-        .auth
-        .GoogleAuthProvider
-        .credentialFromResult(
-            result
-        );
-
-    if (
-        credential?.accessToken
-    ) {
-
-        localStorage.setItem(
-            "googleToken",
-            credential.accessToken
-        );
-
-    }
-
-}

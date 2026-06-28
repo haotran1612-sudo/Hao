@@ -1116,7 +1116,7 @@ async function toggleCreateCalendar(id, checkbox){
 
     }
 
-  }catch(err){
+  catch(err){
 
     console.error(
       "toggleCreateCalendar",
@@ -1304,6 +1304,8 @@ if(
     await db.collection("tasks").doc(id).delete();
 
     loadTasks();
+    
+
 
   } catch (err) {
     console.error(err);

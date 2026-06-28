@@ -1,4 +1,3 @@
-
 // =======================
 // FIREBASE INIT
 // =======================
@@ -16,22 +15,6 @@ firebase.initializeApp(firebaseConfig);
 const auth = firebase.auth();
 const db = firebase.firestore();
 const provider = new firebase.auth.GoogleAuthProvider();
-provider.addScope("https://www.googleapis.com/auth/calendar");
-provider.addScope("https://www.googleapis.com/auth/tasks");
-const SYNC_DELAY = 300;
-let syncQueue = Promise.resolve();
-const creatingCalendar = new Set();
-function enqueueSync(fn) {
-  syncQueue = syncQueue.then(() => new Promise(async (resolve) => {
-    try {
-      await fn();
-    } catch (err) {
-      console.error(err);
-    }
-    setTimeout(resolve, SYNC_DELAY);
-  }));
-  return syncQueue;
-}
 // =======================
 // NOTIFICATION
 // =======================
@@ -379,8 +362,6 @@ async function saveTask() {
 
       calendarStatus: "Create",
 reviewCalendarIds: [],
-googleTaskId:"",
-reviewGoogleTaskIds:[],
       createdAt: new Date()
 
     };
@@ -782,9 +763,6 @@ autoDelete: false,
 
 reviewCalendarIds: [],
 
-googleTaskId:"",
-reviewGoogleTaskIds:[],
-
 createdAt: new Date()
 
     });
@@ -943,76 +921,54 @@ async function updateTask(id, field, value) {
 
   try {
 
-    const ref = db.collection("tasks").doc(id);
+    const data = {};
+    data[field] = value;
 
-    // =========================
-    // FIX REVIEW DAYS (QUAN TRỌNG)
-    // =========================
-    if (field.startsWith("reviewDays.")) {
+    await db.collection("tasks")
+      .doc(id)
+      .update(data);
 
-      await ref.update({
-        [field]: value
-      });
+    // Nếu đổi taskType / start / taskName thì reset reviewDays
+    // để loadTasks() build lại theo logic mới
+   if (
+  field === "taskType" ||
+  field === "start" ||
+  field === "deadline" ||
+  field === "taskName" ||
+  field === "processingTime"
+) {
 
+      await db.collection("tasks")
+        .doc(id)
+        .update({
+          reviewDays: {
+            day1:"",
+            day2:"",
+            day3:"",
+            day4:"",
+            day5:"",
+            day6:"",
+            day7:""
+          }
+        });
+
+      await loadTasks();
       return;
     }
 
-    // =========================
-    // UPDATE FIELD BÌNH THƯỜNG
-    // =========================
-    await ref.update({
-      [field]: value
-    });
-
-    // =========================
-    // RESET REVIEW DAYS (CHỈ KHI CẦN)
-    // =========================
-    const resetFields = [
-      "taskType",
-      "start",
-      "deadline",
-      "taskName",
-      "processingTime"
-    ];
-
-    if (resetFields.includes(field)) {
-
-      await ref.update({
-        reviewDays: {
-          day1: "",
-          day2: "",
-          day3: "",
-          day4: "",
-          day5: "",
-          day6: "",
-          day7: ""
-        }
-      });
-
-      await loadTasks();
-    }
-
-  } catch (err) {
-    console.error("updateTask error:", err);
+  } catch(err) {
+    console.error(err);
   }
 }
 async function toggleCreateCalendar(id, checkbox){
 
     try{
 
-       await db.collection("tasks")
-.doc(id)
-.update({
-
-    calendarId:"",
-    reviewCalendarIds:[],
-    googleTaskId:"",
-    reviewGoogleTaskIds:[],
-    meetLink:"",
-    calendarStatus:"Create",
-    apply:false
-
-});
+        await db.collection("tasks")
+        .doc(id)
+        .update({
+            apply: checkbox.checked
+        });
 
         if(checkbox.checked){
 
@@ -1109,167 +1065,91 @@ if(task.calendarId && token){
 
 }
 async function createCalendarFromRow(id, rowEl = null) {
-
-    if (creatingCalendar.has(id)) {
-        console.log("Đang đồng bộ...");
-        return;
+  try {
+    const docRef = await db.collection("tasks").doc(id).get();
+    if (!docRef.exists) {
+      alert("Task không tồn tại");
+      return;
     }
 
-    creatingCalendar.add(id);
+    const task = docRef.data();
 
-    try {
-  const doc = await db.collection("tasks").doc(id).get();
-  if (!doc.exists) return;
+    // ===== MAIN EVENT =====
+    let mainEvent = null;
 
-  const task = doc.data();
-  // Đã tạo rồi thì không tạo nữa
-if (task.calendarType === "Event" && task.calendarId) {
-    console.log("Event đã tồn tại");
-    return;
-}
-
-if (task.calendarType === "Task" && task.googleTaskId) {
-    console.log("Google Task đã tồn tại");
-    return;
-}
-  const week = getCurrentWeekDates();
-
-const reviewDays = rowEl
-  ? {
-      day1: rowEl.querySelectorAll(".review-cell")[0]?.value || "",
-      day2: rowEl.querySelectorAll(".review-cell")[1]?.value || "",
-      day3: rowEl.querySelectorAll(".review-cell")[2]?.value || "",
-      day4: rowEl.querySelectorAll(".review-cell")[3]?.value || "",
-      day5: rowEl.querySelectorAll(".review-cell")[4]?.value || "",
-      day6: rowEl.querySelectorAll(".review-cell")[5]?.value || "",
-      day7: rowEl.querySelectorAll(".review-cell")[6]?.value || ""
-    }
-  : (task.reviewDays || {});
-      console.log("ReviewDays =", reviewDays);
-
- const isTaskMode = task.calendarType === "Task";
-
-  await enqueueSync(async () => {
-
-    if (isTaskMode) {
-
-    const createdTask =
-await createGoogleTask(
-freshTask.taskName
-    task.start
-);
-
-await db.collection("tasks")
-.doc(id)
-.update({
-    googleTaskId: createdTask.id
-});
-
-      for (let i = 0; i < 7; i++) {
-        const items = parseReviewTasks(reviewDays["day" + (i + 1)]);
-
-        for (const t of items) {
-         const gt =
-await createGoogleTask(
-    t.title,
-    week[i]
-);
-
-await db.collection("tasks")
-.doc(id)
-.update({
-    reviewGoogleTaskIds:
-        firebase.firestore.FieldValue.arrayUnion(gt.id)
-});
-        }
-      }
-
+    if (!task.calendarId) {
+      mainEvent = await createCalendarEvent(task, id);
     } else {
+      // đã có main event thì giữ lại
+      mainEvent = { id: task.calendarId, hangoutLink: task.meetLink || "" };
+    }
 
- const startMain = new Date(task.start);
-     const hours = Math.max(
-    0.5,
-    Number(task.processingTime || 1)
-);
+    // ===== REVIEW CELLS =====
+    let reviewDays = {};
 
-const endMain = new Date(
-    startMain.getTime() + hours * 3600000
-);
+    // Ưu tiên lấy dữ liệu đang hiển thị trên row
+    if (rowEl) {
+      const cells = rowEl.querySelectorAll(".review-cell");
+      reviewDays = {
+        day1: cells[0]?.value || "",
+        day2: cells[1]?.value || "",
+        day3: cells[2]?.value || "",
+        day4: cells[3]?.value || "",
+        day5: cells[4]?.value || "",
+        day6: cells[5]?.value || "",
+        day7: cells[6]?.value || ""
+      };
+    } else {
+      // fallback nếu không có row thì build từ task
+      reviewDays = buildReviewDays(task);
+    }
 
-     const createdEvent 
-       
-await createGoogleEvent(
-    task.taskName,
-    startMain,
-    endMain
-);
+    const reviewIds = [];
+    const week = getCurrentWeekDates();
 
-await db.collection("tasks")
-.doc(id)
-.update({
-    calendarId: createdEvent.id
-});
+    for (let i = 1; i <= 7; i++) {
+      const text = reviewDays["day" + i] || "";
+      const reviewTasks = parseReviewTasks(text);
 
-      for (let i = 0; i < 7; i++) {
-        const items = parseReviewTasks(reviewDays["day" + (i + 1)]);
+      for (const t of reviewTasks) {
+        const eventId = await createReviewCalendarTask(
+          t,
+          week[i - 1],
+          id,
+          i
+        );
 
-        for (const t of items) {
-          const d = week[i];
-
-         const start = new Date(d);
-start.setHours(t.hour, t.minute, 0);
-
-let end;
-
-if (t.endHour != null && t.endMinute != null) {
-
-    end = new Date(d);
-    end.setHours(
-        t.endHour,
-        t.endMinute,
-        0
-    );
-
-} else {
-
-    end = new Date(
-        start.getTime() + 30 * 60000
-    );
-
-}
-
-const event =
-await createGoogleEvent(
-    t.title,
-    start,
-    end
-);
-
-await db.collection("tasks")
-.doc(id)
-.update({
-    reviewCalendarIds:
-        firebase.firestore.FieldValue.arrayUnion(event.id)
-});
-
-
+        if (eventId && !reviewIds.includes(eventId)) {
+          reviewIds.push(eventId);
         }
       }
     }
 
-  await db.collection("tasks").doc(id).update({
-      calendarStatus: "Created"
+    // lưu lại reviewDays thực tế vừa sync để Firestore đồng bộ với form
+    await db.collection("tasks").doc(id).update({
+      apply: true,
+      calendarId: mainEvent?.id || task.calendarId || "",
+      reviewCalendarIds: reviewIds,
+      meetLink: mainEvent?.hangoutLink || task.meetLink || "",
+      calendarStatus: "Created",
+      reviewDays: reviewDays
     });
 
-  });
+    await loadTasks();
 
-    } finally {
+  } catch (err) {
+    console.error(err);
 
-        creatingCalendar.delete(id);
+    await db.collection("tasks").doc(id).update({
+      apply: false,
+      calendarStatus: "Create"
+    });
 
-    }
-
+    await loadTasks();
+    alert("Tạo Calendar thất bại");
+  }
 }
+
 // =======================
 // ARCHIVE TASK
 // =======================
@@ -1355,14 +1235,7 @@ if(
       email: localStorage.getItem("userEmail"),
       archivedAt: new Date()
     });
-await db.collection("tasks")
-.doc(id)
-.update({
-    calendarId:"",
-    reviewCalendarIds:[],
-    googleTaskId:"",
-    reviewGoogleTaskIds:[]
-});
+
     await db.collection("tasks").doc(id).delete();
 
     loadTasks();
@@ -2135,119 +2008,94 @@ async function refreshAllNotifications() {
 }
 //Bước 1: Tạo Calendar cho từng task trong cell
 
-async function createReviewCalendarTask(
-    reviewTask,
-    parentTask,
-    date,
-    docId = "",
-    dayIndex = ""
-) {
+async function createReviewCalendarTask(task, date, docId = "", dayIndex = "") {
+  const token = localStorage.getItem("googleToken");
+  if (!token) return null;
 
-    if (parentTask.calendarType === "Task") {
-        return await createGoogleReviewTask(
-            reviewTask,
-            parentTask,
-            date,
-            docId,
-            dayIndex
-        );
-    }
+  // START
+  const startDate = new Date(
+    date.getFullYear(),
+    date.getMonth(),
+    date.getDate(),
+    task.hour,
+    task.minute
+  );
 
-    const token = localStorage.getItem("googleToken");
-    if (!token) return null;
+  // END
+  let endDate;
 
-    const startDate = new Date(
+  if (task.endHour != null && task.endMinute != null) {
+    endDate = new Date(
+      date.getFullYear(),
+      date.getMonth(),
+      date.getDate(),
+      task.endHour,
+      task.endMinute
+    );
+  } else {
+    const match = `${task.raw || ""}`.match(/-(\d{1,2}):(\d{2})/);
+
+    if (match) {
+      endDate = new Date(
         date.getFullYear(),
         date.getMonth(),
         date.getDate(),
-        reviewTask.hour,
-        reviewTask.minute
-    );
-
-    let endDate;
-
-    if (
-        reviewTask.endHour != null &&
-        reviewTask.endMinute != null
-    ) {
-
-        endDate = new Date(
-            date.getFullYear(),
-            date.getMonth(),
-            date.getDate(),
-            reviewTask.endHour,
-            reviewTask.endMinute
-        );
-
+        Number(match[1]),
+        Number(match[2])
+      );
     } else {
-
-        endDate = new Date(
-            startDate.getTime() + 30 * 60000
-        );
-
+      endDate = new Date(startDate.getTime() + 30 * 60 * 1000);
     }
+  }
 
-    const eventKey = buildReviewEventKey(
-        docId,
-        dayIndex,
-        reviewTask,
-        date
-    );
+  // ===== CHẶN TRÙNG REVIEW TASK =====
+  const eventKey = buildReviewEventKey(docId, dayIndex, task, date);
+  const existed = await findCalendarEventByKey(eventKey);
 
-    const existed = await findCalendarEventByKey(eventKey);
+  if (existed) {
+    return existed.id; // đã có rồi thì trả id cũ
+  }
 
-    if (existed) {
-        return existed.id;
+  const body = {
+    summary: task.title || task.raw || "Task",
+    start: {
+      dateTime: startDate.toISOString(),
+      timeZone: "Asia/Ho_Chi_Minh"
+    },
+    end: {
+      dateTime: endDate.toISOString(),
+      timeZone: "Asia/Ho_Chi_Minh"
+    },
+    extendedProperties: {
+      private: {
+        appTaskKey: eventKey,
+        appTaskType: "review"
+      }
     }
+  };
 
-    const body = {
-
-        summary: reviewTask.title || reviewTask.raw || "Task",
-
-        start: {
-            dateTime: startDate.toISOString(),
-            timeZone: "Asia/Ho_Chi_Minh"
-        },
-
-        end: {
-            dateTime: endDate.toISOString(),
-            timeZone: "Asia/Ho_Chi_Minh"
-        },
-
-        extendedProperties: {
-            private: {
-                appTaskKey: eventKey,
-                appTaskType: "review"
-            }
-        }
-
-    };
-
-    const response = await fetch(
-        "https://www.googleapis.com/calendar/v3/calendars/primary/events",
-        {
-            method: "POST",
-            headers: {
-                Authorization: `Bearer ${token}`,
-                "Content-Type": "application/json"
-            },
-            body: JSON.stringify(body)
-        }
-    );
-
-    if (!response.ok) {
-
-        console.error(await response.text());
-
-        return null;
-
+  const response = await fetch(
+    "https://www.googleapis.com/calendar/v3/calendars/primary/events",
+    {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify(body)
     }
+  );
 
-    const event = await response.json();
+  if (!response.ok) {
+    const err = await response.text();
+    console.error("createReviewCalendarTask error:", err);
+    return null;
+  }
 
-    return event.id;
-
+  const event = await response.json();
+  return event.id;
 }
+
 
 //Bước 2: Quét toàn bộ cột Mon → Sun
 async function createCalendarFromReviewCells(){
@@ -2272,17 +2120,7 @@ async function createCalendarFromReviewCells(){
             for(const t of tasks){
 
                const docId = row.querySelector("button[data-id]")?.getAttribute("data-id") || "";
-const snap = await db.collection("tasks").doc(docId).get();
-
-const parentTask = snap.data();
-
-await createReviewCalendarTask(
-    t,
-    parentTask,
-    date,
-    docId,
-    i + 1
-);
+await createReviewCalendarTask(t, date, docId, i + 1);
 
             }
 
@@ -2299,10 +2137,7 @@ async function createReviewCalendarForRow(btn){
     const row = btn.closest("tr");
 
     const week = getCurrentWeekDates();
-const freshTask = {
-  ...task,
-  reviewDays: buildReviewDays(task)
-};
+
     const cells =
       row.querySelectorAll(".review-cell");
 
@@ -2316,56 +2151,21 @@ const freshTask = {
         for(const task of tasks){
 
           const docId = btn.getAttribute("data-id") || "";
-const snap = await db.collection("tasks").doc(docId).get();
-
-const parentTask = snap.data();
-
-await createReviewCalendarTask(
-    task,
-    parentTask,
-    date,
-    docId,
-    i + 1
-);
+await createReviewCalendarTask(task, date, docId, i + 1);
         }
 
     }
 
     alert("Đã tạo Calendar");
 }
-async function syncFullCalendarFromRow(btn){
+async function syncFullCalendarFromRow(btn) {
+  const docId = btn.getAttribute("data-id");
+  if (!docId) return alert("Missing task id");
 
-    if(btn.disabled){
-        return;
-    }
+  const row = btn.closest("tr");
+  await createCalendarFromRow(docId, row);
 
-    btn.disabled=true;
-
-    try{
-
-        const docId=btn.getAttribute("data-id");
-
-        if(!docId){
-            alert("Missing task id");
-            return;
-        }
-
-        const row=btn.closest("tr");
-
-        await createCalendarFromRow(docId,row);
-
-        alert("Đồng bộ Calendar hoàn tất");
-
-    }catch(err){
-
-        console.error(err);
-
-    }finally{
-
-        btn.disabled=false;
-
-    }
-
+  alert("Đồng bộ Calendar hoàn tất");
 }
 
 // =======================
@@ -2431,111 +2231,7 @@ async function findCalendarEventByKey(eventKey) {
   return null;
 }
 
-// 
-async function findGoogleTask(title, due = null){
 
-    const token=localStorage.getItem("googleToken");
-
-    if(!token) return null;
-
-    const res=await fetch(
-        "https://tasks.googleapis.com/tasks/v1/lists/@default/tasks",
-        {
-            headers:{
-                Authorization:`Bearer ${token}`
-            }
-        }
-    );
-
-    const data=await res.json();
-
-    if(!data.items) return null;
-
- return data.items.find(t => {
-
-    if (t.title !== title) {
-        return false;
-    }
-
-    if (!due) {
-        return true;
-    }
-
-    if (!t.due) {
-        return false;
-    }
-
-    return (
-        t.due.substring(0,10) ===
-        new Date(due)
-            .toISOString()
-            .substring(0,10)
-    );
-
-}) || null;
-}
-// =======================
-// Tasks
-// =======================
-async function createGoogleTask(title, due = null) {
-  const token = localStorage.getItem("googleToken");
-const existed = await findGoogleTask(title, due);
-
-if(existed){
-
-    return existed;
-
-}
-
-  const body = {
-    title,
-    due: due ? new Date(due).toISOString() : undefined
-  };
-
-  const res = await fetch(
-    "https://tasks.googleapis.com/tasks/v1/lists/@default/tasks",
-    {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${token}`,
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify(body)
-    }
-  );
-
-  return await res.json();
-}
-// Event
-async function createGoogleEvent(title, start, end) {
-  const token = localStorage.getItem("googleToken");
-
-  const body = {
-    summary: title,
-    start: {
-      dateTime: start.toISOString(),
-      timeZone: "Asia/Ho_Chi_Minh"
-    },
-    end: {
-      dateTime: end.toISOString(),
-      timeZone: "Asia/Ho_Chi_Minh"
-    }
-  };
-
-  const res = await fetch(
-    "https://www.googleapis.com/calendar/v3/calendars/primary/events",
-    {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${token}`,
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify(body)
-    }
-  );
-
-  return await res.json();
-}
 // =======================
 // MUSIC
 // =======================

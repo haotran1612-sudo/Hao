@@ -141,73 +141,95 @@ async function registerUser() {
 // =======================
 // LOGIN
 // =======================
-async function login(){
+async function login() {
 
-  const email = document.getElementById("loginEmail").value.trim();
-  const password = document.getElementById("loginPassword").value;
+  try {
 
-auth.signInWithEmailAndPassword(email, password)
-.then(async userCredential => {
+    const email =
+      document.getElementById("loginEmail").value.trim();
 
-    const userEmail = userCredential.user.email;
+    const password =
+      document.getElementById("loginPassword").value;
 
-    localStorage.setItem("userEmail", userEmail);
+    const userCredential =
+      await auth.signInWithEmailAndPassword(
+        email,
+        password
+      );
 
-    document.getElementById("loginPage").style.display = "none";
-    document.getElementById("appPage").style.display = "block";
-    document.getElementById("welcomeUser").innerText = userEmail;
+    const userEmail =
+      userCredential.user.email;
 
-await requestNotificationPermission();
+    localStorage.setItem(
+      "userEmail",
+      userEmail
+    );
 
-if(
-!localStorage.getItem(
-"googleToken"
-)
-){
+    document.getElementById(
+      "loginPage"
+    ).style.display = "none";
 
-try{
+    document.getElementById(
+      "appPage"
+    ).style.display = "block";
 
-const result =
-await auth.signInWithPopup(
-provider
-);
+    document.getElementById(
+      "welcomeUser"
+    ).innerText = userEmail;
 
-const token =
-result.credential
-?.accessToken;
+    await requestNotificationPermission();
 
-if(token){
+    if (
+      !localStorage.getItem(
+        "googleToken"
+      )
+    ) {
 
-localStorage.setItem(
-"googleToken",
-token
-);
+      try {
 
-}
+        const result =
+          await auth.signInWithPopup(
+            provider
+          );
 
-}catch(e){
+        const token =
+          result.credential
+          ?.accessToken;
 
-console.log(
-"Calendar chưa kết nối"
-);
+        if (token) {
+          localStorage.setItem(
+            "googleToken",
+            token
+          );
+        }
 
-}
+      } catch (e) {
 
-}
+        console.log(
+          "Calendar chưa kết nối"
+        );
 
-await loadTasks();
+      }
 
-await loadUserMusicSettings();
-   
-})   // <-- thiếu đoạn này
+    }
 
-.catch(err => {
+    await loadTasks();
 
-    alert(err.message);
+    await loadUserMusicSettings();
+
+  }
+
+  catch(err){
+
     console.error(err);
 
-});
-} 
+    alert(
+      err.message
+    );
+
+  }
+
+}
 async function googleLogin() {
   try {
     const result = await auth.signInWithPopup(provider);

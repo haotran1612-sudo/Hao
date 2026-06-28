@@ -157,9 +157,47 @@ auth.signInWithEmailAndPassword(email, password)
     document.getElementById("appPage").style.display = "block";
     document.getElementById("welcomeUser").innerText = userEmail;
 
-    await requestNotificationPermission();
-    await loadTasks();
-    await loadUserMusicSettings();
+await requestNotificationPermission();
+
+if(
+!localStorage.getItem(
+"googleToken"
+)
+){
+
+try{
+
+const result =
+await auth.signInWithPopup(
+provider
+);
+
+const token =
+result.credential
+?.accessToken;
+
+if(token){
+
+localStorage.setItem(
+"googleToken",
+token
+);
+
+}
+
+}catch(e){
+
+console.log(
+"Calendar chưa kết nối"
+);
+
+}
+
+}
+
+await loadTasks();
+
+await loadUserMusicSettings();
    
 })   // <-- thiếu đoạn này
 
@@ -365,16 +403,55 @@ reviewCalendarIds: [],
       createdAt: new Date()
 
     };
+// lưu task
+const doc = await db.collection("tasks").add(taskData);
 
-    await db.collection("tasks").add(taskData);
+// tự tạo calendar nếu có start date
+if (taskData.start) {
 
-    alert("Tạo task thành công");
+    try {
 
-    closeTaskModal();
+        // bật trạng thái apply
+        await db.collection("tasks")
+        .doc(doc.id)
+        .update({
+            apply: true
+        });
 
-    resetForm();
+        // tạo calendar
+        await createCalendarFromRow(doc.id);
 
-    loadTasks();
+    } catch(err){
+
+        console.error(
+            "Calendar create error",
+            err
+        );
+
+        alert(
+            "Task tạo rồi nhưng Calendar lỗi"
+        );
+
+    }
+
+}
+
+alert("Tạo task thành công");
+
+closeTaskModal();
+
+resetForm();
+
+await loadTasks();
+   await db.collection("tasks").add(taskData);
+
+alert("Tạo task thành công");
+
+closeTaskModal();
+
+resetForm();
+
+loadTasks();
 
   } catch (err) {
 
@@ -1405,7 +1482,13 @@ function buildReviewSchedule(task) {
 
   const week = getCurrentWeekDates();
 
-  const processingHours = Number(task.processingTime || 0);
+const processingHours =
+Math.max(
+Number(
+task.processingTime || 1
+),
+0.5
+);
   const durationMs = processingHours * 60 * 60 * 1000;
 
   function formatHM(date) {

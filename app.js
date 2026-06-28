@@ -1148,100 +1148,168 @@ async function toggleCreateCalendar(id, checkbox){
   }
 
 }
-async function createCalendarFromRow(id, rowEl = null) {
-  try {
-    const docRef = await db.collection("tasks").doc(id).get();
-    if (!docRef.exists) {
-      alert("Task không tồn tại");
-      return;
-    }
+async function createCalendarFromRow(id, rowEl=null){
 
-    const task = docRef.data();
-if (task.autoDelete) {
+try{
 
-  console.log(
-    "Auto delete ON -> skip create calendar"
-  );
+const docRef =
+await db.collection("tasks")
+.doc(id)
+.get();
 
-  return;
+if(!docRef.exists) return;
+
+const task =
+docRef.data();
+
+if(task.autoDelete) return;
+
+
+// ===================
+// MAIN EVENT
+// ===================
+let mainEvent=null;
+
+try{
+
+if(!task.calendarId){
+
+mainEvent=
+await createCalendarEvent(
+task,
+id
+);
+
+}else{
+
+mainEvent={
+id:task.calendarId,
+hangoutLink:
+task.meetLink||""
+};
 
 }
-    // ===== MAIN EVENT =====
-    let mainEvent = null;
 
-    if (!task.calendarId) {
-      mainEvent = await createCalendarEvent(task, id);
-    } else {
-      // đã có main event thì giữ lại
-      mainEvent = { id: task.calendarId, hangoutLink: task.meetLink || "" };
-    }
+}catch(err){
 
-    // ===== REVIEW CELLS =====
-    let reviewDays = {};
+console.error(
+"Main event fail",
+err
+);
 
-    // Ưu tiên lấy dữ liệu đang hiển thị trên row
-    if (rowEl) {
-      const cells = rowEl.querySelectorAll(".review-cell");
-      reviewDays = {
-        day1: cells[0]?.value || "",
-        day2: cells[1]?.value || "",
-        day3: cells[2]?.value || "",
-        day4: cells[3]?.value || "",
-        day5: cells[4]?.value || "",
-        day6: cells[5]?.value || "",
-        day7: cells[6]?.value || ""
-      };
-    } else {
-      // fallback nếu không có row thì build từ task
-      reviewDays = buildReviewDays(task);
-    }
+// vẫn tiếp tục tạo review
 
-    const reviewIds = [];
-    const week = getCurrentWeekDates();
-
-    for (let i = 1; i <= 7; i++) {
-      const text = reviewDays["day" + i] || "";
-      const reviewTasks = parseReviewTasks(text);
-
-      for (const t of reviewTasks) {
-        const eventId = await createReviewCalendarTask(
-          t,
-          week[i - 1],
-          id,
-          i
-        );
-
-        if (eventId && !reviewIds.includes(eventId)) {
-          reviewIds.push(eventId);
-        }
-      }
-    }
-
-    // lưu lại reviewDays thực tế vừa sync để Firestore đồng bộ với form
-    await db.collection("tasks").doc(id).update({
-      apply: true,
-      calendarId: mainEvent?.id || task.calendarId || "",
-      reviewCalendarIds: reviewIds,
-      meetLink: mainEvent?.hangoutLink || task.meetLink || "",
-      calendarStatus: "Created",
-      reviewDays: reviewDays
-    });
-
-    await loadTasks();
-
-  } catch (err) {
-    console.error(err);
-
-    await db.collection("tasks").doc(id).update({
-      apply: false,
-      calendarStatus: "Create"
-    });
-
-    await loadTasks();
-    alert("Tạo Calendar thất bại");
-  }
 }
 
+
+// ===================
+// REVIEW
+// ===================
+
+let reviewDays={};
+
+if(rowEl){
+
+const cells=
+rowEl.querySelectorAll(
+".review-cell"
+);
+
+reviewDays={
+
+day1:cells[0]?.value||"",
+day2:cells[1]?.value||"",
+day3:cells[2]?.value||"",
+day4:cells[3]?.value||"",
+day5:cells[4]?.value||"",
+day6:cells[5]?.value||"",
+day7:cells[6]?.value||""
+
+};
+
+}else{
+
+reviewDays=
+buildReviewDays(task);
+
+}
+
+const reviewIds=[];
+
+const week=
+getCurrentWeekDates();
+
+for(let i=1;i<=7;i++){
+
+const text=
+reviewDays["day"+i];
+
+const tasks=
+parseReviewTasks(text);
+
+for(const t of tasks){
+
+const id2=
+await createReviewCalendarTask(
+t,
+week[i-1],
+id,
+i
+);
+
+if(id2){
+
+reviewIds.push(id2);
+
+}
+
+}
+
+}
+
+
+// SAVE
+await db
+.collection("tasks")
+.doc(id)
+.update({
+
+apply:true,
+
+calendarId:
+mainEvent?.id
+||
+task.calendarId
+||
+"",
+
+reviewCalendarIds:
+reviewIds,
+
+meetLink:
+mainEvent?.hangoutLink
+||
+task.meetLink
+||
+"",
+
+calendarStatus:
+"Created",
+
+reviewDays
+
+});
+
+
+await loadTasks();
+
+}catch(err){
+
+console.error(err);
+
+}
+
+}
 // =======================
 // ARCHIVE TASK
 // =======================

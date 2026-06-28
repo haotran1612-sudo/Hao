@@ -499,7 +499,7 @@ const reviewDays = buildReviewDays(task);
 <td style="text-align:center;">
   <input
     type="checkbox"
-    onchange="archiveTask('${doc.id}', this)">
+    oninput="archiveTask('${doc.id}', this)">
 </td>
 
 <td>
@@ -507,7 +507,7 @@ const reviewDays = buildReviewDays(task);
     type="datetime-local"
     value="${(task.start || '').substring(0,16)}"
     onkeydown="return false"
-    onchange="updateTask('${doc.id}','start',this.value)">
+    oninput="updateTask('${doc.id}','start',this.value)">
 </td>
 
 <td>
@@ -515,7 +515,7 @@ const reviewDays = buildReviewDays(task);
     type="datetime-local"
     value="${(task.deadline || '').substring(0,16)}"
     onkeydown="return false"
-    onchange="updateTask('${doc.id}','deadline',this.value)">
+    oninput="updateTask('${doc.id}','deadline',this.value)">
 </td>
 <td>
   <input
@@ -523,18 +523,18 @@ const reviewDays = buildReviewDays(task);
     min="0"
     step="0.5"
  value="${task.processingTime ?? ''}"
-    onchange="updateTask('${doc.id}','processingTime',Number(this.value))">
+    oninput="updateTask('${doc.id}','processingTime',Number(this.value))">
 </td>
 <td>
   <input
     type="text"
     value="${task.taskName || ''}"
-    onchange="updateTask('${doc.id}','taskName',this.value)">
+    oninput="updateTask('${doc.id}','taskName',this.value)">
 </td>
 <td>
 <textarea
 oninput="autoResize(this)"
-onchange="updateTask('${doc.id}','reviewDays.day1',this.value);
+oninput="updateTask('${doc.id}','reviewDays.day1',this.value);
 scheduleTodayNotifications();"
 rows="1"
 class="review-cell">${reviewDays.day1 || ""}</textarea>
@@ -542,7 +542,7 @@ class="review-cell">${reviewDays.day1 || ""}</textarea>
 <td>
 <textarea
 oninput="autoResize(this)"
-onchange="updateTask('${doc.id}','reviewDays.day2',this.value);
+oninput="updateTask('${doc.id}','reviewDays.day2',this.value);
 scheduleTodayNotifications();"
 rows="1"
 class="review-cell">${reviewDays.day2 || ""}</textarea>
@@ -550,7 +550,7 @@ class="review-cell">${reviewDays.day2 || ""}</textarea>
 <td>
 <textarea
 oninput="autoResize(this)"
-onchange="updateTask('${doc.id}','reviewDays.day3',this.value);
+oninput="updateTask('${doc.id}','reviewDays.day3',this.value);
 scheduleTodayNotifications();"
 rows="1"
 class="review-cell">${reviewDays.day3 || ""}</textarea>
@@ -558,7 +558,7 @@ class="review-cell">${reviewDays.day3 || ""}</textarea>
 <td>
 <textarea
 oninput="autoResize(this)"
-onchange="updateTask('${doc.id}','reviewDays.day4',this.value);
+oninput="updateTask('${doc.id}','reviewDays.day4',this.value);
 scheduleTodayNotifications();"
 rows="1"
 class="review-cell">${reviewDays.day4 || ""}</textarea>
@@ -566,7 +566,7 @@ class="review-cell">${reviewDays.day4 || ""}</textarea>
 <td>
 <textarea
 oninput="autoResize(this)"
-onchange="updateTask('${doc.id}','reviewDays.day5',this.value);
+oninput="updateTask('${doc.id}','reviewDays.day5',this.value);
 scheduleTodayNotifications();"
 rows="1"
 class="review-cell">${reviewDays.day5 || ""}</textarea>
@@ -574,7 +574,7 @@ class="review-cell">${reviewDays.day5 || ""}</textarea>
 <td>
 <textarea
 oninput="autoResize(this)"
-onchange="updateTask('${doc.id}','reviewDays.day6',this.value);
+oninput="updateTask('${doc.id}','reviewDays.day6',this.value);
 scheduleTodayNotifications();"
 rows="1"
 class="review-cell">${reviewDays.day6 || ""}</textarea>
@@ -582,20 +582,20 @@ class="review-cell">${reviewDays.day6 || ""}</textarea>
 <td>
 <textarea
 oninput="autoResize(this)"
-onchange="updateTask('${doc.id}','reviewDays.day7',this.value);
+oninput="updateTask('${doc.id}','reviewDays.day7',this.value);
 scheduleTodayNotifications();"
 rows="1"
 class="review-cell">${reviewDays.day7 || ""}</textarea>
 </td>
 <td>
-  <select onchange="updateTask('${doc.id}','priority',this.value)">
+  <select oninput="updateTask('${doc.id}','priority',this.value)">
     <option value="Normal" ${task.priority==="Normal"?"selected":""}>Normal</option>
     <option value="Urgent" ${task.priority==="Urgent"?"selected":""}>Urgent</option>
   </select>
 </td>
 
 <td>
-  <select onchange="updateTask('${doc.id}','status',this.value)">
+  <select oninput="updateTask('${doc.id}','status',this.value)">
     <option value="Todo" ${task.status==="Todo"?"selected":""}>Todo</option>
     <option value="Processing" ${task.status==="Processing"?"selected":""}>Processing</option>
     <option value="Done" ${task.status==="Done"?"selected":""}>Done</option>
@@ -603,7 +603,7 @@ class="review-cell">${reviewDays.day7 || ""}</textarea>
 </td>
 
 <td>
-  <select onchange="updateTask('${doc.id}','taskType',this.value)">
+  <select oninput="updateTask('${doc.id}','taskType',this.value)">
       <option value="Ôn tập" ${task.taskType==="Ôn tập"?"selected":""}>Ôn tập</option>
     <option value="Daily" ${task.taskType==="Daily"?"selected":""}>Daily</option>
     <option value="Weekly" ${task.taskType==="Weekly"?"selected":""}>Weekly</option>
@@ -615,11 +615,11 @@ class="review-cell">${reviewDays.day7 || ""}</textarea>
   <input
     type="text"
     value="${task.calendarTitle || ''}"
-    onchange="updateTask('${doc.id}','calendarTitle',this.value)">
+    oninput="updateTask('${doc.id}','calendarTitle',this.value)">
 </td>
 
 <td>
-  <select onchange="updateTask('${doc.id}','calendarType',this.value)">
+  <select oninput="updateTask('${doc.id}','calendarType',this.value)">
     <option value="Event" ${task.calendarType==="Event"?"selected":""}>Event</option>
     <option value="Task" ${task.calendarType==="Task"?"selected":""}>Task</option>
   </select>
@@ -629,32 +629,32 @@ class="review-cell">${reviewDays.day7 || ""}</textarea>
   <input
     type="text"
     value="${task.attendees || ''}"
-    onchange="updateTask('${doc.id}','attendees',this.value)">
+    oninput="updateTask('${doc.id}','attendees',this.value)">
 </td>
 
 <td style="text-align:center;">
   <input
     type="checkbox"
     ${task.addMeet ? "checked" : ""}
-    onchange="updateTask('${doc.id}','addMeet',this.checked)">
+    oninput="updateTask('${doc.id}','addMeet',this.checked)">
 </td>
 
 <td>
   <input
     type="text"
     value="${task.location || ''}"
-    onchange="updateTask('${doc.id}','location',this.value)">
+    oninput="updateTask('${doc.id}','location',this.value)">
 </td>
 
 <td>
   <input
     type="text"
     value="${task.description || ''}"
-    onchange="updateTask('${doc.id}','description',this.value)">
+    oninput="updateTask('${doc.id}','description',this.value)">
 </td>
 
 <td>
-  <select onchange="updateTask('${doc.id}','repeat',this.value)">
+  <select oninput="updateTask('${doc.id}','repeat',this.value)">
     <option value="None" ${task.repeat==="None"?"selected":""}>None</option>
     <option value="Daily" ${task.repeat==="Daily"?"selected":""}>Daily</option>
     <option value="Weekly" ${task.repeat==="Weekly"?"selected":""}>Weekly</option>
@@ -667,19 +667,19 @@ class="review-cell">${reviewDays.day7 || ""}</textarea>
         type="number"
         min="1"
         value="${task.repeatInterval || 1}"
-        onchange="updateTask('${doc.id}','repeatInterval',Number(this.value))">
+        oninput="updateTask('${doc.id}','repeatInterval',Number(this.value))">
 </td>
 <td>
   <input
     type="date"
     value="${task.repeatUntil || ''}"
-    onchange="updateTask('${doc.id}','repeatUntil',this.value)">
+    oninput="updateTask('${doc.id}','repeatUntil',this.value)">
 </td>
 <td style="text-align:center;">
   <input
     type="checkbox"
     ${task.apply ? "checked" : ""}
-    onchange="toggleCreateCalendar('${doc.id}',this)">
+    oninput="toggleCreateCalendar('${doc.id}',this)">
 </td>
 <td>
   <input
@@ -697,7 +697,7 @@ class="review-cell">${reviewDays.day7 || ""}</textarea>
 
 
 <td>
-  <select onchange="updateTask('${doc.id}','calendarStatus',this.value)">
+  <select oninput="updateTask('${doc.id}','calendarStatus',this.value)">
     <option value="Create" ${task.calendarStatus==="Create"?"selected":""}>Create</option>
     <option value="Created" ${task.calendarStatus==="Created"?"selected":""}>Created</option>
     <option value="Delete" ${task.calendarStatus==="Delete"?"selected":""}>Delete</option>
@@ -708,7 +708,7 @@ class="review-cell">${reviewDays.day7 || ""}</textarea>
   <input
     type="checkbox"
     ${task.autoDelete ? "checked" : ""}
-    onchange="updateTask('${doc.id}','autoDelete',this.checked)">
+    oninput="updateTask('${doc.id}','autoDelete',this.checked)">
 </td>
 <td style="text-align:center;">
   <button data-id="${doc.id}" onclick="syncFullCalendarFromRow(this)">
@@ -961,6 +961,30 @@ await autoPlayMusicAfterLogin();
     }
   });
 };
+const inputTimers={};
+
+function delayedUpdate(
+  id,
+  field,
+  value
+){
+
+clearTimeout(
+inputTimers[id+field]
+);
+
+inputTimers[id+field]=
+setTimeout(()=>{
+
+updateTask(
+id,
+field,
+value
+);
+
+},800);
+
+}
 // =======================
 // update
 // ==============
@@ -1235,6 +1259,36 @@ console.error(err);
 
 }
 // =======================
+// UPDATE TASK + AUTO SYNC
+// =======================
+async function updateTask(id, field, value){
+
+  try{
+
+    const payload = {};
+
+    // hỗ trợ update nested field
+    payload[field] = value;
+
+    await db
+      .collection("tasks")
+      .doc(id)
+      .update(payload);
+
+    // AUTO SYNC
+    queueCalendarSync(id);
+
+  }catch(err){
+
+    console.error(
+      "updateTask error",
+      err
+    );
+
+  }
+
+}
+// =======================
 // ARCHIVE TASK
 // =======================
 async function archiveTask(id, checkbox) {
@@ -1372,7 +1426,7 @@ async function showBackup() {
 <input
 type="checkbox"
 ${task.apply ? "checked" : ""}
-onchange="toggleCreateCalendar('${doc.id}',this)">
+oninput="toggleCreateCalendar('${doc.id}',this)">
 </td>
 
 
@@ -1700,35 +1754,45 @@ function buildReviewDays(task) {
 }
 
 
-async function rebuildReviewDays(id) {
-  try {
-    const docRef = await db.collection("tasks").doc(id).get();
-    if (!docRef.exists) return;
+async function rebuildReviewDays(id){
 
-    const task = docRef.data();
+  const docRef =
+    await db.collection("tasks")
+      .doc(id)
+      .get();
 
-    const clearedTask = {
+  if(!docRef.exists)
+    return;
+
+  const task =
+    docRef.data();
+
+  const rebuilt =
+    buildReviewDays({
       ...task,
-      reviewDays: {
-        day1: "",
-        day2: "",
-        day3: "",
-        day4: "",
-        day5: "",
-        day6: "",
-        day7: ""
+      reviewDays:{
+        day1:"",
+        day2:"",
+        day3:"",
+        day4:"",
+        day5:"",
+        day6:"",
+        day7:""
       }
-    };
-
-    const rebuilt = buildReviewDays(clearedTask);
-
-    await db.collection("tasks").doc(id).update({
-      reviewDays: rebuilt
     });
 
-    await loadTasks();
+  await db
+    .collection("tasks")
+    .doc(id)
+    .update({
+      reviewDays:rebuilt
+    });
 
-  } catch (err) {
+  return rebuilt;
+
+}
+
+catch (err) {
     console.error(err);
     alert("Rebuild thất bại");
   }
@@ -2568,5 +2632,65 @@ async function removeTaskFromCalendar(task) {
       calendarStatus: "Delete"
 
     });
+
+}
+// =======================
+// AUTO SYNC CALENDAR
+// =======================
+
+const syncTimers = {};
+
+function queueCalendarSync(docId){
+
+  clearTimeout(
+    syncTimers[docId]
+  );
+
+  syncTimers[docId] =
+    setTimeout(
+      async ()=>{
+
+        try{
+
+          const ref =
+            await db
+              .collection("tasks")
+              .doc(docId)
+              .get();
+
+          if(!ref.exists)
+            return;
+
+          const task =
+            ref.data();
+
+          if(!task.apply)
+            return;
+
+          console.log(
+            "Auto syncing...",
+            docId
+          );
+
+          await rebuildReviewDays(
+            docId
+          );
+
+          await createCalendarFromRow(
+            docId
+          );
+
+        }catch(err){
+
+          console.error(
+            "Auto sync error",
+            err
+          );
+
+        }
+
+      },
+      1500
+    );
 
 }

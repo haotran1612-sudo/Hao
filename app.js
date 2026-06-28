@@ -1060,7 +1060,41 @@ async function toggleCreateCalendar(id, checkbox){
 
             const task = docRef.data();
 
-            if(task.calendarId){
+           if(task.calendarId && token){
+
+try{
+
+const res =
+await fetch(
+`https://www.googleapis.com/calendar/v3/calendars/primary/events/${task.calendarId}`,
+{
+method:"DELETE",
+headers:{
+Authorization:`Bearer ${token}`
+}
+}
+);
+
+if(
+res.status!==404 &&
+res.status!==410 &&
+!res.ok
+){
+throw new Error(
+await res.text()
+);
+}
+
+}catch(err){
+
+console.log(
+"Event đã mất:",
+task.calendarId
+);
+
+}
+
+}
 
                 const token =
                 localStorage.getItem("googleToken");

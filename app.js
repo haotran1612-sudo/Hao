@@ -2602,48 +2602,44 @@ function stopMusic() {
 }
 
 // Delete
-async function removeTaskFromCalendar(task){
+async function removeTaskFromCalendar(task) {
 
   const token = localStorage.getItem("googleToken");
-  if(!token) return;
+  if (!token) return;
 
   try {
-    if(task.calendarId){
+
+    // MAIN EVENT
+    if (task.calendarId) {
       await fetch(
         `https://www.googleapis.com/calendar/v3/calendars/primary/events/${task.calendarId}`,
         {
-          method:"DELETE",
-          headers:{ Authorization:`Bearer ${token}` }
+          method: "DELETE",
+          headers: {
+            Authorization: `Bearer ${token}`
+          }
         }
       );
     }
 
-    for(const id of (task.reviewCalendarIds || [])){
-      await fetch(
-        `https://www.googleapis.com/calendar/v3/calendars/primary/events/${id}`,
-        {
-          method:"DELETE",
-          headers:{ Authorization:`Bearer ${token}` }
-        }
-      );
+    // REVIEW EVENTS
+    if (Array.isArray(task.reviewCalendarIds)) {
+      for (const id of task.reviewCalendarIds) {
+        await fetch(
+          `https://www.googleapis.com/calendar/v3/calendars/primary/events/${id}`,
+          {
+            method: "DELETE",
+            headers: {
+              Authorization: `Bearer ${token}`
+            }
+          }
+        ).catch(() => {});
+      }
     }
 
-  } catch(err){
+  } catch (err) {
     console.error("Calendar delete failed", err);
   }
-}
-
-  // delete review
-  for(const id of (task.reviewCalendarIds||[])){
-    await fetch(
-      `https://www.googleapis.com/calendar/v3/calendars/primary/events/${id}`,
-      {
-        method:"DELETE",
-        headers:{ Authorization:`Bearer ${token}` }
-      }
-    ).catch(()=>{});
-  }
-
 }
 // =======================
 // AUTO SYNC CALENDAR

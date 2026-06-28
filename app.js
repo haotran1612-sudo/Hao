@@ -25,20 +25,14 @@ window.addEventListener(
 "DOMContentLoaded",
 ()=>{
 
-  initUI();
+ initUI();
 
-  initCalendar();
+ initCalendar();
 
-  initGoogleSync();
+ initGoogleSync();
 
 });
-export function initCalendar(){
 
- console.log(
- "calendar started"
- );
-
-}
 // =======================
 // FIREBASE INIT
 // =======================

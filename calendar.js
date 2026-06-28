@@ -47,3 +47,11 @@ export async function getEvents(){
  );
 
 }
+
+export function initCalendar(){
+
+ console.log(
+ "calendar started"
+ );
+
+}

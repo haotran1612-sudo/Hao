@@ -1,3 +1,44 @@
+import "./firebase.js";
+
+import "./eventBus.js";
+
+import "./store.js";
+
+import "./task.js";
+
+import {
+ initCalendar
+}
+from "./calendar.js";
+
+import {
+ initGoogleSync
+}
+from "./googleSync.js";
+
+import {
+ initUI
+}
+from "./ui.js";
+
+window.addEventListener(
+"DOMContentLoaded",
+()=>{
+
+  initUI();
+
+  initCalendar();
+
+  initGoogleSync();
+
+});
+export function initCalendar(){
+
+ console.log(
+ "calendar started"
+ );
+
+}
 // =======================
 // FIREBASE INIT
 // =======================

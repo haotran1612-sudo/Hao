@@ -964,68 +964,6 @@ await autoPlayMusicAfterLogin();
 // =======================
 // update
 // ==============
-async function updateTask(id, field, value) {
-
-  try {
-
-    const data = {};
-    data[field] = value;
-
-  // AUTO DELETE
-if (
-  field === "autoDelete" &&
-  value === true
-) {
-
-  const docRef =
-    await db.collection("tasks")
-      .doc(id)
-      .get();
-
-  const task = {
-    id,
-    ...docRef.data()
-  };
-
-  await removeTaskFromCalendar(task);
-
-  await loadTasks();
-
-  return;
-}
-
-    // Nếu đổi taskType / start / taskName thì reset reviewDays
-    // để loadTasks() build lại theo logic mới
-   if (
-  field === "taskType" ||
-  field === "start" ||
-  field === "deadline" ||
-  field === "taskName" ||
-  field === "processingTime"
-) {
-
-      await db.collection("tasks")
-        .doc(id)
-        .update({
-          reviewDays: {
-            day1:"",
-            day2:"",
-            day3:"",
-            day4:"",
-            day5:"",
-            day6:"",
-            day7:""
-          }
-        });
-
-      await loadTasks();
-      return;
-    }
-
-  } catch(err) {
-    console.error(err);
-  }
-}
 async function toggleCreateCalendar(id, checkbox){
 
 try{
@@ -1051,16 +989,10 @@ const task=
 docRef.data();
 
 const token=
-localStorage.getItem(
-"googleToken"
-);
-
+localStorage.getItem("googleToken");
 
 // MAIN EVENT
-if(
-task.calendarId &&
-token
-){
+if(task.calendarId && token){
 
 try{
 
@@ -1069,33 +1001,23 @@ await fetch(
 {
 method:"DELETE",
 headers:{
-Authorization:
-`Bearer ${token}`
+Authorization:`Bearer ${token}`
 }
 }
 );
-}  
+
 }catch(err){
 
-console.log(
-"Main calendar delete fail"
-);
+console.log("Main calendar delete fail");
 
 }
 
 }
-
 
 // REVIEW EVENTS
-if(
-task.reviewCalendarIds?.length &&
-token
-){
+if(task.reviewCalendarIds?.length && token){
 
-for(
-const eventId
-of task.reviewCalendarIds
-){
+for(const eventId of task.reviewCalendarIds){
 
 try{
 
@@ -1104,24 +1026,20 @@ await fetch(
 {
 method:"DELETE",
 headers:{
-Authorization:
-`Bearer ${token}`
+Authorization:`Bearer ${token}`
 }
 }
 );
-}
+
 }catch(err){
 
-console.log(
-"Review delete fail"
-);
+console.log("Review delete fail");
 
 }
 
 }
 
 }
-
 
 // RESET FIRESTORE
 await db
@@ -1139,11 +1057,9 @@ apply:false
 
 await loadTasks();
 
-} // ← ĐÓNG else
+}
 
-} // ← ĐÓNG try
-
-catch(err){
+}catch(err){
 
 console.error(
 "toggleCreateCalendar",

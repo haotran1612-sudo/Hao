@@ -57,3 +57,60 @@ export function initGoogleSync(){
  );
 
 }
+
+import { auth } from "./firebase.js";
+
+// =======================
+// GOOGLE PROVIDER
+// =======================
+const provider = new firebase.auth.GoogleAuthProvider();
+provider.addScope("https://www.googleapis.com/auth/calendar");
+
+// =======================
+// GOOGLE LOGIN
+// =======================
+export async function googleLogin() {
+  try {
+    const result = await auth.signInWithPopup(provider);
+
+    const credential = result.credential || null;
+    const token = credential?.accessToken || "";
+    const user = result.user;
+
+    if (token) {
+      localStorage.setItem("googleToken", token);
+    }
+
+    if (user?.email) {
+      localStorage.setItem("userEmail", user.email);
+    }
+
+    return {
+      user,
+      token
+    };
+
+  } catch (err) {
+    console.error("googleLogin error:", err);
+    throw err;
+  }
+}
+
+// =======================
+// REFRESH GOOGLE TOKEN
+// =======================
+export async function ensureGoogleToken() {
+  try {
+    const result = await auth.signInWithPopup(provider);
+
+    const token = result.credential?.accessToken;
+    if (token) {
+      localStorage.setItem("googleToken", token);
+    }
+
+    return token;
+  } catch (e) {
+    console.log("Token refresh fail");
+    return null;
+  }
+}

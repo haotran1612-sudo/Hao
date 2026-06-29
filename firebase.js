@@ -1,6 +1,6 @@
 // =======================
 // FIREBASE CONFIG
-// =======================
+// ======================= 
 
 // FIREBASE INIT
 const firebaseConfig = {

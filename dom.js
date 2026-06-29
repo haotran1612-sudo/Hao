@@ -374,3 +374,45 @@ current
 );
 
 }
+export function getCurrentWeekDates(){
+
+const result=[];
+
+const now=
+new Date();
+
+const day=
+now.getDay();
+
+const monday=
+new Date(now);
+
+monday.setDate(
+now.getDate()-
+(day===0?6:day-1)
+);
+
+for(
+let i=0;
+i<7;
+i++
+){
+
+const d=
+new Date(
+monday
+);
+
+d.setDate(
+monday.getDate()+i
+);
+
+result.push(
+d
+);
+
+}
+
+return result;
+
+}

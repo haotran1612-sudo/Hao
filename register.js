@@ -1,7 +1,7 @@
 import {
   auth,
   db
-} from "../config/firebase.js";
+} from "./firebase.js";
 
 // =======================
 // REGISTER

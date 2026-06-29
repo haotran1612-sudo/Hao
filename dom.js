@@ -374,4 +374,22 @@ current
 );
 
 }
+export function getCurrentWeekDates() {
 
+const days=[];
+
+const today=new Date();
+
+for(let i=0;i<7;i++){
+
+const d=new Date(today);
+
+d.setDate(today.getDate()+i);
+
+days.push(d);
+
+}
+
+return days;
+
+}

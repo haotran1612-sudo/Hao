@@ -1,3 +1,7 @@
+import {
+highlightTodayColumn
+}
+from "./dom.js";
 import { db } from "./firebase.js";
 
 // =======================

@@ -1,4 +1,4 @@
-import { db, auth } from "../config/firebase.js";
+import { db, auth } from "./firebase.js";
 
 // =======================
 // SAVE MUSIC URL

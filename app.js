@@ -1,13 +1,10 @@
-// =======================
-// FIREBASE INIT SIDE EFFECT (nếu cần chạy init)
-// =======================
 import "./firebase.js";
 
-import { auth } from "./firebase.js";
+import {
+  auth
+} from "./firebase.js";
 
-// =======================
 // AUTH
-// =======================
 import {
   login,
   logout,
@@ -23,9 +20,7 @@ import {
 
 import { googleLogin } from "./google.js";
 
-// =======================
 // MODULES
-// =======================
 import * as task from "./task.js";
 import * as review from "./review.js";
 import * as backup from "./backup.js";
@@ -41,72 +36,61 @@ import * as dateUtils from "./date.js";
 
 
 // =======================
-// SAFE GLOBAL BINDING
-// (giữ HTML onclick hoạt động như tracker cũ)
+// FIX GLOBAL (QUAN TRỌNG)
 // =======================
+window.login = login;
+window.logout = logout;
+window.handleLoginEnter = handleLoginEnter;
+
+window.registerUser = registerUser;
+window.checkProviders = checkProviders;
+window.resetPassword = resetPassword;
+
+window.googleLogin = googleLogin;
+
+// TASK / REVIEW / ETC (GIỮ ONCLICK CŨ CHẠY)
 Object.assign(window, {
-  // auth
-  login,
-  logout,
-  handleLoginEnter,
-
-  registerUser,
-  checkProviders,
-  resetPassword,
-
-  googleLogin,
-
-  // modules (namespaced để tránh crash overwrite)
-  Task: task,
-  Review: review,
-  Backup: backup,
-  Calendar: calendar,
-  Sync: sync,
-  Music: music,
-  Notification: notification,
-  Dom: dom,
-  DateUtils: dateUtils
+  ...task,
+  ...review,
+  ...backup,
+  ...calendar,
+  ...sync,
+  ...music,
+  ...notification,
+  ...dom,
+  ...dateUtils
 });
 
 
 // =======================
-// APP INIT
+// INIT APP
 // =======================
 window.addEventListener("DOMContentLoaded", async () => {
   try {
-    console.log("🚀 APP INIT START");
 
-    // 1. AUTH STATE FIRST (quan trọng nhất)
-    if (typeof initAuthState === "function") {
+    console.log("APP START");
+
+    // AUTH STATE
+    if (initAuthState) {
       await initAuthState();
     }
 
-    // 2. WEEK HEADER UI
+    // UI
     dom.loadWeekHeader?.();
     dom.highlightTodayColumn?.();
 
-    // 3. NOTIFICATION PERMISSION (không chặn app nếu fail)
-    try {
-      await notification.requestNotificationPermission?.();
-    } catch (e) {
-      console.warn("Notification permission skipped:", e);
-    }
+    // NOTIFICATION
+    await notification.requestNotificationPermission?.();
 
-    // 4. MUSIC SETTINGS (không block UI)
-    try {
-      await music.loadUserMusicSettings?.();
-    } catch (e) {
-      console.warn("Music load failed:", e);
-    }
-
-    // 5. LOAD TASKS (core app)
+    // TASKS
     await task.loadTasks?.();
 
-    // 6. REFRESH NOTIFICATION SCHEDULER
-    notification.scheduleTodayNotifications?.();
+    // MUSIC
+    await music.loadUserMusicSettings?.();
 
-    console.log("✅ APP READY");
+    console.log("APP READY");
+
   } catch (err) {
-    console.error("❌ APP INIT ERROR:", err);
+    console.error("APP ERROR:", err);
   }
 });

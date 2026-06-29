@@ -1,193 +1,154 @@
 // =======================
-// DATE UTILS
-// =======================  
-
-// =======================
-// NORMALIZE
+// AUTO RESIZE
 // =======================
 
-export function normalizeDate(
+export function autoResize(
+el
+){
+
+if(
+!el
+)
+return;
+
+el.style.height=
+"auto";
+
+el.style.height=
+el.scrollHeight+
+"px";
+
+}
+
+// =======================
+// HIGHLIGHT TODAY
+// =======================
+
+export function highlightTodayColumn(){
+
+const headers=
+document.querySelectorAll(
+"#taskTable th"
+);
+
+headers.forEach(
+h=>
+h.classList.remove(
+"today-column"
+)
+);
+
+const today=
+new Date();
+
+const day=
+today.getDay();
+
+// map Mon→Sun
+const index=
+
+day===0
+?11
+:day+4;
+
+if(
+headers[index]
+){
+
+headers[index]
+.classList.add(
+"today-column"
+);
+
+}
+
+}
+
+// =======================
+// WEEK HEADER
+// =======================
+
+export function loadWeekHeader(){
+
+const ids=[
+"day1",
+"day2",
+"day3",
+"day4",
+"day5",
+"day6",
+"day7"
+];
+
+const week=
+getCurrentWeekDates();
+
+ids.forEach(
+(
+id,
+i
+)=>{
+
+const el=
+document.getElementById(
+id
+);
+
+if(
+!el
+)
+return;
+
+const d=
+week[i];
+
+el.innerHTML=
+`${formatDate(d)}`;
+
+});
+
+}
+
+// =======================
+// FORMAT DATE
+// =======================
+
+export function formatDate(
 date
 ){
 
 if(
-!(date instanceof Date)
-){
+!date
+)
+return "";
 
 date=
 new Date(
 date
 );
 
-}
-
-const d=
-new Date(
-date
-);
-
-d.setHours(
-0,
-0,
-0,
-0
-);
-
-return d;
-
-}
-
-// =======================
-// SAME DATE
-// =======================
-
-export function isSameDate(
-a,
-b
-){
-
-if(
-!a ||
-!b
-)
-return false;
-
 return (
 
-normalizeDate(a)
-.getTime()
-
-===
-
-normalizeDate(b)
-.getTime()
-
-);
-
-}
-
-// =======================
-// DATE RANGE
-// =======================
-
-export function isDateInRange(
-target,
-start,
-end
-){
-
-if(
-!target||
-!start||
-!end
+String(
+date.getDate()
 )
-return false;
-
-const t=
-normalizeDate(
-target
-);
-
-const s=
-normalizeDate(
-start
-);
-
-const e=
-normalizeDate(
-end
-);
-
-return (
-
-t.getTime()
-
->=
-
-s.getTime()
-
-&&
-
-t.getTime()
-
-<=
-
-e.getTime()
-
-);
-
-}
-
-// =======================
-// DIFF DAYS
-// =======================
-
-export function diffDays(
-a,
-b
-){
-
-const ms=
-
-normalizeDate(b)
-
--
-
-normalizeDate(a);
-
-return Math.floor(
-
-ms/
-
-(
-1000
-*
-60
-*
-60
-*
-24
+.padStart(
+2,
+"0"
 )
-
-);
-
-}
-
-// =======================
-// DIFF MONTHS
-// =======================
-
-export function diffMonths(
-a,
-b
-){
-
-a=
-new Date(
-a
-);
-
-b=
-new Date(
-b
-);
-
-return (
-
-(
-b.getFullYear()
--
-a.getFullYear()
-)
-*
-12
 
 +
 
-(
-b.getMonth()
--
-a.getMonth()
+"/"
+
++
+
+String(
+date.getMonth()+1
+)
+.padStart(
+2,
+"0"
 )
 
 );
@@ -195,201 +156,37 @@ a.getMonth()
 }
 
 // =======================
-// OCCURRENCE
+// CURRENT WEEK
 // =======================
 
-export function isOccurrenceForTaskType(
-task,
-date
+export function getCurrentWeekDates(){
+
+const result=[];
+
+const now=
+new Date();
+
+for(
+let i=0;
+i<7;
+i++
 ){
 
-if(
-!task
-)
-return false;
-
-const start=
-normalizeDate(
-task.start
+const d=
+new Date(
+now
 );
 
-const current=
-normalizeDate(
-date
+d.setDate(
+now.getDate()+i
 );
 
-if(
-current
-<
-start
-)
-return false;
-
-// DAILY
-if(
-task.taskType===
-"Daily"
-){
-
-return true;
-
-}
-
-// WEEKLY
-if(
-task.taskType===
-"Weekly"
-){
-
-return (
-diffDays(
-start,
-current
-)
-%
-7
-===
-0
+result.push(
+d
 );
 
 }
 
-// MONTHLY
-if(
-task.taskType===
-"Monthly"
-){
-
-return (
-start.getDate()
-
-===
-
-current.getDate()
-);
-
-}
-
-// YEARLY
-if(
-task.taskType===
-"Yearly"
-){
-
-return (
-
-start.getDate()
-===
-
-current.getDate()
-
-&&
-
-start.getMonth()
-===
-
-current.getMonth()
-
-);
-
-}
-
-// CUSTOM REPEAT
-if(
-task.repeat
-&&
-task.repeat!=="None"
-){
-
-const interval=
-Number(
-task.repeatInterval
-||
-1
-);
-
-if(
-task.repeat===
-"Daily"
-){
-
-return (
-diffDays(
-start,
-current
-)
-%
-interval
-===
-0
-);
-
-}
-
-if(
-task.repeat===
-"Weekly"
-){
-
-return (
-Math.floor(
-diffDays(
-start,
-current
-)
-/
-7
-)
-%
-interval
-===
-0
-);
-
-}
-
-if(
-task.repeat===
-"Monthly"
-){
-
-return (
-diffMonths(
-start,
-current
-)
-%
-interval
-===
-0
-);
-
-}
-
-}
-
-return isSameDate(
-start,
-current
-);
-
-}
-export function getCurrentWeekDates() {
-
-const days=[];
-
-const today=new Date();
-
-for(let i=0;i<7;i++){
-
-const d=new Date(today);
-
-d.setDate(today.getDate()+i);
-
-days.push(d);
-
-}
-
-return days;
+return result;
 
 }

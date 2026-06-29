@@ -3,7 +3,29 @@
 // SYNC CALENDAR
 // =======================
 
-import { db } from "../config/firebase.js";
+import { db } from "./firebase.js";
+
+import {
+createCalendarEvent,
+createReviewCalendarTask
+}
+from "./calendar.js";
+
+import {
+buildReviewDays,
+parseReviewTasks
+}
+from "./review.js";
+
+import {
+loadTasks
+}
+from "./task.js";
+
+import {
+getCurrentWeekDates
+}
+from "./dom.js";
 
 // =======================
 // TOGGLE CREATE CALENDAR

@@ -1,7 +1,7 @@
 import {
   auth,
   provider
-} from "../config/firebase.js";
+} from "./firebase.js";
 
 // =======================
 // GOOGLE LOGIN

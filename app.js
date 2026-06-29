@@ -1,96 +1,123 @@
-import "./firebase.js";
+// =======================
+// FIREBASE
+// =======================
+import "./config/firebase.js";
 
-import {
-  auth
-} from "./firebase.js"; 
-
+// =======================
 // AUTH
+// =======================
 import {
-  login,
-  logout,
-  handleLoginEnter,
-  initAuthState
-} from "./login.js";
+login,
+logout,
+handleLoginEnter,
+initAuthState
+}
+from "./auth/login.js";
 
 import {
-  registerUser,
-  checkProviders,
-  resetPassword
-} from "./register.js";
+registerUser,
+checkProviders,
+resetPassword
+}
+from "./auth/register.js";
 
-import { googleLogin } from "./google.js";
+import {
+googleLogin
+}
+from "./auth/google.js";
 
-// MODULES
-import * as task from "./task.js";
-import * as review from "./review.js";
-import * as backup from "./backup.js";
+// =======================
+// TASK
+// =======================
+import * as task from "./task/task.js";
+import * as review from "./task/review.js";
+import * as backup from "./task/backup.js";
 
-import * as calendar from "./calendar.js";
-import * as sync from "./sync.js";
+// =======================
+// CALENDAR
+// =======================
+import * as calendar from "./calendar/calendar.js";
+import * as sync from "./calendar/sync.js";
 
-import * as music from "./music.js";
-import * as notification from "./notification.js";
+// =======================
+// MUSIC
+// =======================
+import * as music from "./music/music.js";
 
-import * as dom from "./dom.js";
-import * as dateUtils from "./date.js";
+// =======================
+// NOTIFICATION
+// =======================
+import * as notification from "./notification/notification.js";
+
+// =======================
+// UTILS
+// =======================
+import * as dom from "./utils/dom.js";
+import * as dateUtils from "./utils/date.js";
 
 
 // =======================
-// FIX GLOBAL (QUAN TRỌNG)
+// GLOBAL EXPORT
 // =======================
-window.login = login;
-window.logout = logout;
-window.handleLoginEnter = handleLoginEnter;
-
-window.registerUser = registerUser;
-window.checkProviders = checkProviders;
-window.resetPassword = resetPassword;
-
-window.googleLogin = googleLogin;
-
-// TASK / REVIEW / ETC (GIỮ ONCLICK CŨ CHẠY)
 Object.assign(window, {
-  ...task,
-  ...review,
-  ...backup,
-  ...calendar,
-  ...sync,
-  ...music,
-  ...notification,
-  ...dom,
-  ...dateUtils
+
+login,
+logout,
+handleLoginEnter,
+
+registerUser,
+checkProviders,
+resetPassword,
+
+googleLogin,
+
+...task,
+...review,
+...backup,
+
+...calendar,
+...sync,
+
+...music,
+
+...notification,
+
+...dom,
+
+...dateUtils
+
 });
 
 
 // =======================
-// INIT APP
+// INIT
 // =======================
-window.addEventListener("DOMContentLoaded", async () => {
-  try {
+window.addEventListener(
+"DOMContentLoaded",
 
-    console.log("APP START");
+async()=>{
 
-    // AUTH STATE
-    if (initAuthState) {
-      await initAuthState();
-    }
+try{
 
-    // UI
-    dom.loadWeekHeader?.();
-    dom.highlightTodayColumn?.();
+await initAuthState?.();
 
-    // NOTIFICATION
-    await notification.requestNotificationPermission?.();
+dom.loadWeekHeader?.();
 
-    // TASKS
-    await task.loadTasks?.();
+dom.highlightTodayColumn?.();
 
-    // MUSIC
-    await music.loadUserMusicSettings?.();
+await task.loadTasks?.();
 
-    console.log("APP READY");
+await music.loadUserMusicSettings?.();
 
-  } catch (err) {
-    console.error("APP ERROR:", err);
-  }
-});
+notification.scheduleTodayNotifications?.();
+
+console.log("APP READY");
+
+}catch(err){
+
+console.error(err);
+
+}
+
+}
+);

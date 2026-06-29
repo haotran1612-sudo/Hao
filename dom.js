@@ -1,65 +1,25 @@
 // =======================
-// DOM HELPERS
+// DATE UTILS
 // =======================
 
 // =======================
-// AUTO RESIZE TEXTAREA
+// NORMALIZE
 // =======================
 
-export function autoResize(
-element
+export function normalizeDate(
+date
 ){
 
 if(
-!element
-)
-return;
+!(date instanceof Date)
+){
 
-element.style.height=
-"auto";
-
-element.style.height=
-element.scrollHeight+
-"px";
+date=
+new Date(
+date
+);
 
 }
-
-// =======================
-// HIGHLIGHT TODAY
-// =======================
-
-export function highlightTodayColumn(){
-
-const week=
-getCurrentWeekDates();
-
-const today=
-new Date();
-
-today.setHours(
-0,
-0,
-0,
-0
-);
-
-const headers=
-document.querySelectorAll(
-".week-header"
-);
-
-headers.forEach(
-el=>
-el.classList.remove(
-"today"
-)
-);
-
-week.forEach(
-(
-date,
-index
-)=>{
 
 const d=
 new Date(
@@ -73,193 +33,344 @@ d.setHours(
 0
 );
 
+return d;
+
+}
+
+// =======================
+// SAME DATE
+// =======================
+
+export function isSameDate(
+a,
+b
+){
+
 if(
-d.getTime()
+!a ||
+!b
+)
+return false;
+
+return (
+
+normalizeDate(a)
+.getTime()
+
 ===
-today.getTime()
-){
 
-const header=
-headers[
-index
-];
+normalizeDate(b)
+.getTime()
 
-if(
-header
-){
-
-header.classList.add(
-"today"
-);
-
-}
-
-}
-
-}
 );
 
 }
 
 // =======================
-// WEEK HEADER
+// DATE RANGE
 // =======================
 
-export function loadWeekHeader(){
-
-const container=
-document.getElementById(
-"weekHeader"
-);
-
-if(
-!container)
-return;
-
-container.innerHTML=
-"";
-
-const week=
-getCurrentWeekDates();
-
-week.forEach(
-date=>{
-
-const div=
-document.createElement(
-"div"
-);
-
-div.className=
-"week-header";
-
-div.innerHTML=
-
-`${formatDate(date)}`;
-
-container.appendChild(
-div
-);
-
-});
-
-highlightTodayColumn();
-
-}
-
-// =======================
-// FORMAT DATE
-// =======================
-
-export function formatDate(
-date
+export function isDateInRange(
+target,
+start,
+end
 ){
 
 if(
-!(
-date instanceof Date
+!target||
+!start||
+!end
 )
+return false;
+
+const t=
+normalizeDate(
+target
+);
+
+const s=
+normalizeDate(
+start
+);
+
+const e=
+normalizeDate(
+end
+);
+
+return (
+
+t.getTime()
+
+>=
+
+s.getTime()
+
+&&
+
+t.getTime()
+
+<=
+
+e.getTime()
+
+);
+
+}
+
+// =======================
+// DIFF DAYS
+// =======================
+
+export function diffDays(
+a,
+b
 ){
 
-date=
+const ms=
+
+normalizeDate(b)
+
+-
+
+normalizeDate(a);
+
+return Math.floor(
+
+ms/
+
+(
+1000
+*
+60
+*
+60
+*
+24
+)
+
+);
+
+}
+
+// =======================
+// DIFF MONTHS
+// =======================
+
+export function diffMonths(
+a,
+b
+){
+
+a=
 new Date(
+a
+);
+
+b=
+new Date(
+b
+);
+
+return (
+
+(
+b.getFullYear()
+-
+a.getFullYear()
+)
+*
+12
+
++
+
+(
+b.getMonth()
+-
+a.getMonth()
+)
+
+);
+
+}
+
+// =======================
+// OCCURRENCE
+// =======================
+
+export function isOccurrenceForTaskType(
+task,
+date
+){
+
+if(
+!task
+)
+return false;
+
+const start=
+normalizeDate(
+task.start
+);
+
+const current=
+normalizeDate(
 date
 );
 
-}
-
 if(
-isNaN(
-date.getTime()
+current
+<
+start
 )
-)
-return "";
+return false;
 
-const day=
-String(
-date.getDate()
-)
-.padStart(
-2,
-"0"
-);
+// DAILY
+if(
+task.taskType===
+"Daily"
+){
 
-const month=
-String(
-date.getMonth()+1
-)
-.padStart(
-2,
-"0"
-);
-
-const year=
-date.getFullYear();
-
-return `${day}/${month}/${year}`;
+return true;
 
 }
 
-// =======================
-// CURRENT WEEK
-// =======================
+// WEEKLY
+if(
+task.taskType===
+"Weekly"
+){
 
-export function getCurrentWeekDates(){
-
-const today=
-new Date();
-
-today.setHours(
-0,
-0,
-0,
+return (
+diffDays(
+start,
+current
+)
+%
+7
+===
 0
 );
 
-const day=
-today.getDay();
+}
 
-const diff=
-day===0
-? -6
-: 1-day;
-
-const monday=
-new Date(
-today
-);
-
-monday.setDate(
-today.getDate()
-+
-diff
-);
-
-const week=[];
-
-for(
-let i=0;
-i<7;
-i++
+// MONTHLY
+if(
+task.taskType===
+"Monthly"
 ){
 
-const d=
-new Date(
-monday
-);
+return (
+start.getDate()
 
-d.setDate(
-monday.getDate()
-+
-i
-);
+===
 
-week.push(
-d
+current.getDate()
 );
 
 }
 
-return week;
+// YEARLY
+if(
+task.taskType===
+"Yearly"
+){
+
+return (
+
+start.getDate()
+===
+
+current.getDate()
+
+&&
+
+start.getMonth()
+===
+
+current.getMonth()
+
+);
+
+}
+
+// CUSTOM REPEAT
+if(
+task.repeat
+&&
+task.repeat!=="None"
+){
+
+const interval=
+Number(
+task.repeatInterval
+||
+1
+);
+
+if(
+task.repeat===
+"Daily"
+){
+
+return (
+diffDays(
+start,
+current
+)
+%
+interval
+===
+0
+);
+
+}
+
+if(
+task.repeat===
+"Weekly"
+){
+
+return (
+Math.floor(
+diffDays(
+start,
+current
+)
+/
+7
+)
+%
+interval
+===
+0
+);
+
+}
+
+if(
+task.repeat===
+"Monthly"
+){
+
+return (
+diffMonths(
+start,
+current
+)
+%
+interval
+===
+0
+);
+
+}
+
+}
+
+return isSameDate(
+start,
+current
+);
 
 }

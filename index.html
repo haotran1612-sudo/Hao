@@ -9,9 +9,11 @@
 <link rel="stylesheet" href="style.css">
 
 <!-- FIREBASE V8 -->
-<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
-<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
-<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+<script defer src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+
+<script defer src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+
+<script defer src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
 
 </head>
 
@@ -397,7 +399,9 @@ id="calendarRoot">
 <input id="attendees">
 
 <label>
-    <input type="checkbox" id="addMeet">
+   <input
+type="checkbox"
+id="addMeet">
     Add Google Meet
 </label>
 
@@ -468,13 +472,14 @@ id="calendarRoot">
 
 </div>
 
-<button id="fabAdd" onclick="openTaskModal()">+</button>
-<!-- PLAYER YOUTUBE ẨN -->
+<button id="fabAdd" onclick="openTaskModal()">
++
+</button>
 
-<!-- APP.JS LUÔN ĐẶT CUỐI -->
+<!-- APP -->
 <script
 type="module"
-src="./app.js">
+src="./src/app.js">
 </script>
 
 </body>

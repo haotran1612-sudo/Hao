@@ -1,62 +1,91 @@
-// googleSync.js
+import {
+  auth,
+  provider
+} from "../config/firebase.js";
 
-export async function pushToGoogle(event){
+// =======================
+// GOOGLE LOGIN
+// =======================
+export async function googleLogin() {
 
- const token =
- localStorage.getItem(
-   "googleToken"
- );
+  try {
 
- if(!token)
-   return;
+    const result =
+      await auth
+      .signInWithPopup(
+        provider
+      );
 
- await fetch(
-   "https://www.googleapis.com/calendar/v3/calendars/primary/events",
-   {
-     method:"POST",
-     headers:{
-       Authorization:`Bearer ${token}`,
-       "Content-Type":"application/json"
-     },
-     body:JSON.stringify({
+    // lấy credential
+    const credential =
+      result.credential ||
+      null;
 
-       summary:event.title,
+    const token =
+      credential?.accessToken ||
+      "";
 
-       start:{
-         dateTime:event.start
-       },
+    const user =
+      result.user;
 
-       end:{
-         dateTime:event.end
-       }
+    // lưu token calendar
+    if(token){
 
-     })
-   }
- );
+      localStorage.setItem(
+        "googleToken",
+        token
+      );
+
+    }
+
+    // lưu email
+    if(user?.email){
+
+      localStorage.setItem(
+        "userEmail",
+        user.email
+      );
+
+      document.getElementById(
+        "welcomeUser"
+      ).innerText =
+        user.email;
+
+    }
+
+    // chuyển màn hình
+    document.getElementById(
+      "loginPage"
+    ).style.display =
+      "none";
+
+    document.getElementById(
+      "appPage"
+    ).style.display =
+      "block";
+
+    await requestNotificationPermission();
+
+    await loadTasks();
+
+    await loadUserMusicSettings();
+
+    alert(
+      "Google login + Calendar connected thành công"
+    );
+
+  } catch (err) {
+
+    console.error(
+      "googleLogin error:",
+      err
+    );
+
+    alert(
+      err.message ||
+      "Google login failed"
+    );
+
+  }
 
 }
-
-export function googleLogin(){
-
- console.log(
-   "google login"
- );
-
-}
-
-export function logout(){
-
- firebase.auth().signOut();
-
-}
-
-export function initGoogleSync(){
-
- console.log(
-   "google sync started"
- );
-
-}
-
-import { auth } from "./firebase.js";
-

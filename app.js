@@ -2,7 +2,7 @@ import "./firebase.js";
 
 import {
   auth
-} from "./firebase.js";
+} from "./firebase.js"; 
 
 // AUTH
 import {

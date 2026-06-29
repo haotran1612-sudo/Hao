@@ -1,5 +1,5 @@
 // =======================
-// CONFIG
+// FIREBASE
 // =======================
 
 import "./config/firebase.js";
@@ -32,152 +32,51 @@ from "./auth/google.js";
 // TASK
 // =======================
 
-import {
-
-saveTask,
-loadTasks,
-updateTask,
-addRow,
-
-openTaskModal,
-closeTaskModal,
-resetForm,
-
-showTracker,
-showKanban
-
-}
+import * as task
 from "./task/task.js";
 
-import {
-
-buildReviewDays,
-buildReviewSchedule,
-rebuildReviewDays,
-parseReviewTasks,
-
-createCalendarFromReviewCells,
-createReviewCalendarForRow,
-
-scheduleTodayNotifications,
-hasReviewData
-
-}
+import * as review
 from "./task/review.js";
 
-import {
-
-archiveTask,
-showBackup,
-restoreTask,
-deleteBackupTask
-
-}
+import * as backup
 from "./task/backup.js";
 
 // =======================
 // CALENDAR
 // =======================
 
-import {
-
-createCalendarEvent,
-createReviewCalendarTask,
-findCalendarEventByKey,
-
-buildMainEventKey,
-buildReviewEventKey
-
-}
+import * as calendar
 from "./calendar/calendar.js";
 
-import {
-
-toggleCreateCalendar,
-createCalendarFromRow,
-syncFullCalendarFromRow
-
-}
+import * as sync
 from "./calendar/sync.js";
 
 // =======================
 // MUSIC
 // =======================
 
-import {
-
-saveMusicUrl,
-loadUserMusicSettings,
-
-toggleAutoPlayMusic,
-
-playMusicFromUrl,
-playSavedMusic,
-stopMusic,
-
-extractYoutubeVideoId,
-buildYoutubeEmbedUrl
-
-}
+import * as music
 from "./music/music.js";
 
 // =======================
 // NOTIFICATION
 // =======================
 
-import {
-
-requestNotificationPermission,
-
-showTaskNotification,
-
-scheduleNotification,
-
-refreshAllNotifications,
-
-showInAppPopup
-
-}
+import * as notification
 from "./notification/notification.js";
 
 // =======================
 // UTILS
 // =======================
 
-import {
-
-autoResize,
-
-highlightTodayColumn,
-
-loadWeekHeader,
-
-formatDate,
-
-getCurrentWeekDates
-
-}
+import * as dom
 from "./utils/dom.js";
 
-import {
-
-normalizeDate,
-
-isSameDate,
-
-isDateInRange,
-
-diffDays,
-
-diffMonths,
-
-isOccurrenceForTaskType
-
-}
+import * as dateUtils
 from "./utils/date.js";
 
 // =======================
-// GLOBAL WINDOW
+// EXPORT TO WINDOW
 // =======================
 
 Object.assign(
@@ -185,7 +84,7 @@ window,
 
 {
 
-// AUTH
+// auth
 login,
 logout,
 handleLoginEnter,
@@ -194,142 +93,110 @@ checkProviders,
 resetPassword,
 googleLogin,
 
-// TASK
-saveTask,
-loadTasks,
-updateTask,
-addRow,
+// task
+...task,
 
-openTaskModal,
-closeTaskModal,
-resetForm,
+// review
+...review,
 
-showTracker,
-showKanban,
+// backup
+...backup,
 
-// REVIEW
-buildReviewDays,
-buildReviewSchedule,
-rebuildReviewDays,
+// calendar
+...calendar,
 
-parseReviewTasks,
+// sync
+...sync,
 
-createCalendarFromReviewCells,
+// music
+...music,
 
-createReviewCalendarForRow,
+// notification
+...notification,
 
-scheduleTodayNotifications,
-
-hasReviewData,
-
-// BACKUP
-archiveTask,
-showBackup,
-restoreTask,
-deleteBackupTask,
-
-// CALENDAR
-createCalendarEvent,
-createReviewCalendarTask,
-
-findCalendarEventByKey,
-
-buildMainEventKey,
-buildReviewEventKey,
-
-toggleCreateCalendar,
-createCalendarFromRow,
-
-syncFullCalendarFromRow,
-
-// MUSIC
-saveMusicUrl,
-
-loadUserMusicSettings,
-
-toggleAutoPlayMusic,
-
-playMusicFromUrl,
-
-playSavedMusic,
-
-stopMusic,
-
-extractYoutubeVideoId,
-
-buildYoutubeEmbedUrl,
-
-// NOTIFICATION
-requestNotificationPermission,
-
-showTaskNotification,
-
-scheduleNotification,
-
-refreshAllNotifications,
-
-showInAppPopup,
-
-// DOM
-autoResize,
-
-highlightTodayColumn,
-
-loadWeekHeader,
-
-formatDate,
-
-getCurrentWeekDates,
-
-// DATE
-normalizeDate,
-
-isSameDate,
-
-isDateInRange,
-
-diffDays,
-
-diffMonths,
-
-isOccurrenceForTaskType
+// utils
+...dom,
+...dateUtils
 
 }
 
 );
 
 // =======================
-// INIT APP
+// INIT
 // =======================
 
 window.addEventListener(
 "DOMContentLoaded",
 
-async ()=>{
+async()=>{
 
 try{
 
-// login state
-initAuthState();
+if(
+typeof initAuthState===
+"function"
+){
 
-// UI
-loadWeekHeader();
+await initAuthState();
 
-highlightTodayColumn();
+}
 
-// load music
-await loadUserMusicSettings();
+if(
+typeof dom.loadWeekHeader===
+"function"
+){
 
-// notification
-await requestNotificationPermission();
+dom.loadWeekHeader();
 
-// task
-await loadTasks();
+}
 
-}catch(err){
+if(
+typeof dom.highlightTodayColumn===
+"function"
+){
+
+dom.highlightTodayColumn();
+
+}
+
+if(
+typeof music.loadUserMusicSettings===
+"function"
+){
+
+await music.loadUserMusicSettings();
+
+}
+
+if(
+typeof notification.requestNotificationPermission===
+"function"
+){
+
+await notification.requestNotificationPermission();
+
+}
+
+if(
+typeof task.loadTasks===
+"function"
+){
+
+await task.loadTasks();
+
+}
+
+console.log(
+"TaskFlow started"
+);
+
+}catch(
+err
+){
 
 console.error(
-"APP INIT ERROR",
+"INIT ERROR",
 err
 );
 

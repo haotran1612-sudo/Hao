@@ -1,123 +1,112 @@
 // =======================
-// FIREBASE
+// FIREBASE INIT SIDE EFFECT (nếu cần chạy init)
 // =======================
-import "./config/firebase.js";
+import "./firebase.js";
+
+import { auth } from "./firebase.js";
 
 // =======================
 // AUTH
 // =======================
 import {
-login,
-logout,
-handleLoginEnter,
-initAuthState
-}
-from "./auth/login.js";
+  login,
+  logout,
+  handleLoginEnter,
+  initAuthState
+} from "./login.js";
 
 import {
-registerUser,
-checkProviders,
-resetPassword
-}
-from "./auth/register.js";
+  registerUser,
+  checkProviders,
+  resetPassword
+} from "./register.js";
 
-import {
-googleLogin
-}
-from "./auth/google.js";
+import { googleLogin } from "./google.js";
 
 // =======================
-// TASK
+// MODULES
 // =======================
-import * as task from "./task/task.js";
-import * as review from "./task/review.js";
-import * as backup from "./task/backup.js";
+import * as task from "./task.js";
+import * as review from "./review.js";
+import * as backup from "./backup.js";
 
-// =======================
-// CALENDAR
-// =======================
-import * as calendar from "./calendar/calendar.js";
-import * as sync from "./calendar/sync.js";
+import * as calendar from "./calendar.js";
+import * as sync from "./sync.js";
 
-// =======================
-// MUSIC
-// =======================
-import * as music from "./music/music.js";
+import * as music from "./music.js";
+import * as notification from "./notification.js";
 
-// =======================
-// NOTIFICATION
-// =======================
-import * as notification from "./notification/notification.js";
-
-// =======================
-// UTILS
-// =======================
-import * as dom from "./utils/dom.js";
-import * as dateUtils from "./utils/date.js";
+import * as dom from "./dom.js";
+import * as dateUtils from "./date.js";
 
 
 // =======================
-// GLOBAL EXPORT
+// SAFE GLOBAL BINDING
+// (giữ HTML onclick hoạt động như tracker cũ)
 // =======================
 Object.assign(window, {
+  // auth
+  login,
+  logout,
+  handleLoginEnter,
 
-login,
-logout,
-handleLoginEnter,
+  registerUser,
+  checkProviders,
+  resetPassword,
 
-registerUser,
-checkProviders,
-resetPassword,
+  googleLogin,
 
-googleLogin,
-
-...task,
-...review,
-...backup,
-
-...calendar,
-...sync,
-
-...music,
-
-...notification,
-
-...dom,
-
-...dateUtils
-
+  // modules (namespaced để tránh crash overwrite)
+  Task: task,
+  Review: review,
+  Backup: backup,
+  Calendar: calendar,
+  Sync: sync,
+  Music: music,
+  Notification: notification,
+  Dom: dom,
+  DateUtils: dateUtils
 });
 
 
 // =======================
-// INIT
+// APP INIT
 // =======================
-window.addEventListener(
-"DOMContentLoaded",
+window.addEventListener("DOMContentLoaded", async () => {
+  try {
+    console.log("🚀 APP INIT START");
 
-async()=>{
+    // 1. AUTH STATE FIRST (quan trọng nhất)
+    if (typeof initAuthState === "function") {
+      await initAuthState();
+    }
 
-try{
+    // 2. WEEK HEADER UI
+    dom.loadWeekHeader?.();
+    dom.highlightTodayColumn?.();
 
-await initAuthState?.();
+    // 3. NOTIFICATION PERMISSION (không chặn app nếu fail)
+    try {
+      await notification.requestNotificationPermission?.();
+    } catch (e) {
+      console.warn("Notification permission skipped:", e);
+    }
 
-dom.loadWeekHeader?.();
+    // 4. MUSIC SETTINGS (không block UI)
+    try {
+      await music.loadUserMusicSettings?.();
+    } catch (e) {
+      console.warn("Music load failed:", e);
+    }
 
-dom.highlightTodayColumn?.();
+    // 5. LOAD TASKS (core app)
+    await task.loadTasks?.();
 
-await task.loadTasks?.();
+    // 6. REFRESH NOTIFICATION SCHEDULER
+    notification.scheduleTodayNotifications?.();
 
-await music.loadUserMusicSettings?.();
-
-notification.scheduleTodayNotifications?.();
-
-console.log("APP READY");
-
-}catch(err){
-
-console.error(err);
-
-}
-
-}
-);
+    console.log("✅ APP READY");
+  } catch (err) {
+    console.error("❌ APP INIT ERROR:", err);
+  }
+});

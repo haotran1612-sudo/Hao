@@ -1,28 +1,31 @@
-// FIREBASE
+// =======================
+// FIREBASE INIT SIDE EFFECT (nếu cần chạy init)
+// =======================
 import "./firebase.js";
 
+import { auth } from "./firebase.js";
+
+// =======================
 // AUTH
+// =======================
 import {
-login,
-logout,
-handleLoginEnter,
-initAuthState
-}
-from "./login.js";
+  login,
+  logout,
+  handleLoginEnter,
+  initAuthState
+} from "./login.js";
 
 import {
-registerUser,
-checkProviders,
-resetPassword
-}
-from "./register.js";
+  registerUser,
+  checkProviders,
+  resetPassword
+} from "./register.js";
 
-import {
-googleLogin
-}
-from "./google.js";
+import { googleLogin } from "./google.js";
 
+// =======================
 // MODULES
+// =======================
 import * as task from "./task.js";
 import * as review from "./review.js";
 import * as backup from "./backup.js";
@@ -31,81 +34,79 @@ import * as calendar from "./calendar.js";
 import * as sync from "./sync.js";
 
 import * as music from "./music.js";
-
 import * as notification from "./notification.js";
 
 import * as dom from "./dom.js";
-
 import * as dateUtils from "./date.js";
 
-// EXPORT WINDOW
-Object.assign(
-window,
-{
-login,
-logout,
-handleLoginEnter,
 
-registerUser,
-checkProviders,
-resetPassword,
+// =======================
+// SAFE GLOBAL BINDING
+// (giữ HTML onclick hoạt động như tracker cũ)
+// =======================
+Object.assign(window, {
+  // auth
+  login,
+  logout,
+  handleLoginEnter,
 
-googleLogin,
+  registerUser,
+  checkProviders,
+  resetPassword,
 
-...task,
-...review,
-...backup,
+  googleLogin,
 
-...calendar,
-...sync,
+  // modules (namespaced để tránh crash overwrite)
+  Task: task,
+  Review: review,
+  Backup: backup,
+  Calendar: calendar,
+  Sync: sync,
+  Music: music,
+  Notification: notification,
+  Dom: dom,
+  DateUtils: dateUtils
+});
 
-...music,
 
-...notification,
+// =======================
+// APP INIT
+// =======================
+window.addEventListener("DOMContentLoaded", async () => {
+  try {
+    console.log("🚀 APP INIT START");
 
-...dom,
+    // 1. AUTH STATE FIRST (quan trọng nhất)
+    if (typeof initAuthState === "function") {
+      await initAuthState();
+    }
 
-...dateUtils
-}
-);
+    // 2. WEEK HEADER UI
+    dom.loadWeekHeader?.();
+    dom.highlightTodayColumn?.();
 
-// INIT
-window.addEventListener(
-"DOMContentLoaded",
+    // 3. NOTIFICATION PERMISSION (không chặn app nếu fail)
+    try {
+      await notification.requestNotificationPermission?.();
+    } catch (e) {
+      console.warn("Notification permission skipped:", e);
+    }
 
-async()=>{
+    // 4. MUSIC SETTINGS (không block UI)
+    try {
+      await music.loadUserMusicSettings?.();
+    } catch (e) {
+      console.warn("Music load failed:", e);
+    }
 
-try{
+    // 5. LOAD TASKS (core app)
+    await task.loadTasks?.();
 
-if(initAuthState)
-await initAuthState();
+    // 6. REFRESH NOTIFICATION SCHEDULER
+    notification.scheduleTodayNotifications?.();
 
-if(dom.loadWeekHeader)
-dom.loadWeekHeader();
-
-if(dom.highlightTodayColumn)
-dom.highlightTodayColumn();
-
-if(music.loadUserMusicSettings)
-await music.loadUserMusicSettings();
-
-if(notification.requestNotificationPermission)
-await notification.requestNotificationPermission();
-
-if(task.loadTasks)
-await task.loadTasks();
-
-console.log(
-"APP READY"
-);
-
-}catch(e){
-
-console.error(
-e
-);
-
-}
-
-}
-);
+    console.log("✅ APP READY");
+  } catch (err) {
+    console.error("❌ APP INIT ERROR:", err);
+  }
+});

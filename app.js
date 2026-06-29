@@ -1,86 +1,340 @@
+// =======================
+// CONFIG
+// =======================
+
+import "./config/firebase.js";
+
+// =======================
+// AUTH
+// =======================
+
 import {
-login
+login,
+logout,
+handleLoginEnter,
+initAuthState
 }
-from "./auth/login.js"
+from "./auth/login.js";
 
 import {
 registerUser,
-resetPassword,
 checkProviders,
-logout
+resetPassword
 }
-from "./auth/register.js"
+from "./auth/register.js";
 
 import {
+googleLogin
+}
+from "./auth/google.js";
+
+// =======================
+// TASK
+// =======================
+
+import {
+
 saveTask,
 loadTasks,
-showTracker,
-showKanban,
+updateTask,
+addRow,
+
 openTaskModal,
 closeTaskModal,
-addRow
-}
-from "./task/task.js"
+resetForm,
 
-import {
-googleLogin
-}
-from "./auth/google.js"
-
-import {
-saveMusicUrl,
-playSavedMusic,
-stopMusic,
-toggleAutoPlayMusic
-}
-from "./music/music.js"
-
-window.login=login
-
-window.registerUser=
-registerUser
-
-window.resetPassword=
-resetPassword
-
-window.checkProviders=
-checkProviders
-
-window.googleLogin=
-googleLogin
-
-window.logout=
-logout
-
-window.saveTask=
-saveTask
-
-window.loadTasks=
-loadTasks
-
-window.showTracker=
-showTracker
-
-window.showKanban=
+showTracker,
 showKanban
 
-window.openTaskModal=
-openTaskModal
+}
+from "./task/task.js";
 
-window.closeTaskModal=
-closeTaskModal
+import {
 
-window.addRow=
-addRow
+buildReviewDays,
+buildReviewSchedule,
+rebuildReviewDays,
+parseReviewTasks,
 
-window.saveMusicUrl=
-saveMusicUrl
+createCalendarFromReviewCells,
+createReviewCalendarForRow,
 
-window.playSavedMusic=
-playSavedMusic
+scheduleTodayNotifications,
+hasReviewData
 
-window.stopMusic=
-stopMusic
+}
+from "./task/review.js";
 
-window.toggleAutoPlayMusic=
-toggleAutoPlayMusic
+import {
+
+archiveTask,
+showBackup,
+restoreTask,
+deleteBackupTask
+
+}
+from "./task/backup.js";
+
+// =======================
+// CALENDAR
+// =======================
+
+import {
+
+createCalendarEvent,
+createReviewCalendarTask,
+findCalendarEventByKey,
+
+buildMainEventKey,
+buildReviewEventKey
+
+}
+from "./calendar/calendar.js";
+
+import {
+
+toggleCreateCalendar,
+createCalendarFromRow,
+syncFullCalendarFromRow
+
+}
+from "./calendar/sync.js";
+
+// =======================
+// MUSIC
+// =======================
+
+import {
+
+saveMusicUrl,
+loadUserMusicSettings,
+
+toggleAutoPlayMusic,
+
+playMusicFromUrl,
+playSavedMusic,
+stopMusic,
+
+extractYoutubeVideoId,
+buildYoutubeEmbedUrl
+
+}
+from "./music/music.js";
+
+// =======================
+// NOTIFICATION
+// =======================
+
+import {
+
+requestNotificationPermission,
+
+showTaskNotification,
+
+scheduleNotification,
+
+refreshAllNotifications,
+
+showInAppPopup
+
+}
+from "./notification/notification.js";
+
+// =======================
+// UTILS
+// =======================
+
+import {
+
+autoResize,
+
+highlightTodayColumn,
+
+loadWeekHeader,
+
+formatDate,
+
+getCurrentWeekDates
+
+}
+from "./utils/dom.js";
+
+import {
+
+normalizeDate,
+
+isSameDate,
+
+isDateInRange,
+
+diffDays,
+
+diffMonths,
+
+isOccurrenceForTaskType
+
+}
+from "./utils/date.js";
+
+// =======================
+// GLOBAL WINDOW
+// =======================
+
+Object.assign(
+window,
+
+{
+
+// AUTH
+login,
+logout,
+handleLoginEnter,
+registerUser,
+checkProviders,
+resetPassword,
+googleLogin,
+
+// TASK
+saveTask,
+loadTasks,
+updateTask,
+addRow,
+
+openTaskModal,
+closeTaskModal,
+resetForm,
+
+showTracker,
+showKanban,
+
+// REVIEW
+buildReviewDays,
+buildReviewSchedule,
+rebuildReviewDays,
+
+parseReviewTasks,
+
+createCalendarFromReviewCells,
+
+createReviewCalendarForRow,
+
+scheduleTodayNotifications,
+
+hasReviewData,
+
+// BACKUP
+archiveTask,
+showBackup,
+restoreTask,
+deleteBackupTask,
+
+// CALENDAR
+createCalendarEvent,
+createReviewCalendarTask,
+
+findCalendarEventByKey,
+
+buildMainEventKey,
+buildReviewEventKey,
+
+toggleCreateCalendar,
+createCalendarFromRow,
+
+syncFullCalendarFromRow,
+
+// MUSIC
+saveMusicUrl,
+
+loadUserMusicSettings,
+
+toggleAutoPlayMusic,
+
+playMusicFromUrl,
+
+playSavedMusic,
+
+stopMusic,
+
+extractYoutubeVideoId,
+
+buildYoutubeEmbedUrl,
+
+// NOTIFICATION
+requestNotificationPermission,
+
+showTaskNotification,
+
+scheduleNotification,
+
+refreshAllNotifications,
+
+showInAppPopup,
+
+// DOM
+autoResize,
+
+highlightTodayColumn,
+
+loadWeekHeader,
+
+formatDate,
+
+getCurrentWeekDates,
+
+// DATE
+normalizeDate,
+
+isSameDate,
+
+isDateInRange,
+
+diffDays,
+
+diffMonths,
+
+isOccurrenceForTaskType
+
+}
+
+);
+
+// =======================
+// INIT APP
+// =======================
+
+window.addEventListener(
+"DOMContentLoaded",
+
+async ()=>{
+
+try{
+
+// login state
+initAuthState();
+
+// UI
+loadWeekHeader();
+
+highlightTodayColumn();
+
+// load music
+await loadUserMusicSettings();
+
+// notification
+await requestNotificationPermission();
+
+// task
+await loadTasks();
+
+}catch(err){
+
+console.error(
+"APP INIT ERROR",
+err
+);
+
+}
+
+}
+
+);

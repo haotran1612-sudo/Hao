@@ -1,4 +1,4 @@
-import { db } from "../config/firebase.js";
+import { db } from "./firebase.js";
 
 // =======================
 // ARCHIVE TASK

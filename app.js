@@ -1,185 +1,141 @@
 // =======================
-// FIREBASE
+// CONFIG
 // =======================
-import { auth } from "./config/firebase.js";
+import "./config/firebase.js";
 
 // =======================
 // AUTH
 // =======================
 import {
-login,
-logout,
-handleLoginEnter
-}
-from "./auth/login.js";
+  login,
+  logout,
+  handleLoginEnter,
+  initAuthState
+} from "./auth/login.js";
 
 import {
-registerUser,
-checkProviders,
-resetPassword
-}
-from "./auth/register.js";
+  registerUser,
+  checkProviders,
+  resetPassword
+} from "./auth/register.js";
 
 import {
-googleLogin
-}
-from "./auth/google.js";
+  googleLogin
+} from "./auth/google.js";
 
 // =======================
 // TASK
 // =======================
 import {
-saveTask,
-loadTasks,
-updateTask,
-addRow,
-openTaskModal,
-closeTaskModal,
-resetForm,
-showTracker,
-showKanban
-}
-from "./task/task.js";
+  saveTask,
+  loadTasks,
+  updateTask,
+  addRow,
+  openTaskModal,
+  closeTaskModal,
+  resetForm,
+  showTracker,
+  showKanban,
+  syncFullCalendarFromRow
+} from "./task/task.js";
 
 // =======================
 // REVIEW
 // =======================
 import {
-rebuildReviewDays,
-createCalendarFromReviewCells,
-createReviewCalendarForRow
-}
-from "./task/review.js";
+  rebuildReviewDays,
+  scheduleTodayNotifications
+} from "./task/review.js";
 
 // =======================
 // BACKUP
 // =======================
 import {
-archiveTask,
-showBackup,
-restoreTask,
-deleteBackupTask
-}
-from "./task/backup.js";
+  archiveTask,
+  showBackup,
+  restoreTask,
+  deleteBackupTask
+} from "./task/backup.js";
 
 // =======================
 // CALENDAR
 // =======================
 import {
-toggleCreateCalendar,
-createCalendarFromRow,
-syncFullCalendarFromRow
-}
-from "./calendar/sync.js";
+  toggleCreateCalendar,
+  createCalendarFromRow
+} from "./calendar/sync.js";
 
 // =======================
 // MUSIC
 // =======================
 import {
-saveMusicUrl,
-loadUserMusicSettings,
-toggleAutoPlayMusic,
-playMusicFromUrl,
-playSavedMusic,
-stopMusic
-}
-from "./music/music.js";
+  saveMusicUrl,
+  loadUserMusicSettings,
+  toggleAutoPlayMusic,
+  playMusicFromUrl,
+  playSavedMusic,
+  stopMusic
+} from "./music/music.js";
 
 // =======================
 // NOTIFICATION
 // =======================
 import {
-requestNotificationPermission,
-refreshAllNotifications
-}
-from "./notification/notification.js";
+  requestNotificationPermission,
+  refreshAllNotifications
+} from "./notification/notification.js";
 
 // =======================
-// DOM
+// UTILS
 // =======================
 import {
-loadWeekHeader
-}
-from "./utils/dom.js";
+  autoResize,
+  highlightTodayColumn,
+  loadWeekHeader
+} from "./utils/dom.js";
 
 
 // =======================
-// WINDOW BIND
+// EXPORT RA WINDOW
+// (HTML onclick sẽ dùng)
 // =======================
 
-// AUTH
+// auth
 window.login = login;
 window.logout = logout;
+window.registerUser = registerUser;
 window.googleLogin = googleLogin;
+window.checkProviders = checkProviders;
+window.resetPassword = resetPassword;
+window.handleLoginEnter = handleLoginEnter;
 
-window.registerUser =
-registerUser;
+// task
+window.saveTask = saveTask;
+window.loadTasks = loadTasks;
+window.updateTask = updateTask;
+window.addRow = addRow;
 
-window.checkProviders =
-checkProviders;
+window.openTaskModal = openTaskModal;
+window.closeTaskModal = closeTaskModal;
 
-window.resetPassword =
-resetPassword;
+window.resetForm = resetForm;
 
-window.handleLoginEnter =
-handleLoginEnter;
+window.showTracker = showTracker;
+window.showKanban = showKanban;
 
+// review
+window.rebuildReviewDays = rebuildReviewDays;
+window.scheduleTodayNotifications =
+scheduleTodayNotifications;
 
-// TASK
-window.saveTask =
-saveTask;
-
-window.loadTasks =
-loadTasks;
-
-window.updateTask =
-updateTask;
-
-window.addRow =
-addRow;
-
-window.openTaskModal =
-openTaskModal;
-
-window.closeTaskModal =
-closeTaskModal;
-
-window.resetForm =
-resetForm;
-
-window.showTracker =
-showTracker;
-
-window.showKanban =
-showKanban;
-
-
-// REVIEW
-window.rebuildReviewDays =
-rebuildReviewDays;
-
-window.createCalendarFromReviewCells =
-createCalendarFromReviewCells;
-
-window.createReviewCalendarForRow =
-createReviewCalendarForRow;
-
-
-// BACKUP
-window.archiveTask =
-archiveTask;
-
-window.showBackup =
-showBackup;
-
-window.restoreTask =
-restoreTask;
-
+// backup
+window.archiveTask = archiveTask;
+window.showBackup = showBackup;
+window.restoreTask = restoreTask;
 window.deleteBackupTask =
 deleteBackupTask;
 
-
-// CALENDAR
+// calendar
 window.toggleCreateCalendar =
 toggleCreateCalendar;
 
@@ -189,10 +145,12 @@ createCalendarFromRow;
 window.syncFullCalendarFromRow =
 syncFullCalendarFromRow;
 
-
-// MUSIC
+// music
 window.saveMusicUrl =
 saveMusicUrl;
+
+window.loadUserMusicSettings =
+loadUserMusicSettings;
 
 window.toggleAutoPlayMusic =
 toggleAutoPlayMusic;
@@ -206,88 +164,52 @@ playSavedMusic;
 window.stopMusic =
 stopMusic;
 
+// notification
+window.requestNotificationPermission =
+requestNotificationPermission;
 
-// NOTIFICATION
 window.refreshAllNotifications =
 refreshAllNotifications;
+
+// utils
+window.autoResize =
+autoResize;
+
+window.highlightTodayColumn =
+highlightTodayColumn;
 
 
 // =======================
 // INIT APP
 // =======================
 document.addEventListener(
-"DOMContentLoaded",
-()=>{
+  "DOMContentLoaded",
+  async () => {
 
-loadWeekHeader();
+    try {
 
-auth.onAuthStateChanged(
-async(user)=>{
+      loadWeekHeader();
 
-try{
+      await initAuthState();
 
-if(user){
+      await requestNotificationPermission();
 
-localStorage.setItem(
-"userEmail",
-user.email || ""
+      highlightTodayColumn();
+
+      scheduleTodayNotifications();
+
+      console.log(
+        "✅ TaskFlow initialized"
+      );
+
+    } catch (err) {
+
+      console.error(
+        "Init error:",
+        err
+      );
+
+    }
+
+  }
 );
-
-document.getElementById(
-"loginPage"
-).style.display =
-"none";
-
-document.getElementById(
-"appPage"
-).style.display =
-"block";
-
-const welcome =
-document.getElementById(
-"welcomeUser"
-);
-
-if(welcome){
-
-welcome.innerText =
-user.email || "";
-
-}
-
-await requestNotificationPermission();
-
-await loadTasks();
-
-await loadUserMusicSettings();
-
-}else{
-
-localStorage.removeItem(
-"userEmail"
-);
-
-document.getElementById(
-"loginPage"
-).style.display =
-"block";
-
-document.getElementById(
-"appPage"
-).style.display =
-"none";
-
-}
-
-}catch(err){
-
-console.error(
-"APP INIT ERROR",
-err
-);
-
-}
-
-});
-
-});

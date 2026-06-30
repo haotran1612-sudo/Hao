@@ -1,112 +1,285 @@
 // =======================
-// FIREBASE INIT SIDE EFFECT (nếu cần chạy init)
+// FIREBASE
 // =======================
-import "./firebase.js";
-
-import { auth } from "./firebase.js";
+import "./config/firebase.js";
+import { auth } from "./config/firebase.js";
 
 // =======================
 // AUTH
 // =======================
 import {
-  login,
-  logout,
-  handleLoginEnter,
-  initAuthState
-} from "./login.js";
+login,
+logout,
+handleLoginEnter,
+initAuthState
+}
+from "./auth/login.js";
 
 import {
-  registerUser,
-  checkProviders,
-  resetPassword
-} from "./register.js";
+registerUser,
+checkProviders,
+resetPassword
+}
+from "./auth/register.js";
 
-import { googleLogin } from "./google.js";
-
-// =======================
-// MODULES
-// =======================
-import * as task from "./task.js";
-import * as review from "./review.js";
-import * as backup from "./backup.js";
-
-import * as calendar from "./calendar.js";
-import * as sync from "./sync.js";
-
-import * as music from "./music.js";
-import * as notification from "./notification.js";
-
-import * as dom from "./dom.js";
-import * as dateUtils from "./date.js";
-
+import {
+googleLogin
+}
+from "./auth/google.js";
 
 // =======================
-// SAFE GLOBAL BINDING
-// (giữ HTML onclick hoạt động như tracker cũ)
+// TASK
 // =======================
-Object.assign(window, {
-  // auth
-  login,
-  logout,
-  handleLoginEnter,
+import {
+saveTask,
+loadTasks,
+updateTask,
+addRow,
+openTaskModal,
+closeTaskModal,
+resetForm,
+showTracker,
+showKanban
+}
+from "./task/task.js";
 
-  registerUser,
-  checkProviders,
-  resetPassword,
+// =======================
+// REVIEW
+// =======================
+import {
+rebuildReviewDays,
+createCalendarFromReviewCells,
+createReviewCalendarForRow
+}
+from "./task/review.js";
 
-  googleLogin,
+// =======================
+// BACKUP
+// =======================
+import {
+archiveTask,
+showBackup,
+restoreTask,
+deleteBackupTask
+}
+from "./task/backup.js";
 
-  // modules (namespaced để tránh crash overwrite)
-  Task: task,
-  Review: review,
-  Backup: backup,
-  Calendar: calendar,
-  Sync: sync,
-  Music: music,
-  Notification: notification,
-  Dom: dom,
-  DateUtils: dateUtils
-});
+// =======================
+// CALENDAR
+// =======================
+import {
+toggleCreateCalendar,
+createCalendarFromRow,
+syncFullCalendarFromRow
+}
+from "./calendar/sync.js";
+
+// =======================
+// MUSIC
+// =======================
+import {
+saveMusicUrl,
+loadUserMusicSettings,
+toggleAutoPlayMusic,
+playMusicFromUrl,
+playSavedMusic,
+stopMusic
+}
+from "./music/music.js";
+
+// =======================
+// NOTIFICATION
+// =======================
+import {
+requestNotificationPermission,
+refreshAllNotifications
+}
+from "./notification/notification.js";
+
+// =======================
+// DOM
+// =======================
+import {
+loadWeekHeader
+}
+from "./utils/dom.js";
+
+
+// =======================
+// BIND GLOBAL WINDOW
+// =======================
+
+// AUTH
+window.login = login;
+window.logout = logout;
+window.googleLogin = googleLogin;
+window.registerUser = registerUser;
+window.checkProviders = checkProviders;
+window.resetPassword = resetPassword;
+window.handleLoginEnter = handleLoginEnter;
+
+// TASK
+window.saveTask = saveTask;
+window.loadTasks = loadTasks;
+window.updateTask = updateTask;
+window.addRow = addRow;
+
+window.openTaskModal =
+openTaskModal;
+
+window.closeTaskModal =
+closeTaskModal;
+
+window.resetForm =
+resetForm;
+
+window.showTracker =
+showTracker;
+
+window.showKanban =
+showKanban;
+
+// REVIEW
+window.rebuildReviewDays =
+rebuildReviewDays;
+
+window.createCalendarFromReviewCells =
+createCalendarFromReviewCells;
+
+window.createReviewCalendarForRow =
+createReviewCalendarForRow;
+
+// BACKUP
+window.archiveTask =
+archiveTask;
+
+window.showBackup =
+showBackup;
+
+window.restoreTask =
+restoreTask;
+
+window.deleteBackupTask =
+deleteBackupTask;
+
+// CALENDAR
+window.toggleCreateCalendar =
+toggleCreateCalendar;
+
+window.createCalendarFromRow =
+createCalendarFromRow;
+
+window.syncFullCalendarFromRow =
+syncFullCalendarFromRow;
+
+// MUSIC
+window.saveMusicUrl =
+saveMusicUrl;
+
+window.toggleAutoPlayMusic =
+toggleAutoPlayMusic;
+
+window.playMusicFromUrl =
+playMusicFromUrl;
+
+window.playSavedMusic =
+playSavedMusic;
+
+window.stopMusic =
+stopMusic;
+
+// NOTIFICATION
+window.refreshAllNotifications =
+refreshAllNotifications;
 
 
 // =======================
 // APP INIT
 // =======================
-window.addEventListener("DOMContentLoaded", async () => {
-  try {
-    console.log("🚀 APP INIT START");
+document.addEventListener(
+"DOMContentLoaded",
+async ()=>{
 
-    // 1. AUTH STATE FIRST (quan trọng nhất)
-    if (typeof initAuthState === "function") {
-      await initAuthState();
-    }
+try{
 
-    // 2. WEEK HEADER UI
-    dom.loadWeekHeader?.();
-    dom.highlightTodayColumn?.();
+loadWeekHeader();
 
-    // 3. NOTIFICATION PERMISSION (không chặn app nếu fail)
-    try {
-      await notification.requestNotificationPermission?.();
-    } catch (e) {
-      console.warn("Notification permission skipped:", e);
-    }
+if(
+typeof initAuthState ===
+"function"
+){
 
-    // 4. MUSIC SETTINGS (không block UI)
-    try {
-      await music.loadUserMusicSettings?.();
-    } catch (e) {
-      console.warn("Music load failed:", e);
-    }
+await initAuthState();
 
-    // 5. LOAD TASKS (core app)
-    await task.loadTasks?.();
+}else{
 
-    // 6. REFRESH NOTIFICATION SCHEDULER
-    notification.scheduleTodayNotifications?.();
+auth.onAuthStateChanged(
+async(user)=>{
 
-    console.log("✅ APP READY");
-  } catch (err) {
-    console.error("❌ APP INIT ERROR:", err);
-  }
+if(user){
+
+localStorage.setItem(
+"userEmail",
+user.email || ""
+);
+
+document.getElementById(
+"loginPage"
+).style.display =
+"none";
+
+document.getElementById(
+"appPage"
+).style.display =
+"block";
+
+const welcome =
+document.getElementById(
+"welcomeUser"
+);
+
+if(welcome){
+
+welcome.innerText =
+user.email;
+
+}
+
+await requestNotificationPermission();
+
+await loadTasks();
+
+await loadUserMusicSettings();
+
+}else{
+
+localStorage.removeItem(
+"userEmail"
+);
+
+document.getElementById(
+"loginPage"
+).style.display =
+"block";
+
+document.getElementById(
+"appPage"
+).style.display =
+"none";
+
+}
+
+});
+
+}
+
+}catch(err){
+
+console.error(
+"APP INIT ERROR",
+err
+);
+
+}
+
 });

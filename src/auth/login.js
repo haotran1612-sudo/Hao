@@ -1,358 +1,196 @@
 // =======================
-// LOGIN MODULE
-// src/auth/login.js
+// LOGIN
 // =======================
 
-import {
-  auth
-}
-from "../config/firebase.js";
+import { auth, provider } from "../config/firebase.js";
 
 import {
-  loadTasks,
-  showTracker
-}
-from "../task/task.js";
+    requestNotificationPermission
+} from "../notification/notification.js";
 
 import {
-  loadUserMusicSettings
-}
-from "../music/music.js";
+    loadTasks
+} from "../task/task.js";
 
 import {
-  requestNotificationPermission
-}
-from "../notification/notification.js";
-
-
-// =======================
-// UI
-// =======================
-
-function showLoggedInUI(
-  user
-) {
-
-  const login =
-    document.getElementById(
-      "loginPage"
-    );
-
-  const tracker =
-    document.getElementById(
-      "trackerPage"
-    );
-
-  if (
-    login
-  ) {
-
-    login.style.display =
-      "none";
-
-  }
-
-  if (
-    tracker
-  ) {
-
-    tracker.style.display =
-      "block";
-
-  }
-
-  const userName =
-    document.getElementById(
-      "userName"
-    );
-
-  if (
-
-    userName
-
-  ) {
-
-    userName.textContent =
-
-      user.displayName
-
-      ||
-
-      user.email
-
-      ||
-
-      "";
-
-  }
-
-}
-
-
-function showLoggedOutUI() {
-
-  const login =
-    document.getElementById(
-      "loginPage"
-    );
-
-  const tracker =
-    document.getElementById(
-      "trackerPage"
-    );
-
-  const backup =
-    document.getElementById(
-      "backupPage"
-    );
-
-  if (
-    login
-  ) {
-
-    login.style.display =
-      "block";
-
-  }
-
-  if (
-    tracker
-  ) {
-
-    tracker.style.display =
-      "none";
-
-  }
-
-  if (
-    backup
-  ) {
-
-    backup.style.display =
-      "none";
-
-  }
-
-}
-
+    loadUserMusicSettings
+} from "../music/music.js";
 
 // =======================
 // LOGIN
 // =======================
-
 export async function login() {
 
-  try {
+    try {
 
-    const email =
-      document
-      .getElementById(
-        "email"
-      )
-      ?.value
-      .trim();
+        const email =
+            document.getElementById("loginEmail").value.trim();
 
-    const password =
-      document
-      .getElementById(
-        "password"
-      )
-      ?.value;
+        const password =
+            document.getElementById("loginPassword").value;
 
-    if (
+        const userCredential =
+            await auth.signInWithEmailAndPassword(
+                email,
+                password
+            );
 
-      !email ||
+        const userEmail =
+            userCredential.user.email;
 
-      !password
+        localStorage.setItem(
+            "userEmail",
+            userEmail
+        );
 
-    ) {
+        document.getElementById(
+            "loginPage"
+        ).style.display = "none";
 
-      alert(
-        "Nhập email và mật khẩu"
-      );
+        document.getElementById(
+            "appPage"
+        ).style.display = "block";
 
-      return;
+        document.getElementById(
+            "welcomeUser"
+        ).innerText = userEmail;
+
+        await requestNotificationPermission();
+
+        // Nếu chưa có Google Token thì xin quyền Calendar
+        if (
+            !localStorage.getItem(
+                "googleToken"
+            )
+        ) {
+
+            try {
+
+                const result =
+                    await auth.signInWithPopup(
+                        provider
+                    );
+
+                const token =
+                    result.credential?.accessToken;
+
+                if (token) {
+
+                    localStorage.setItem(
+                        "googleToken",
+                        token
+                    );
+
+                }
+
+            } catch (err) {
+
+                console.log(
+                    "Calendar chưa được kết nối."
+                );
+
+            }
+
+        }
+
+        await loadTasks();
+
+        await loadUserMusicSettings();
 
     }
 
-    const result =
+    catch (err) {
 
-      await auth
-      .signInWithEmailAndPassword(
+        console.error(
+            "login error:",
+            err
+        );
 
-        email,
+        alert(
+            err.message
+        );
 
-        password
-
-      );
-
-    const user =
-      result.user;
-
-    localStorage.setItem(
-      "userEmail",
-      user.email
-    );
-
-    showLoggedInUI(
-      user
-    );
-
-  }
-
-  catch (
-    err
-  ) {
-
-    console.error(
-      err
-    );
-
-    alert(
-      "Đăng nhập thất bại"
-    );
-
-  }
+    }
 
 }
-
 
 // =======================
 // LOGOUT
 // =======================
+export function logout() {
 
-export async function logout() {
-
-  try {
-
-    await auth.signOut();
+    auth.signOut();
 
     localStorage.removeItem(
-      "userEmail"
+        "userEmail"
     );
 
     localStorage.removeItem(
-      "googleToken"
+        "googleToken"
     );
 
-    showLoggedOutUI();
-
-  }
-
-  catch (
-    err
-  ) {
-
-    console.error(
-      err
-    );
-
-  }
+    location.reload();
 
 }
 
-
 // =======================
-// ENTER
+// ENTER TO LOGIN
 // =======================
+export function handleLoginEnter(event) {
 
-export function handleLoginEnter(
-  event
-) {
+    if (event.key === "Enter") {
 
-  if (
-
-    event.key
-    ===
-    "Enter"
-
-  ) {
-
-    login();
-
-  }
-
-}
-
-
-// =======================
-// AUTH STATE
-// =======================
-
-export async function initAuthState() {
-
-  return new Promise(
-
-    resolve => {
-
-      auth.onAuthStateChanged(
-
-        async user => {
-
-          try {
-
-            if (
-
-              !user
-
-            ) {
-
-              showLoggedOutUI();
-
-              resolve(
-                null
-              );
-
-              return;
-
-            }
-
-            localStorage.setItem(
-
-              "userEmail",
-
-              user.email
-
-            );
-
-            showLoggedInUI(
-              user
-            );
-
-            await requestNotificationPermission();
-
-            await loadTasks();
-
-            await loadUserMusicSettings();
-
-            showTracker();
-
-            resolve(
-              user
-            );
-
-          }
-
-          catch (
-            err
-          ) {
-
-            console.error(
-              err
-            );
-
-            resolve(
-              null
-            );
-
-          }
-
-        }
-
-      );
+        login();
 
     }
 
-  );
+}
+
+// =======================
+// AUTO LOGIN
+// =======================
+export async function handleAuthStateChanged(user) {
+
+    if (user) {
+
+        localStorage.setItem(
+            "userEmail",
+            user.email || ""
+        );
+
+        document.getElementById(
+            "loginPage"
+        ).style.display = "none";
+
+        document.getElementById(
+            "appPage"
+        ).style.display = "block";
+
+        document.getElementById(
+            "welcomeUser"
+        ).innerText =
+            user.email || "";
+
+        await requestNotificationPermission();
+
+        await loadTasks();
+
+        await loadUserMusicSettings();
+
+    } else {
+
+        localStorage.removeItem(
+            "userEmail"
+        );
+
+        document.getElementById(
+            "loginPage"
+        ).style.display = "block";
+
+        document.getElementById(
+            "appPage"
+        ).style.display = "none";
+
+    }
 
 }

@@ -1,618 +1,504 @@
 // =======================
-// REVIEW MODULE
-// src/task/review.js
+// REVIEW
 // =======================
 
 import { db } from "../config/firebase.js";
 
 import {
-  getCurrentWeekDates
-} from "../utils/dom.js";
-
-import {
-  isSameDate,
-  isDateInRange,
-  isOccurrenceForTaskType
+    getCurrentWeekDates,
+    isSameDate,
+    isDateInRange,
+    isOccurrenceForTaskType
 } from "../utils/date.js";
 
 import {
-  createReviewCalendarTask
+    createReviewCalendarTask
 } from "../calendar/calendar.js";
 
 import {
-  showTaskNotification,
-  scheduleNotification
+    scheduleNotification
 } from "../notification/notification.js";
 
-import {
-  loadTasks
-} from "./task.js";
+
+// =======================
+// kiểm tra đã có review chưa
+// =======================
+
+export function hasReviewData(task){
+
+    if(!task.reviewDays) return false;
+
+    return Object.values(task.reviewDays)
+        .some(v => String(v || "").trim() !== "");
+
+}
 
 
 // =======================
-// REVIEW SCHEDULE
+// Build review schedule cho task Ôn tập
 // =======================
 
-export function buildReviewSchedule(task) {
+export function buildReviewSchedule(task){
 
-  const current =
-    task.reviewDays || {};
+    const current = task.reviewDays || {};
 
-  const result = {
-    day1: current.day1 || "",
-    day2: current.day2 || "",
-    day3: current.day3 || "",
-    day4: current.day4 || "",
-    day5: current.day5 || "",
-    day6: current.day6 || "",
-    day7: current.day7 || ""
-  };
+    const result = {
+        day1: current.day1 || "",
+        day2: current.day2 || "",
+        day3: current.day3 || "",
+        day4: current.day4 || "",
+        day5: current.day5 || "",
+        day6: current.day6 || "",
+        day7: current.day7 || ""
+    };
 
-  if (
-    !task.start ||
-    !task.taskName
-  ) {
-    return result;
-  }
+    if(!task.start || !task.taskName) return result;
 
-  const start =
-    new Date(task.start);
+    const start = new Date(task.start);
 
-  const week =
-    getCurrentWeekDates();
+    if(isNaN(start.getTime()))
+        return result;
 
-  const hours =
-    Number(
-      task.processingTime || 0
-    );
+    const week = getCurrentWeekDates();
 
-  function hm(d) {
+    const processingHours =
+        Math.max(Number(task.processingTime || 1),0.5);
 
-    return (
-      String(
-        d.getHours()
-      ).padStart(2, "0")
+    const durationMs =
+        processingHours * 60 * 60 * 1000;
 
-      +
+    function formatHM(date){
 
-      ":"
+        const hh =
+            String(date.getHours()).padStart(2,"0");
 
-      +
+        const mm =
+            String(date.getMinutes()).padStart(2,"0");
 
-      String(
-        d.getMinutes()
-      ).padStart(2, "0")
-    );
-
-  }
-
-  function add(day, text) {
-
-    const key =
-      "day" + day;
-
-    if (
-      !result[key]
-    ) {
-
-      result[key] =
-        text;
-
-      return;
+        return `${hh}:${mm}`;
 
     }
 
-    if (
-      !result[key]
-        .includes(text)
-    ) {
+    function addToDay(day,text){
 
-      result[key] +=
-        "\n" +
-        text;
+        const key="day"+day;
 
-    }
+        if(!result[key]){
 
-  }
-
-  const dates = [
-
-    start,
-
-    new Date(
-      start.getTime()
-      +
-      10 * 60000
-    ),
-
-    new Date(
-      start.getTime()
-      +
-      86400000
-    )
-
-  ];
-
-  const d7 =
-    new Date(start);
-
-  d7.setDate(
-    d7.getDate()
-    + 7
-  );
-
-  dates.push(d7);
-
-  const d30 =
-    new Date(start);
-
-  d30.setMonth(
-    d30.getMonth()
-    + 1
-  );
-
-  dates.push(d30);
-
-  dates.forEach(
-    review => {
-
-      week.forEach(
-        (
-          col,
-          index
-        ) => {
-
-          if (
-            isSameDate(
-              review,
-              col
-            )
-          ) {
-
-            const end =
-              new Date(
-                review.getTime()
-                +
-                hours
-                *
-                3600000
-              );
-
-            add(
-              index + 1,
-
-`${hm(review)}-${hm(end)} ${task.taskName}`
-
-            );
-
-          }
+            result[key]=text;
+            return;
 
         }
 
-      );
+        const lines=result[key]
+            .split("\n")
+            .map(x=>x.trim())
+            .filter(Boolean);
+
+        if(!lines.includes(text))
+            result[key]+="\n"+text;
 
     }
 
-  );
+    const reviewDates=[];
 
-  return result;
+    reviewDates.push(new Date(start));
 
-}
+    reviewDates.push(
+        new Date(start.getTime()+10*60*1000)
+    );
 
+    reviewDates.push(
+        new Date(start.getTime()+24*60*60*1000)
+    );
 
-// =======================
-// BUILD REVIEW DAYS
-// =======================
+    const d7=new Date(start);
+    d7.setDate(d7.getDate()+7);
 
-export function buildReviewDays(
-  task
-) {
+    reviewDates.push(d7);
 
-  const result = {
+    const d30=new Date(start);
+    d30.setMonth(d30.getMonth()+1);
 
-    day1:"",
-    day2:"",
-    day3:"",
-    day4:"",
-    day5:"",
-    day6:"",
-    day7:""
+    reviewDates.push(d30);
 
-  };
+    for(let i=0;i<7;i++){
 
-  Object.assign(
-    result,
-    task.reviewDays
-    || {}
-  );
+        const colDate=week[i];
 
-  if (
-    !task.start
-  ) {
+        for(const r of reviewDates){
+
+            if(isSameDate(r,colDate)){
+
+                const end=
+                    new Date(r.getTime()+durationMs);
+
+                addToDay(
+                    i+1,
+                    `${formatHM(r)}-${formatHM(end)} ${task.taskName}`
+                );
+
+            }
+
+        }
+
+    }
 
     return result;
 
-  }
+}
 
-  const start =
-    new Date(
-      task.start
-    );
 
-  const deadline =
-    task.deadline
-    ? new Date(
+
+// =======================
+// Build reviewDays
+// =======================
+
+export function buildReviewDays(task){
+
+    const current = task.reviewDays || {};
+
+    const result = {
+
+        day1:current.day1||"",
+        day2:current.day2||"",
+        day3:current.day3||"",
+        day4:current.day4||"",
+        day5:current.day5||"",
+        day6:current.day6||"",
+        day7:current.day7||""
+
+    };
+
+    if(!task.start)
+        return result;
+
+    if(task.taskType==="Ôn tập")
+        return buildReviewSchedule(task);
+
+    const start=new Date(task.start);
+
+    const deadline=
         task.deadline
-      )
-    : start;
+        ? new Date(task.deadline)
+        : new Date(task.start);
 
-  if (
-    task.taskType
-    ===
-    "Ôn tập"
-  ) {
+    const week=getCurrentWeekDates();
 
-    return buildReviewSchedule(
-      task
-    );
+    const duration=
+        Number(task.processingTime||0);
 
-  }
+    const endTime=
+        new Date(
+            start.getTime()+duration*3600000
+        );
 
-  const week =
-    getCurrentWeekDates();
+    const line=
+`${String(start.getHours()).padStart(2,"0")}:${String(start.getMinutes()).padStart(2,"0")}-${String(endTime.getHours()).padStart(2,"0")}:${String(endTime.getMinutes()).padStart(2,"0")} ${task.taskName}`;
 
-  const h =
-    String(
-      start.getHours()
-    ).padStart(
-      2,
-      "0"
-    );
+    function add(day,text){
 
-  const m =
-    String(
-      start.getMinutes()
-    ).padStart(
-      2,
-      "0"
-    );
+        const key="day"+day;
 
-  const duration =
-    Number(
-      task.processingTime
-      || 0
-    );
+        if(!result[key]){
 
-  const end =
-    new Date(
-      start.getTime()
-      +
-      duration
-      *
-      3600000
-    );
+            result[key]=text;
+            return;
 
-  const line =
+        }
 
-`${h}:${m}-${String(end.getHours()).padStart(2,"0")}:${String(end.getMinutes()).padStart(2,"0")} ${task.taskName}`;
+        const arr=result[key]
+            .split("\n")
+            .filter(Boolean);
 
-  week.forEach(
+        if(!arr.includes(text))
+            result[key]+="\n"+text;
 
-(
-date,
-index
-)=>{
+    }
 
-if(
-!isDateInRange(
-date,
-start,
-deadline
-)
-){
+    for(let i=0;i<7;i++){
 
-return;
+        const colDate=week[i];
+
+        if(!isDateInRange(colDate,start,deadline))
+            continue;
+
+        if(
+            isOccurrenceForTaskType(
+                task.taskType,
+                start,
+                colDate
+            )
+        ){
+
+            add(i+1,line);
+
+        }
+
+    }
+
+    return result;
 
 }
 
-if(
-isOccurrenceForTaskType(
-task.taskType,
-start,
-date
-)
-){
-
-result[
-"day"+(
-index+1
-)
-]=line;
-
-}
-
-}
-
-);
-
-return result;
-
-}
 
 
 // =======================
-// REBUILD
+// rebuild review
 // =======================
 
-export async function rebuildReviewDays(
-  id
-){
+export async function rebuildReviewDays(id){
 
-const doc=
-await db
-.collection(
-"tasks"
-)
-.doc(id)
-.get();
+    const doc=
+        await db.collection("tasks")
+        .doc(id)
+        .get();
 
-if(
-!doc.exists
-){
+    if(!doc.exists)
+        return;
 
-return;
+    const task=doc.data();
 
-}
+    const rebuilt=
+        buildReviewDays({
 
-const task=
-doc.data();
+            ...task,
 
-await db
-.collection(
-"tasks"
-)
-.doc(id)
-.update({
+            reviewDays:{
+                day1:"",
+                day2:"",
+                day3:"",
+                day4:"",
+                day5:"",
+                day6:"",
+                day7:""
+            }
 
-reviewDays:
-buildReviewDays({
+        });
 
-...task,
+    await db.collection("tasks")
+        .doc(id)
+        .update({
 
-reviewDays:{}
+            reviewDays:rebuilt
 
-})
-
-});
-
-await loadTasks();
+        });
 
 }
+
 
 
 // =======================
-// PARSE
+// parse review cell
 // =======================
 
-export function parseReviewTasks(
-text
-){
+export function parseReviewTasks(text){
 
-if(
-!text
-){
+    if(!text)
+        return [];
 
-return [];
+    const result=[];
+
+    const lines=text.split("\n");
+
+    for(const line of lines){
+
+        const t=line.trim();
+
+        if(!t)
+            continue;
+
+        let m=t.match(
+            /^(\d{1,2}):(\d{2})-(\d{1,2}):(\d{2})\s+(.+)$/
+        );
+
+        if(m){
+
+            result.push({
+
+                hour:Number(m[1]),
+                minute:Number(m[2]),
+
+                endHour:Number(m[3]),
+                endMinute:Number(m[4]),
+
+                title:m[5]
+
+            });
+
+            continue;
+
+        }
+
+        m=t.match(
+            /^(\d{1,2}):(\d{2})\s+(.+)$/
+        );
+
+        if(m){
+
+            result.push({
+
+                hour:Number(m[1]),
+                minute:Number(m[2]),
+
+                endHour:null,
+                endMinute:null,
+
+                title:m[3],
+                raw:t
+
+            });
+
+        }
+
+    }
+
+    return result;
 
 }
 
-return text
-.split("\n")
-.map(
-x=>
-x.trim()
-)
-.filter(Boolean)
-.map(
-row=>{
-
-const m=
-row.match(
-/(\d+):(\d+)-(\d+):(\d+)\s(.+)/
-);
-
-if(
-!m
-){
-
-return null;
-
-}
-
-return{
-
-hour:+m[1],
-minute:+m[2],
-
-endHour:+m[3],
-endMinute:+m[4],
-
-title:m[5]
-
-};
-
-}
-)
-.filter(Boolean);
-
-}
 
 
 // =======================
-// REVIEW CALENDAR
+// tạo calendar toàn bộ review cells
 // =======================
 
 export async function createCalendarFromReviewCells(){
 
-const rows=
-document.querySelectorAll(
-"#taskTableBody tr"
-);
+    const week=getCurrentWeekDates();
 
-const week=
-getCurrentWeekDates();
+    const rows=
+        document.querySelectorAll("#taskTableBody tr");
 
-for(
-const row
-of rows
-){
+    for(const row of rows){
 
-const cells=
-row.querySelectorAll(
-".review-cell"
-);
+        const cells=row.querySelectorAll(".review-cell");
 
-for(
-let i=0;
-i<cells.length;
-i++
-){
+        for(let i=0;i<cells.length;i++){
 
-const tasks=
-parseReviewTasks(
-cells[i].value
-);
+            const tasks=
+                parseReviewTasks(cells[i].value);
 
-for(
-const task
-of tasks
-){
+            const docId=
+                row.querySelector("button[data-id]")
+                ?.dataset.id || "";
 
-await createReviewCalendarTask(
-task,
-week[i]
-);
+            for(const task of tasks){
 
-}
+                await createReviewCalendarTask(
+
+                    task,
+
+                    week[i],
+
+                    docId,
+
+                    i+1
+
+                );
+
+            }
+
+        }
+
+    }
 
 }
 
-}
-
-alert(
-"Đã tạo calendar"
-);
-
-}
-
-
-export async function createReviewCalendarForRow(
-btn
-){
-
-await createCalendarFromReviewCells(
-btn
-);
-
-}
 
 
 // =======================
-// NOTIFICATION
+// tạo calendar cho 1 row
+// =======================
+
+export async function createReviewCalendarForRow(btn){
+
+    const row=btn.closest("tr");
+
+    const week=getCurrentWeekDates();
+
+    const cells=
+        row.querySelectorAll(".review-cell");
+
+    const docId=
+        btn.dataset.id;
+
+    for(let i=0;i<cells.length;i++){
+
+        const tasks=
+            parseReviewTasks(cells[i].value);
+
+        for(const task of tasks){
+
+            await createReviewCalendarTask(
+
+                task,
+
+                week[i],
+
+                docId,
+
+                i+1
+
+            );
+
+        }
+
+    }
+
+}
+
+
+
+// =======================
+// Notification hôm nay
 // =======================
 
 export function scheduleTodayNotifications(){
 
-const week=
-getCurrentWeekDates();
+    const week=getCurrentWeekDates();
 
-const today=
-new Date();
+    const today=new Date();
 
-let index=
--1;
+    let index=-1;
 
-week.forEach(
-(
-d,
-i
-)=>{
+    for(let i=0;i<7;i++){
 
-if(
-isSameDate(
-today,
-d
-)
-){
+        if(isSameDate(today,week[i])){
 
-index=
-i;
+            index=i;
 
-}
+            break;
 
-}
-);
+        }
 
-if(
-index===-1
-){
+    }
 
-return;
+    if(index===-1)
+        return;
 
-}
+    document
+        .querySelectorAll("#taskTableBody tr")
+        .forEach(row=>{
 
-document
-.querySelectorAll(
-".review-cell"
-)
+            const textarea=
+                row.querySelectorAll(".review-cell")[index];
 
-.forEach(
+            if(!textarea)
+                return;
 
-cell=>{
+            const tasks=
+                parseReviewTasks(textarea.value);
 
-parseReviewTasks(
-cell.value
-)
+            tasks.forEach(task=>{
 
-.forEach(
+                scheduleNotification(
+                    task,
+                    today
+                );
 
-task=>{
+            });
 
-scheduleNotification(
-task,
-today
-);
+        });
 
 }
-
-);
-
-}
-
-);
-
-}
-
-
-export function hasReviewData(
-task
-){
-
-return Object
-.values(
-task.reviewDays
-||{}
-)
-.some(
-x=>
-String(
-x
-)
-.trim()
-);
-
-}
-
-export {
-showTaskNotification
-};

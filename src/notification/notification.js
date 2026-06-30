@@ -1,316 +1,500 @@
 // =======================
-// NOTIFICATION
+// NOTIFICATION MODULE
+// src/notification/notification.js
 // =======================
 
-const notificationTimers = [];
+import {
+  getCurrentWeekDates
+} from "../utils/dom.js";
+
+import {
+  normalizeDate,
+  isSameDate
+} from "../utils/date.js";
+
+import {
+  parseReviewTasks
+} from "../task/review.js";
+
 
 // =======================
 // REQUEST PERMISSION
 // =======================
 
-export async function requestNotificationPermission(){
+export async function requestNotificationPermission() {
 
-try{
+  try {
 
-if(
-!("Notification" in window)
-){
+    if (
+      !("Notification" in window)
+    ) {
 
-console.log(
-"Browser không hỗ trợ Notification"
-);
+      alert(
+        "Browser không hỗ trợ Notification"
+      );
 
-return false;
+      return false;
+
+    }
+
+    if (
+      Notification.permission
+      ===
+      "default"
+    ) {
+
+      const result =
+        await Notification
+          .requestPermission();
+
+      return (
+        result ===
+        "granted"
+      );
+
+    }
+
+    return (
+      Notification.permission
+      ===
+      "granted"
+    );
+
+  }
+
+  catch (
+    err
+  ) {
+
+    console.error(
+      err
+    );
+
+    return false;
+
+  }
 
 }
 
-if(
-Notification.permission===
-"granted"
-){
 
-return true;
+// =======================
+// POPUP
+// =======================
+
+export function showInAppPopup(
+  text
+) {
+
+  let popup =
+    document.getElementById(
+      "appPopup"
+    );
+
+  if (
+    !popup
+  ) {
+
+    popup =
+      document.createElement(
+        "div"
+      );
+
+    popup.id =
+      "appPopup";
+
+    popup.style.position =
+      "fixed";
+
+    popup.style.top =
+      "20px";
+
+    popup.style.right =
+      "20px";
+
+    popup.style.padding =
+      "14px 18px";
+
+    popup.style.background =
+      "#111";
+
+    popup.style.color =
+      "#fff";
+
+    popup.style.borderRadius =
+      "12px";
+
+    popup.style.zIndex =
+      "999999";
+
+    popup.style.maxWidth =
+      "280px";
+
+    popup.style.boxShadow =
+      "0 10px 30px rgba(0,0,0,.25)";
+
+    document.body.appendChild(
+      popup
+    );
+
+  }
+
+  popup.innerHTML =
+    "⏰ " + text;
+
+  popup.style.opacity =
+    "1";
+
+  setTimeout(
+    () => {
+
+      popup.style.opacity =
+        "0";
+
+      setTimeout(
+        () => {
+
+          popup.remove();
+
+        },
+        300
+      );
+
+    },
+
+    4000
+
+  );
 
 }
 
-if(
-Notification.permission===
-"denied"
-){
-
-return false;
-
-}
-
-const permission=
-await Notification.requestPermission();
-
-return (
-permission===
-"granted"
-);
-
-}catch(err){
-
-console.error(
-err
-);
-
-return false;
-
-}
-
-}
 
 // =======================
 // SHOW NOTIFICATION
 // =======================
 
 export function showTaskNotification(
-title,
-body=""
-){
+  title
+) {
 
-try{
+  if (
 
-if(
-Notification.permission===
-"granted"
-){
+    Notification.permission
+    !==
+    "granted"
 
-new Notification(
-title,
-{
-body
+  ) {
+
+    return;
+
+  }
+
+  try {
+
+    const notif =
+      new Notification(
+
+        "⏰ Nhắc việc",
+
+        {
+
+          body:
+            title,
+
+          icon:
+"https://cdn-icons-png.flaticon.com/512/1827/1827392.png",
+
+          badge:
+"https://cdn-icons-png.flaticon.com/512/1827/1827392.png",
+
+          vibrate:
+            [
+              300,
+              100,
+              300
+            ],
+
+          requireInteraction:
+            true
+
+        }
+
+      );
+
+    if (
+
+      navigator.vibrate
+
+    ) {
+
+      navigator.vibrate(
+
+        [
+          300,
+          100,
+          300
+        ]
+
+      );
+
+    }
+
+    notif.onclick =
+      () => {
+
+        window.focus();
+
+        notif.close();
+
+      };
+
+    showInAppPopup(
+      title
+    );
+
+  }
+
+  catch (
+    err
+  ) {
+
+    console.error(
+      err
+    );
+
+  }
+
 }
-);
 
-}
-
-showInAppPopup(
-title,
-body
-);
-
-}catch(err){
-
-console.error(
-err
-);
-
-}
-
-}
 
 // =======================
 // SCHEDULE
 // =======================
 
 export function scheduleNotification(
-task,
-targetDate
-){
 
-try{
+  task,
 
-if(
-!task
-)
-return;
+  date
 
-const now=
-Date.now();
+) {
 
-let notifyTime=
-targetDate.getTime();
+  try {
 
-if(
-task.hour!=null
-){
+    const target =
+      new Date(
 
-notifyTime=
-new Date(
+        date.getFullYear(),
 
-targetDate.getFullYear(),
+        date.getMonth(),
 
-targetDate.getMonth(),
+        date.getDate(),
 
-targetDate.getDate(),
+        task.hour,
 
-task.hour,
+        task.minute,
 
-task.minute||0
+        0
 
-).getTime();
+      );
 
-}
+    const delay =
+      target
+      -
+      Date.now();
 
-const delay=
-notifyTime-now;
+    if (
+      delay <= 0
+    ) {
 
-if(
-delay<=0)
-return;
+      return;
 
-const timer=
-setTimeout(
-()=>{
+    }
 
-showTaskNotification(
+    setTimeout(
 
-task.title
-||
-task.taskName
-||
-"Task",
+      () => {
 
-task.description
-||
-"Đến giờ"
+        showTaskNotification(
 
-);
+          task.title
 
-},
-delay
-);
+        );
 
-notificationTimers.push(
-timer
-);
+      },
 
-}catch(err){
+      delay
 
-console.error(
-err
-);
+    );
+
+  }
+
+  catch (
+    err
+  ) {
+
+    console.error(
+      err
+    );
+
+  }
 
 }
 
-}
 
 // =======================
-// REFRESH ALL
+// TODAY NOTIFICATION
 // =======================
 
-export async function refreshAllNotifications(){
+export function scheduleTodayNotifications() {
 
-try{
+  const week =
+    getCurrentWeekDates();
 
-notificationTimers.forEach(
-clearTimeout
-);
+  const today =
+    normalizeDate(
+      new Date()
+    );
 
-notificationTimers.length=
-0;
+  let todayIndex =
+    -1;
 
-if(
-typeof loadTasks===
-"function"
-){
+  week.forEach(
 
-await loadTasks();
+    (
+      d,
+      i
+    ) => {
+
+      if (
+
+        isSameDate(
+          today,
+          d
+        )
+
+      ) {
+
+        todayIndex =
+          i;
+
+      }
+
+    }
+
+  );
+
+  if (
+
+    todayIndex
+    ===
+    -1
+
+  ) {
+
+    return;
+
+  }
+
+  document
+
+    .querySelectorAll(
+      "#taskTableBody tr"
+    )
+
+    .forEach(
+
+      row => {
+
+        const cell =
+          row
+          .querySelectorAll(
+            ".review-cell"
+          )[
+            todayIndex
+          ];
+
+        if (
+          !cell
+        ) {
+
+          return;
+
+        }
+
+        const tasks =
+          parseReviewTasks(
+            cell.value
+          );
+
+        tasks.forEach(
+
+          task => {
+
+            scheduleNotification(
+
+              task,
+
+              new Date()
+
+            );
+
+          }
+
+        );
+
+      }
+
+    );
 
 }
 
-}catch(err){
-
-console.error(
-err
-);
-
-}
-
-}
 
 // =======================
-// IN APP POPUP
+// REFRESH
 // =======================
 
-export function showInAppPopup(
-title,
-message=""
-){
+export async function refreshAllNotifications() {
 
-let popup=
-document.getElementById(
-"inAppNotification"
-);
+  try {
 
-if(
-!popup
-){
+    await requestNotificationPermission();
 
-popup=
-document.createElement(
-"div"
-);
+    let id =
+      setTimeout(
+        () => {},
+        0
+      );
 
-popup.id=
-"inAppNotification";
+    while (
+      id--
+    ) {
 
-popup.style.position=
-"fixed";
+      clearTimeout(
+        id
+      );
 
-popup.style.top=
-"20px";
+    }
 
-popup.style.right=
-"20px";
+    scheduleTodayNotifications();
 
-popup.style.zIndex=
-99999;
+    alert(
+      "Đã cập nhật thông báo"
+    );
 
-popup.style.padding=
-"14px";
+  }
 
-popup.style.borderRadius=
-"10px";
+  catch (
+    err
+  ) {
 
-popup.style.background=
-"#222";
+    console.error(
+      err
+    );
 
-popup.style.color=
-"#fff";
+    alert(
+      "Không thể cập nhật notification"
+    );
 
-popup.style.maxWidth=
-"320px";
-
-popup.style.boxShadow=
-"0 5px 20px rgba(0,0,0,.25)";
-
-document.body.appendChild(
-popup
-);
-
-}
-
-popup.innerHTML=
-`
-<div>
-<b>${title}</b>
-</div>
-
-<div>
-${message}
-</div>
-`;
-
-popup.style.display=
-"block";
-
-clearTimeout(
-popup._timer
-);
-
-popup._timer=
-setTimeout(
-()=>{
-
-popup.style.display=
-"none";
-
-},
-5000
-);
+  }
 
 }

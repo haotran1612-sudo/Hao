@@ -1,271 +1,230 @@
-  import { db, auth } from "./firebase.js";
-
 // =======================
-// SAVE MUSIC URL
-// =======================
-
-export async function saveMusicUrl(){
-
-try{
-
-const url=
-document
-.getElementById(
-"musicUrl"
-)
-?.value
-.trim();
-
-if(
-!url
-){
-
-alert(
-"Nhập link nhạc"
-);
-
-return;
-
-}
-
-const user=
-auth.currentUser;
-
-if(
-!user
-){
-
-alert(
-"Chưa đăng nhập"
-);
-
-return;
-
-}
-
-await db
-.collection(
-"users"
-)
-.doc(
-user.uid
-)
-.set({
-
-musicUrl:
-url,
-
-updatedAt:
-new Date()
-
-},{
-merge:true
-});
-
-localStorage.setItem(
-"musicUrl",
-url
-);
-
-alert(
-"Đã lưu nhạc");
-
-}catch(err){
-
-console.error(
-err
-);
-
-alert(
-"Lưu thất bại"
-);
-
-}
-
-}
-
-// =======================
-// LOAD SETTINGS
+// MUSIC MODULE
+// src/music/music.js
 // =======================
 
-export async function loadUserMusicSettings(){
+import { db } from "../config/firebase.js";
 
-try{
-
-const user=
-auth.currentUser;
-
-if(
-!user
-)
-return;
-
-const doc=
-await db
-.collection(
-"users"
-)
-.doc(
-user.uid
-)
-.get();
-
-if(
-!doc.exists
-)
-return;
-
-const data=
-doc.data();
-
-const url=
-data.musicUrl||
-"";
-
-const auto=
-data.autoPlayMusic||
-false;
-
-localStorage.setItem(
-"musicUrl",
-url
-);
-
-localStorage.setItem(
-"autoPlayMusic",
-auto
-);
-
-const input=
-document
-.getElementById(
-"musicUrl"
-);
-
-if(
-input)
-input.value=
-url;
-
-const checkbox=
-document
-.getElementById(
-"autoPlayMusic"
-);
-
-if(
-checkbox)
-checkbox.checked=
-auto;
-
-if(
-auto){
-
-playSavedMusic();
-
-}
-
-}catch(err){
-
-console.error(
-err
-);
-
-}
-
-}
 
 // =======================
-// AUTOPLAY
+// EXTRACT VIDEO ID
 // =======================
 
-export async function toggleAutoPlayMusic(){
+export function extractYoutubeVideoId(
+  url
+) {
 
-try{
+  if (!url) {
 
-const checked=
-document
-.getElementById(
-"autoPlayMusic"
-)
-.checked;
+    return "";
 
-localStorage.setItem(
-"autoPlayMusic",
-checked
-);
+  }
 
-const user=
-auth.currentUser;
+  try {
 
-if(
-user){
+    const u =
+      new URL(
+        url
+      );
 
-await db
-.collection(
-"users"
-)
-.doc(
-user.uid
-)
-.set({
+    // youtu.be/xxx
+    if (
 
-autoPlayMusic:
-checked
+      u.hostname
+      .includes(
+        "youtu.be"
+      )
 
-},{
-merge:true
-});
+    ) {
+
+      return u.pathname
+        .replace(
+          "/",
+          ""
+        )
+        .trim();
+
+    }
+
+    // youtube.com/watch?v=
+    const v =
+      u.searchParams
+      .get(
+        "v"
+      );
+
+    if (
+      v
+    ) {
+
+      return v;
+
+    }
+
+    // embed
+    if (
+
+      u.pathname
+      .includes(
+        "/embed/"
+      )
+
+    ) {
+
+      return u.pathname
+        .split(
+          "/embed/"
+        )[1]
+        .split(
+          "/"
+        )[0];
+
+    }
+
+    // shorts
+    if (
+
+      u.pathname
+      .includes(
+        "/shorts/"
+      )
+
+    ) {
+
+      return u.pathname
+        .split(
+          "/shorts/"
+        )[1]
+        .split(
+          "/"
+        )[0];
+
+    }
+
+    return "";
+
+  }
+
+  catch {
+
+    return "";
+
+  }
 
 }
 
-if(
-checked){
-
-playSavedMusic();
-
-}
-
-}catch(err){
-
-console.error(
-err
-);
-
-}
-
-}
 
 // =======================
-// PLAY URL
+// BUILD EMBED
+// =======================
+
+export function buildYoutubeEmbedUrl(
+
+  videoId,
+
+  autoplay = true
+
+) {
+
+  if (
+
+    !videoId
+
+  ) {
+
+    return "";
+
+  }
+
+  return
+
+`https://www.youtube.com/embed/${videoId}?autoplay=${autoplay?1:0}&rel=0`;
+
+}
+
+
+// =======================
+// PLAY
 // =======================
 
 export function playMusicFromUrl(
-url
-){
+  url
+) {
 
-if(
-!url
-)
-return;
+  const videoId =
+    extractYoutubeVideoId(
+      url
+    );
 
-const frame=
-document
-.getElementById(
+  if (
+
+    !videoId
+
+  ) {
+
+    alert(
+      "Link YouTube không hợp lệ"
+    );
+
+    return;
+
+  }
+
+  const iframe =
+    document.getElementById(
+      "musicPlayer"
+    );
+
+  const wrap =
+    document.getElementById(
+      "musicPlayerWrap"
+    );
+
+  if (
+
+    !iframe ||
+
+    !wrap
+
+  ) {
+
+    return;
+
+  }
+
+  iframe.src =
+    buildYoutubeEmbedUrl(
+      videoId,
+      true
+    );
+
+  wrap.style.display =
+    "block";
+
+}
+
+
+// =======================
+// STOP
+// =======================
+
+export function stopMusic(){
+
+const iframe=
+document.getElementById(
 "musicPlayer"
 );
 
 if(
-!frame
-)
-return;
+iframe
+){
 
-frame.src=
-buildYoutubeEmbedUrl(
-url
-);
+iframe.src="";
 
 }
+
+}
+
 
 // =======================
 // PLAY SAVED
@@ -274,16 +233,28 @@ url
 export function playSavedMusic(){
 
 const url=
-
-localStorage
-.getItem(
+document
+.getElementById(
 "musicUrl"
-);
+)
+?.value
+.trim()
+
+||
+
+"";
 
 if(
 !url
-)
+){
+
+alert(
+"Chưa có link nhạc"
+);
+
 return;
+
+}
 
 playMusicFromUrl(
 url
@@ -291,91 +262,291 @@ url
 
 }
 
+
 // =======================
-// STOP
+// SAVE
 // =======================
 
-export function stopMusic(){
+export async function saveMusicUrl(){
 
-const frame=
+try{
+
+const email=
+localStorage
+.getItem(
+"userEmail"
+);
+
+if(
+!email
+){
+
+alert(
+"Bạn chưa đăng nhập"
+);
+
+return;
+
+}
+
+const musicUrl=
 document
 .getElementById(
-"musicPlayer"
-);
+"musicUrl"
+)
+?.value
+.trim()
 
-if(
-frame){
+||
 
-frame.src=
 "";
 
-}
-
-}
-
-// =======================
-// EXTRACT ID
-// =======================
-
-export function extractYoutubeVideoId(
-url
-){
-
-if(
-!url
+const autoPlay=
+document
+.getElementById(
+"autoPlayMusic"
 )
-return null;
+?.checked
 
-let match=
-url.match(
-/(?:youtube\.com\/watch\?v=|youtu\.be\/)([^&]+)/i
-);
+||
 
-if(
-match &&
-match[1]
-){
+false;
 
-return match[1];
-
-}
-
-match=
-url.match(
-/youtube\.com\/embed\/([^?]+)/i
-);
-
-if(
-match &&
-match[1]
-){
-
-return match[1];
-
-}
-
-return null;
-
-}
-
-// =======================
-// BUILD EMBED
-// =======================
-
-export function buildYoutubeEmbedUrl(
-url
-){
-
-const id=
+const videoId=
 extractYoutubeVideoId(
-url
+musicUrl
 );
 
 if(
-!id
-)
-return "";
+!videoId
+){
 
-return `https://www.youtube.com/embed/${id}?autoplay=1`;
+alert(
+"Link YouTube không hợp lệ"
+);
+
+return;
+
+}
+
+await db
+.collection(
+"users"
+)
+.doc(
+email
+)
+.set({
+
+email,
+
+musicUrl,
+
+autoPlayMusic:
+autoPlay,
+
+updatedAt:
+new Date()
+
+},
+
+{
+
+merge:
+true
+
+}
+
+);
+
+alert(
+"Đã lưu nhạc"
+);
+
+}
+
+catch(
+err
+){
+
+console.error(
+err
+);
+
+alert(
+"Không lưu được nhạc"
+);
+
+}
+
+}
+
+
+// =======================
+// LOAD USER SETTINGS
+// =======================
+
+export async function loadUserMusicSettings(){
+
+try{
+
+const email=
+localStorage
+.getItem(
+"userEmail"
+);
+
+if(
+!email
+){
+
+return;
+
+}
+
+const doc=
+await db
+.collection(
+"users"
+)
+.doc(
+email
+)
+.get();
+
+if(
+!doc.exists
+){
+
+return;
+
+}
+
+const data=
+doc.data()
+|| {};
+
+const input=
+document
+.getElementById(
+"musicUrl"
+);
+
+if(
+input
+){
+
+input.value=
+data.musicUrl
+|| "";
+
+}
+
+const auto=
+document
+.getElementById(
+"autoPlayMusic"
+);
+
+if(
+auto
+){
+
+auto.checked=
+!!data.autoPlayMusic;
+
+}
+
+if(
+
+data.musicUrl
+&&
+data.autoPlayMusic
+
+){
+
+playMusicFromUrl(
+data.musicUrl
+);
+
+}
+
+}
+
+catch(
+err
+){
+
+console.error(
+err
+);
+
+}
+
+}
+
+
+// =======================
+// AUTOPLAY
+// =======================
+
+export async function toggleAutoPlayMusic(
+checkbox
+){
+
+try{
+
+const email=
+localStorage
+.getItem(
+"userEmail"
+);
+
+if(
+!email
+){
+
+return;
+
+}
+
+await db
+.collection(
+"users"
+)
+.doc(
+email
+)
+.set({
+
+email,
+
+autoPlayMusic:
+checkbox.checked,
+
+updatedAt:
+new Date()
+
+},
+
+{
+
+merge:true
+
+}
+
+);
+
+}
+
+catch(
+err
+){
+
+console.error(
+err
+);
+
+}
 
 }

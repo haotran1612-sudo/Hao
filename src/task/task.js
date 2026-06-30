@@ -1,8 +1,25 @@
+// =======================
+// TASK MODULE
+// src/task/task.js
+// =======================
+
+import { db } from "../config/firebase.js";
+
 import {
-highlightTodayColumn
-}
-from "./dom.js";
-import { db } from "./firebase.js";
+  buildReviewDays,
+  scheduleTodayNotifications
+} from "./review.js";
+
+import {
+  highlightTodayColumn,
+  loadWeekHeader,
+  autoResize
+} from "../utils/dom.js";
+
+import {
+  syncFullCalendarFromRow
+} from "../calendar/sync.js";
+
 
 // =======================
 // MODAL
@@ -10,112 +27,95 @@ import { db } from "./firebase.js";
 
 export function openTaskModal() {
 
-  document.getElementById(
-    "taskModal"
-  ).style.display =
-    "block";
+  const modal =
+    document.getElementById(
+      "taskModal"
+    );
+
+  if (
+    modal
+  ) {
+
+    modal.style.display =
+      "block";
+
+  }
 
 }
+
 
 export function closeTaskModal() {
 
-  document.getElementById(
-    "taskModal"
-  ).style.display =
-    "none";
+  const modal =
+    document.getElementById(
+      "taskModal"
+    );
+
+  if (
+    modal
+  ) {
+
+    modal.style.display =
+      "none";
+
+  }
 
 }
+
 
 // =======================
 // RESET FORM
 // =======================
 
-export function resetForm() {
+export function resetForm(){
 
-  const fields = [
-    "taskName",
-    "taskDescription",
-    "startDate",
-    "deadline",
-    "calendarTitle",
-    "location",
-    "attendees",
-    "meetLink",
-    "reminder"
-  ];
+[
+"taskName",
+"taskDescription",
+"startDate",
+"deadline",
+"calendarTitle",
+"location",
+"attendees",
+"meetLink",
+"reminder"
 
-  fields.forEach(id=>{
+]
 
-    const el =
-      document
-      .getElementById(id);
+.forEach(
 
-    if(el)
-      el.value="";
+id=>{
 
-  });
+const el=
+document.getElementById(
+id
+);
 
-  const taskType =
-    document
-    .getElementById(
-      "taskType"
-    );
+if(
+el
+){
 
-  if(taskType)
-    taskType.value =
-      "Daily";
-
-  const priority =
-    document
-    .getElementById(
-      "priority"
-    );
-
-  if(priority)
-    priority.value =
-      "Normal";
-
-  const status =
-    document
-    .getElementById(
-      "status"
-    );
-
-  if(status)
-    status.value =
-      "Todo";
-
-  const applyCalendar =
-    document
-    .getElementById(
-      "applyCalendar"
-    );
-
-  if(applyCalendar)
-    applyCalendar.checked =
-      false;
-
-  const sendMail =
-    document
-    .getElementById(
-      "sendMail"
-    );
-
-  if(sendMail)
-    sendMail.checked =
-      false;
+el.value=
+"";
 
 }
 
+}
+
+);
+
+}
+
+
 // =======================
-// SAVE TASK
+// SAVE
 // =======================
 
 export async function saveTask(){
 
 try{
 
-const taskData={
+const task={
 
 email:
 localStorage.getItem(
@@ -126,124 +126,95 @@ taskName:
 document
 .getElementById(
 "taskName"
-)?.value||"",
+)
+?.value
+||
+
+"",
 
 start:
 document
 .getElementById(
 "startDate"
-)?.value||"",
+)
+?.value
+||
+
+"",
 
 deadline:
 document
 .getElementById(
 "deadline"
-)?.value||"",
+)
+?.value
+||
 
-taskType:
+"",
+
+processingTime:
+Number(
+
 document
 .getElementById(
-"taskType"
-)?.value||
-"Daily",
+"processingTime"
+)
+?.value
+
+)
+
+||
+
+0,
 
 priority:
 document
 .getElementById(
 "priority"
-)?.value||
+)
+?.value
+||
+
 "Normal",
 
 status:
 document
 .getElementById(
 "status"
-)?.value||
+)
+?.value
+||
+
 "Todo",
 
-calendarTitle:
+taskType:
 document
 .getElementById(
-"calendarTitle"
-)?.value||"",
+"taskType"
+)
+?.value
+||
 
-calendarType:
-document
-.getElementById(
-"calendarType"
-)?.value||
-"Event",
+"Daily",
 
-attendees:
-document
-.getElementById(
-"attendees"
-)?.value||"",
+calendarTitle:"",
+calendarType:"Event",
 
-addMeet:
-document
-.getElementById(
-"addMeet"
-)?.checked||
-false,
-
-location:
-document
-.getElementById(
-"location"
-)?.value||"",
-
-description:
-document
-.getElementById(
-"description"
-)?.value||"",
-
-repeat:
-document
-.getElementById(
-"repeat"
-)?.value||
-"None",
-
-repeatInterval:
-Number(
-document
-.getElementById(
-"repeatInterval"
-)?.value
-)||1,
-
-repeatUntil:
-document
-.getElementById(
-"repeatUntil"
-)?.value||"",
-
-autoDelete:
-document
-.getElementById(
-"autoDelete"
-)?.checked||
-false,
+attendees:"",
+location:"",
+description:"",
 
 apply:false,
 
-sendMail:
-document
-.getElementById(
-"sendMail"
-)?.checked||
-false,
-
 calendarId:"",
-
 meetLink:"",
 
 calendarStatus:
 "Create",
 
 reviewCalendarIds:[],
+
+reviewDays:{},
 
 createdAt:
 new Date()
@@ -255,35 +226,40 @@ await db
 "tasks"
 )
 .add(
-taskData
+task
 );
+
+resetForm();
+
+closeTaskModal();
+
+await loadTasks();
 
 alert(
 "Tạo task thành công"
 );
 
-closeTaskModal();
+}
 
-resetForm();
-
-loadTasks();
-
-}catch(err){
+catch(
+err
+){
 
 console.error(
 err
 );
 
 alert(
-"Lỗi tạo task"
+"Tạo task thất bại"
 );
 
 }
 
 }
 
+
 // =======================
-// LOAD TASKS
+// LOAD
 // =======================
 
 export async function loadTasks(){
@@ -295,6 +271,14 @@ localStorage
 .getItem(
 "userEmail"
 );
+
+if(
+!email
+){
+
+return;
+
+}
 
 const snapshot=
 await db
@@ -314,34 +298,197 @@ document
 "taskTableBody"
 );
 
-if(!tbody)
+if(
+!tbody
+){
+
 return;
 
-tbody.innerHTML="";
+}
 
-// dùng nguyên phần render row
-snapshot.forEach(
+tbody.innerHTML=
+"";
+
+snapshot
+.forEach(
+
 doc=>{
 
 const task=
 doc.data();
 
-console.log(
-doc.id,
+const review=
+buildReviewDays(
 task
 );
 
-// giữ nguyên block render cũ
-// copy phần tr.innerHTML
-// từ file upload
+const tr=
+document
+.createElement(
+"tr"
+);
 
-});
+tr.innerHTML=`
+
+<td>
+
+<input
+type="checkbox">
+
+</td>
+
+<td>
+
+<input
+type="datetime-local"
+
+value="${(task.start||"").substring(0,16)}"
+
+onchange="
+updateTask(
+'${doc.id}',
+'start',
+this.value
+)
+">
+
+</td>
+
+<td>
+
+<input
+type="datetime-local"
+
+value="${(task.deadline||"").substring(0,16)}"
+
+onchange="
+updateTask(
+'${doc.id}',
+'deadline',
+this.value
+)
+">
+
+</td>
+
+<td>
+
+<input
+value="${task.taskName||""}"
+
+onchange="
+updateTask(
+'${doc.id}',
+'taskName',
+this.value
+)
+">
+
+</td>
+
+${Array.from(
+{
+length:7
+}
+
+)
+
+.map(
+
+(
+_,
+i
+)=>
+
+`
+
+<td>
+
+<textarea
+
+class="review-cell"
+
+oninput="
+autoResize(
+this
+)
+"
+
+onchange="
+updateTask(
+'${doc.id}',
+'reviewDays.day${i+1}',
+this.value
+)
+"
+
+>
+
+${review[
+"day"+(
+i+1
+)
+]||""}
+
+</textarea>
+
+</td>
+
+`
+
+)
+
+.join(
+""
+)}
+
+<td>
+
+<button
+data-id="${doc.id}"
+
+onclick="
+syncFullCalendarFromRow(
+this
+)
+"
+
+>
+
+📅
+
+</button>
+
+</td>
+
+`;
+
+tbody
+.appendChild(
+tr
+);
+
+tr
+.querySelectorAll(
+".review-cell"
+)
+.forEach(
+autoResize
+);
+
+}
+
+);
 
 highlightTodayColumn();
 
 scheduleTodayNotifications();
 
-}catch(err){
+}
+
+catch(
+err
+){
 
 console.error(
 err
@@ -350,6 +497,7 @@ err
 }
 
 }
+
 
 // =======================
 // UPDATE
@@ -363,54 +511,50 @@ value
 
 try{
 
-const data={};
-
-data[field]=
-value;
-
 await db
 .collection(
 "tasks"
 )
-.doc(id)
-.update(
-data
-);
-
-if(
-field==="taskType"||
-field==="start"||
-field==="deadline"||
-field==="taskName"||
-field==="processingTime"
-){
-
-await db
-.collection(
-"tasks"
+.doc(
+id
 )
-.doc(id)
 .update({
 
-reviewDays:{
-
-day1:"",
-day2:"",
-day3:"",
-day4:"",
-day5:"",
-day6:"",
-day7:""
-
-}
+[field]:
+value
 
 });
+
+if(
+
+[
+"taskName",
+
+"taskType",
+
+"start",
+
+"deadline",
+
+"processingTime"
+
+]
+
+.includes(
+field
+)
+
+){
 
 await loadTasks();
 
 }
 
-}catch(err){
+}
+
+catch(
+err
+){
 
 console.error(
 err
@@ -420,13 +564,12 @@ err
 
 }
 
+
 // =======================
 // ADD ROW
 // =======================
 
 export async function addRow(){
-
-try{
 
 await db
 .collection(
@@ -441,96 +584,32 @@ localStorage
 ),
 
 taskName:"",
+
 start:"",
 deadline:"",
+
 processingTime:0,
 
-reviewDays:{
+priority:"Normal",
 
-day1:"",
-day2:"",
-day3:"",
-day4:"",
-day5:"",
-day6:"",
-day7:""
+status:"Todo",
 
-},
+taskType:"Daily",
 
-priority:
-"Normal",
-
-status:
-"Todo",
-
-taskType:
-"Daily",
-
-repeat:
-"None",
-
-repeatInterval:
-1,
-
-repeatUntil:
-"",
-
-calendarTitle:
-"",
-
-calendarType:
-"Event",
-
-attendees:
-"",
-
-addMeet:
-false,
-
-location:
-"",
-
-description:
-"",
-
-apply:
-false,
-
-calendarId:
-"",
-
-meetLink:
-"",
+reviewDays:{},
 
 calendarStatus:
 "Create",
-
-autoDelete:
-false,
-
-reviewCalendarIds:
-[],
 
 createdAt:
 new Date()
 
 });
 
-loadTasks();
-
-}catch(err){
-
-console.error(
-err
-);
-
-alert(
-"Không thêm được dòng mới"
-);
+await loadTasks();
 
 }
 
-}
 
 // =======================
 // VIEW
@@ -541,13 +620,15 @@ export function showTracker(){
 document
 .getElementById(
 "trackerPage"
-).style.display=
+)
+.style.display=
 "block";
 
 document
 .getElementById(
 "backupPage"
-).style.display=
+)
+.style.display=
 "none";
 
 const kanban=
@@ -556,9 +637,14 @@ document
 ".kanban"
 );
 
-if(kanban)
+if(
+kanban
+){
+
 kanban.style.display=
 "none";
+
+}
 
 loadWeekHeader();
 
@@ -566,18 +652,21 @@ loadTasks();
 
 }
 
+
 export function showKanban(){
 
 document
 .getElementById(
 "trackerPage"
-).style.display=
+)
+.style.display=
 "none";
 
 document
 .getElementById(
 "backupPage"
-).style.display=
+)
+.style.display=
 "none";
 
 const kanban=
@@ -586,49 +675,22 @@ document
 ".kanban"
 );
 
-if(kanban)
+if(
+kanban
+){
+
 kanban.style.display=
 "flex";
 
 }
 
-// =======================
-// SYNC CALENDAR
-// =======================
-
-export async function syncFullCalendarFromRow(
-btn
-){
-
-const docId=
-btn.getAttribute(
-"data-id"
-);
-
-if(
-!docId
-){
-
-alert(
-"Missing task id"
-);
-
-return;
-
 }
 
-const row=
-btn.closest(
-"tr"
-);
 
-await createCalendarFromRow(
-docId,
-row
-);
+// =======================
+// EXPORT
+// =======================
 
-alert(
-"Đồng bộ Calendar hoàn tất"
-);
-
-}
+export {
+syncFullCalendarFromRow
+};

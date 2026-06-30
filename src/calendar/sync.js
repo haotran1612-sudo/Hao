@@ -1,519 +1,393 @@
+// =======================
+// CALENDAR SYNC
+// src/calendar/sync.js
+// =======================
+
+import { db } from "../config/firebase.js";
+
+import {
+  createCalendarEvent,
+  createReviewCalendarTask
+} from "./calendar.js";
+
+import {
+  parseReviewTasks
+} from "../task/review.js";
+
+import {
+  getCurrentWeekDates
+} from "../utils/dom.js";
+
 
 // =======================
-// SYNC CALENDAR
+// TOKEN
 // =======================
 
-import { db } from "./firebase.js";
+function getGoogleToken() {
 
-import {
-createCalendarEvent,
-createReviewCalendarTask
-}
-from "./calendar.js";
+  return localStorage.getItem(
+    "googleToken"
+  );
 
-import {
-buildReviewDays,
-parseReviewTasks
 }
-from "./review.js";
 
-import {
-loadTasks
-}
-from "./task.js";
-
-import {
-getCurrentWeekDates
-}
-from "./dom.js";
 
 // =======================
-// TOGGLE CREATE CALENDAR
+// CREATE EVENT
+// =======================
+
+async function createGoogleEvent(
+  event
+) {
+
+  const token =
+    getGoogleToken();
+
+  if (
+    !token
+  ) {
+
+    throw new Error(
+      "Thiếu Google Token"
+    );
+
+  }
+
+  const res =
+    await fetch(
+
+"https://www.googleapis.com/calendar/v3/calendars/primary/events?conferenceDataVersion=1",
+
+      {
+
+        method:
+          "POST",
+
+        headers: {
+
+          Authorization:
+`Bearer ${token}`,
+
+          "Content-Type":
+            "application/json"
+
+        },
+
+        body:
+          JSON.stringify(
+            event
+          )
+
+      }
+
+    );
+
+  if (
+    !res.ok
+  ) {
+
+    throw new Error(
+      "Calendar API Error"
+    );
+
+  }
+
+  return res.json();
+
+}
+
+
+// =======================
+// ENABLE
 // =======================
 
 export async function toggleCreateCalendar(
-id,
-checkbox
-){
+  checkbox,
+  id
+) {
 
-try{
+  try {
 
-await db
-.collection(
-"tasks"
-)
-.doc(
-id
-)
-.update({
+    await db
+      .collection(
+        "tasks"
+      )
+      .doc(
+        id
+      )
+      .update({
 
-apply:
-checkbox.checked
+        apply:
+          checkbox.checked
 
-});
+      });
 
-if(
-checkbox.checked
-){
+  }
 
-await createCalendarFromRow(
-id
-);
+  catch (
+    err
+  ) {
 
-}else{
+    console.error(
+      err
+    );
 
-const docRef=
+    checkbox.checked =
+      false;
 
-await db
-.collection(
-"tasks"
-)
-.doc(
-id
-)
-.get();
-
-const task=
-docRef.data();
-
-const token=
-localStorage.getItem(
-"googleToken"
-);
-
-// DELETE MAIN EVENT
-if(
-task.calendarId &&
-token
-){
-
-try{
-
-await fetch(
-
-`https://www.googleapis.com/calendar/v3/calendars/primary/events/${task.calendarId}`,
-
-{
-
-method:
-"DELETE",
-
-headers:{
-
-Authorization:
-`Bearer ${token}`
+  }
 
 }
 
-}
-
-);
-
-}catch(
-err
-){
-
-console.error(
-err
-);
-
-}
-
-}
-
-// DELETE REVIEW EVENTS
-if(
-
-task.reviewCalendarIds &&
-
-task.reviewCalendarIds.length
-
-){
-
-for(
-const eventId
-of
-task.reviewCalendarIds
-){
-
-try{
-
-await fetch(
-
-`https://www.googleapis.com/calendar/v3/calendars/primary/events/${eventId}`,
-
-{
-
-method:
-"DELETE",
-
-headers:{
-
-Authorization:
-`Bearer ${token}`
-
-}
-
-}
-
-);
-
-}catch(
-err
-){
-
-console.error(
-err
-);
-
-}
-
-}
-
-}
-
-// RESET FIRESTORE
-await db
-.collection(
-"tasks"
-)
-.doc(
-id
-)
-.update({
-
-calendarId:
-"",
-
-reviewCalendarIds:
-[],
-
-meetLink:
-"",
-
-calendarStatus:
-"Create",
-
-apply:
-false
-
-});
-
-loadTasks();
-
-}
-
-}catch(
-err
-){
-
-console.error(
-err
-);
-
-checkbox.checked=
-false;
-
-}
-
-}
 
 // =======================
-// CREATE FROM ROW
+// MAIN CALENDAR
 // =======================
 
 export async function createCalendarFromRow(
-id,
-rowEl=null
-){
+  btn
+) {
 
-try{
+  try {
 
-const docRef=
+    const id =
+      btn.dataset.id;
 
-await db
-.collection(
-"tasks"
-)
-.doc(
-id
-)
-.get();
+    if (
+      !id
+    ) {
 
-if(
-!docRef.exists
-){
+      return;
 
-alert(
-"Task không tồn tại"
-);
+    }
 
-return;
+    const doc =
+      await db
+      .collection(
+        "tasks"
+      )
+      .doc(
+        id
+      )
+      .get();
 
-}
+    if (
+      !doc.exists
+    ) {
 
-const task=
-docRef.data();
+      return;
 
-// MAIN EVENT
-let mainEvent=
-null;
+    }
 
-if(
-!task.calendarId
-){
+    const task =
+      doc.data();
 
-mainEvent=
-await createCalendarEvent(
-task,
-id
-);
+    const event =
+      createCalendarEvent(
+        task
+      );
 
-}else{
+    const result =
+      await createGoogleEvent(
+        event
+      );
 
-mainEvent={
+    await db
+      .collection(
+        "tasks"
+      )
+      .doc(
+        id
+      )
+      .update({
 
-id:
-task.calendarId,
+        calendarId:
+          result.id,
 
-hangoutLink:
-task.meetLink||
-""
+        meetLink:
 
-};
+          result
+          .hangoutLink
+          ||
 
-}
+          "",
 
-// REVIEW CELLS
-let reviewDays=
-{};
+        calendarStatus:
+          "Created"
 
-if(
-rowEl
-){
+      });
 
-const cells=
-rowEl.querySelectorAll(
-".review-cell"
-);
+    alert(
+      "Đã tạo Calendar"
+    );
 
-reviewDays={
+  }
 
-day1:
-cells[0]?.value||
-"",
+  catch (
+    err
+  ) {
 
-day2:
-cells[1]?.value||
-"",
+    console.error(
+      err
+    );
 
-day3:
-cells[2]?.value||
-"",
+    alert(
+      "Không tạo được Calendar"
+    );
 
-day4:
-cells[3]?.value||
-"",
-
-day5:
-cells[4]?.value||
-"",
-
-day6:
-cells[5]?.value||
-"",
-
-day7:
-cells[6]?.value||
-""
-
-};
-
-}else{
-
-reviewDays=
-buildReviewDays(
-task
-);
+  }
 
 }
 
-const reviewIds=
-[];
 
-const week=
-getCurrentWeekDates();
+// =======================
+// REVIEW CALENDAR
+// =======================
 
-for(
-let i=1;
-i<=7;
-i++
-){
+async function createReviewEvents(
+  id,
+  row
+) {
 
-const text=
-reviewDays[
-"day"+i
-]
-||
-"";
+  const week =
+    getCurrentWeekDates();
 
-const reviewTasks=
-parseReviewTasks(
-text
-);
+  const reviewIds =
+    [];
 
-for(
-const t
-of reviewTasks
-){
+  const cells =
+    row.querySelectorAll(
+      ".review-cell"
+    );
 
-const eventId=
+  for (
 
-await createReviewCalendarTask(
+    let i=0;
 
-t,
+    i<
+    cells.length;
 
-week[
-i-1
-],
+    i++
 
-id,
+  ) {
 
-i
+    const tasks =
+      parseReviewTasks(
+        cells[i].value
+      );
 
-);
+    for (
 
-if(
-eventId &&
-!reviewIds.includes(
-eventId
-)
-){
+      const task
+      of tasks
 
-reviewIds.push(
-eventId
-);
+    ) {
 
-}
+      const event =
+        createReviewCalendarTask(
 
-}
+          task,
 
-}
+          week[i]
 
-// SAVE
-await db
-.collection(
-"tasks"
-)
-.doc(
-id
-)
-.update({
+        );
 
-apply:
-true,
+      const created =
+        await createGoogleEvent(
+          event
+        );
 
-calendarId:
+      reviewIds.push(
+        created.id
+      );
 
-mainEvent?.id ||
+    }
 
-task.calendarId ||
+  }
 
-"",
+  await db
+    .collection(
+      "tasks"
+    )
+    .doc(
+      id
+    )
+    .update({
 
-reviewCalendarIds:
-reviewIds,
+      reviewCalendarIds:
+        reviewIds
 
-meetLink:
-
-mainEvent?.hangoutLink ||
-
-task.meetLink ||
-
-"",
-
-calendarStatus:
-"Created",
-
-reviewDays:
-reviewDays
-
-});
-
-await loadTasks();
-
-}catch(
-err
-){
-
-console.error(
-err
-);
-
-await db
-.collection(
-"tasks"
-)
-.doc(
-id
-)
-.update({
-
-apply:
-false,
-
-calendarStatus:
-"Create"
-
-});
-
-await loadTasks();
-
-alert(
-"Tạo Calendar thất bại"
-);
+    });
 
 }
 
-}
 
 // =======================
 // FULL SYNC
 // =======================
 
 export async function syncFullCalendarFromRow(
-btn
-){
+  btn
+) {
 
-const docId=
-btn.getAttribute(
-"data-id"
-);
+  try {
 
-if(
-!docId
-){
+    btn.disabled =
+      true;
 
-alert(
-"Missing task id"
-);
+    const row =
+      btn.closest(
+        "tr"
+      );
 
-return;
+    const id =
+      btn.dataset.id;
 
-}
+    if (
+      !row ||
+      !id
+    ) {
 
-const row=
-btn.closest(
-"tr"
-);
+      return;
 
-await createCalendarFromRow(
-docId,
-row
-);
+    }
 
-alert(
-"Đồng bộ Calendar hoàn tất"
-);
+    await createCalendarFromRow(
+      btn
+    );
+
+    await createReviewEvents(
+
+      id,
+
+      row
+
+    );
+
+    btn.textContent =
+      "✅";
+
+  }
+
+  catch (
+    err
+  ) {
+
+    console.error(
+      err
+    );
+
+    alert(
+      "Đồng bộ thất bại"
+    );
+
+  }
+
+  finally {
+
+    btn.disabled =
+      false;
+
+  }
 
 }

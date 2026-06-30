@@ -1,7 +1,7 @@
 // =======================
 // FIREBASE
 // =======================
-import "./config/firebase.js";
+
 import { auth } from "./config/firebase.js";
 
 // =======================

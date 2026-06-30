@@ -1,4 +1,59 @@
- import { db } from "./firebase.js";  
+// =======================
+// BACKUP MODULE
+// src/task/backup.js
+// =======================
+
+import { db } from "../config/firebase.js";
+import { loadTasks } from "./task.js";
+
+
+// =======================
+// PRIVATE
+// =======================
+
+async function deleteGoogleEvent(eventId, token) {
+
+  if (!eventId || !token) return;
+
+  try {
+
+    await fetch(
+      `https://www.googleapis.com/calendar/v3/calendars/primary/events/${eventId}`,
+      {
+        method: "DELETE",
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      }
+    );
+
+  } catch (err) {
+
+    console.error(
+      "Delete calendar error:",
+      err
+    );
+
+  }
+
+}
+
+
+async function deleteReviewEvents(ids, token) {
+
+  if (!Array.isArray(ids)) return;
+
+  for (const id of ids) {
+
+    await deleteGoogleEvent(
+      id,
+      token
+    );
+
+  }
+
+}
+
 
 // =======================
 // ARCHIVE TASK
@@ -6,416 +61,371 @@
 
 export async function archiveTask(
   id,
-  checkbox
-){
+  checkbox = null
+) {
 
-const confirmDelete=
-confirm(
-"Bạn có chắc muốn archive task này không?"
-);
+  const ok =
+    confirm(
+      "Bạn có chắc muốn archive task này không?"
+    );
 
-if(
-!confirmDelete
-){
+  if (!ok) {
 
-checkbox.checked=
-false;
+    if (checkbox) {
+      checkbox.checked = false;
+    }
 
-return;
+    return;
 
-}
+  }
 
-try{
+  try {
 
-const docRef=
-await db
-.collection(
-"tasks"
-)
-.doc(
-id
-)
-.get();
+    const doc =
+      await db
+        .collection("tasks")
+        .doc(id)
+        .get();
 
-if(
-!docRef.exists
-)
-return;
+    if (!doc.exists) {
 
-const task=
-docRef.data();
+      throw new Error(
+        "Task không tồn tại"
+      );
 
-const token=
-localStorage.getItem(
-"googleToken"
-);
+    }
 
-// MAIN EVENT
-if(
-task.calendarId &&
-token
-){
+    const task =
+      doc.data();
 
-try{
+    const token =
+      localStorage.getItem(
+        "googleToken"
+      );
 
-await fetch(
-`https://www.googleapis.com/calendar/v3/calendars/primary/events/${task.calendarId}`,
-{
-method:
-"DELETE",
+    // xóa calendar chính
+    await deleteGoogleEvent(
+      task.calendarId,
+      token
+    );
 
-headers:{
-Authorization:
-`Bearer ${token}`
-}
-}
-);
+    // xóa review calendars
+    await deleteReviewEvents(
+      task.reviewCalendarIds,
+      token
+    );
 
-}catch(err){
+    // lưu backup
+    await db
+      .collection("backupTasks")
+      .add({
 
-console.error(
-"Delete calendar error",
-err
-);
+        ...task,
 
-}
+        email:
+          localStorage.getItem(
+            "userEmail"
+          ),
 
-}
+        archivedAt:
+          new Date()
 
-// REVIEW EVENTS
-if(
-task.reviewCalendarIds &&
-task.reviewCalendarIds.length &&
-token
-){
+      });
 
-for(
-const eventId
-of
-task.reviewCalendarIds
-){
+    // xóa task gốc
+    await db
+      .collection("tasks")
+      .doc(id)
+      .delete();
 
-try{
+    await loadTasks();
 
-await fetch(
-`https://www.googleapis.com/calendar/v3/calendars/primary/events/${eventId}`,
-{
-method:
-"DELETE",
+  }
 
-headers:{
-Authorization:
-`Bearer ${token}`
-}
-}
-);
+  catch (err) {
 
-}catch(err){
+    console.error(
+      "archiveTask:",
+      err
+    );
 
-console.error(
-"Delete review calendar error",
-err
-);
+    alert(
+      "Không thể backup task"
+    );
+
+    if (checkbox) {
+
+      checkbox.checked =
+        false;
+
+    }
+
+  }
 
 }
 
-}
-
-}
-
-await db
-.collection(
-"backupTasks"
-)
-.add({
-
-...task,
-
-email:
-localStorage.getItem(
-"userEmail"
-),
-
-archivedAt:
-new Date()
-
-});
-
-await db
-.collection(
-"tasks"
-)
-.doc(
-id
-)
-.delete();
-
-loadTasks();
-
-}catch(err){
-
-console.error(
-err
-);
-
-alert(
-"Không thể backup task"
-);
-
-checkbox.checked=
-false;
-
-}
-
-}
 
 // =======================
 // SHOW BACKUP
 // =======================
 
-export async function showBackup(){
+export async function showBackup() {
 
-document
-.getElementById(
-"trackerPage"
-)
-.style.display=
-"none";
+  try {
 
-document
-.getElementById(
-"backupPage"
-)
-.style.display=
-"block";
+    document.getElementById(
+      "trackerPage"
+    ).style.display =
+      "none";
 
-const kanban=
-document.querySelector(
-".kanban"
-);
+    document.getElementById(
+      "backupPage"
+    ).style.display =
+      "block";
 
-if(
-kanban
-)
-kanban.style.display=
-"none";
+    const kanban =
+      document.querySelector(
+        ".kanban"
+      );
 
-const tbody=
-document.getElementById(
-"backupTableBody"
-);
+    if (kanban) {
 
-if(
-!tbody
-)
-return;
+      kanban.style.display =
+        "none";
 
-tbody.innerHTML=
-"";
+    }
 
-const email=
-localStorage.getItem(
-"userEmail"
-);
+    const tbody =
+      document.getElementById(
+        "backupTableBody"
+      );
 
-const snapshot=
-await db
-.collection(
-"backupTasks"
-)
-.where(
-"email",
-"==",
-email
-)
-.get();
+    if (!tbody)
+      return;
 
-snapshot.forEach(
-doc=>{
+    tbody.innerHTML =
+      "";
 
-const task=
-doc.data();
+    const email =
+      localStorage.getItem(
+        "userEmail"
+      );
 
-const tr=
-document.createElement(
-"tr"
-);
+    const snapshot =
+      await db
+        .collection(
+          "backupTasks"
+        )
+        .where(
+          "email",
+          "==",
+          email
+        )
+        .get();
 
-tr.innerHTML=
+    snapshot.forEach(
+      doc => {
+
+        const task =
+          doc.data();
+
+        const tr =
+          document.createElement(
+            "tr"
+          );
+
+        tr.innerHTML =
 `
-<td style="text-align:center;">
-<input
-type="checkbox"
-${task.apply ? "checked":""}
-onchange="toggleCreateCalendar('${doc.id}',this)">
+<td>
+${task.taskName || ""}
 </td>
 
-<td>${task.taskName||""}</td>
+<td>
+${task.start || ""}
+</td>
 
-<td>${task.start||""}</td>
+<td>
+${task.deadline || ""}
+</td>
 
-<td>${task.deadline||""}</td>
+<td>
+${task.status || ""}
+</td>
 
-<td>${task.status||""}</td>
-
-<td>${task.priority||""}</td>
+<td>
+${task.priority || ""}
+</td>
 
 <td>
 ${
 task.archivedAt
-?
-
-new Date(
+? new Date(
 task.archivedAt.seconds
-*
-1000
-)
-.toLocaleString()
-
-:
-""
+*1000
+).toLocaleString()
+: ""
 }
 </td>
 
 <td>
 
 <button
-onclick=
-"deleteBackupTask('${doc.id}')">
+onclick="
+restoreTask(
+'${doc.id}'
+)
+">
 
-Xóa
+Restore
+
+</button>
+
+<button
+onclick="
+deleteBackupTask(
+'${doc.id}'
+)
+">
+
+Delete
 
 </button>
 
 </td>
 `;
 
-tbody.appendChild(
-tr
-);
+        tbody.appendChild(
+          tr
+        );
 
-});
+      });
+
+  }
+
+  catch (err) {
+
+    console.error(
+      err
+    );
+
+    alert(
+      "Không tải được backup"
+    );
+
+  }
 
 }
+
 
 // =======================
 // RESTORE
 // =======================
 
 export async function restoreTask(
-id
-){
+  id
+) {
 
-try{
+  try {
 
-const docRef=
-await db
-.collection(
-"backupTasks"
-)
-.doc(
-id
-)
-.get();
+    const doc =
+      await db
+        .collection(
+          "backupTasks"
+        )
+        .doc(id)
+        .get();
 
-if(
-!docRef.exists
-)
-return;
+    if (!doc.exists)
+      return;
 
-const task=
-docRef.data();
+    const task =
+      doc.data();
 
-delete task.archivedAt;
+    delete task.archivedAt;
 
-await db
-.collection(
-"tasks"
-)
-.add({
+    await db
+      .collection(
+        "tasks"
+      )
+      .add({
 
-...task,
+        ...task,
 
-email:
-localStorage.getItem(
-"userEmail"
-),
+        email:
+          localStorage.getItem(
+            "userEmail"
+          ),
 
-createdAt:
-new Date()
+        createdAt:
+          new Date()
 
-});
+      });
 
-await db
-.collection(
-"backupTasks"
-)
-.doc(
-id
-)
-.delete();
+    await db
+      .collection(
+        "backupTasks"
+      )
+      .doc(id)
+      .delete();
 
-showBackup();
+    await showBackup();
 
-}catch(err){
+  }
 
-console.error(
-err
-);
+  catch (err) {
 
-alert(
-"Không thể restore task"
-);
+    console.error(
+      err
+    );
+
+    alert(
+      "Restore thất bại"
+    );
+
+  }
 
 }
 
-}
 
 // =======================
 // DELETE BACKUP
 // =======================
 
 export async function deleteBackupTask(
-id
-){
+  id
+) {
 
-const ok=
-confirm(
-"Bạn có chắc muốn xóa vĩnh viễn task này?"
-);
+  const ok =
+    confirm(
+      "Bạn có chắc muốn xóa vĩnh viễn?"
+    );
 
-if(
-!ok
-)
-return;
+  if (!ok)
+    return;
 
-try{
+  try {
 
-await db
-.collection(
-"backupTasks"
-)
-.doc(
-id
-)
-.delete();
+    await db
+      .collection(
+        "backupTasks"
+      )
+      .doc(id)
+      .delete();
 
-alert(
-"Đã xóa backup task"
-);
+    await showBackup();
 
-showBackup();
+  }
 
-}catch(err){
+  catch (err) {
 
-console.error(
-err
-);
+    console.error(
+      err
+    );
 
-alert(
-"Xóa thất bại"
-);
+    alert(
+      "Xóa thất bại"
+    );
 
-}
+  }
 
 }

@@ -1,90 +1,272 @@
-import { auth } from "./firebase.js";
+// =======================
+// LOGIN MODULE
+// src/auth/login.js
+// =======================
+
+import {
+  auth
+}
+from "../config/firebase.js";
+
+import {
+  loadTasks,
+  showTracker
+}
+from "../task/task.js";
+
+import {
+  loadUserMusicSettings
+}
+from "../music/music.js";
+
+import {
+  requestNotificationPermission
+}
+from "../notification/notification.js";
+
+
+// =======================
+// UI
+// =======================
+
+function showLoggedInUI(
+  user
+) {
+
+  const login =
+    document.getElementById(
+      "loginPage"
+    );
+
+  const tracker =
+    document.getElementById(
+      "trackerPage"
+    );
+
+  if (
+    login
+  ) {
+
+    login.style.display =
+      "none";
+
+  }
+
+  if (
+    tracker
+  ) {
+
+    tracker.style.display =
+      "block";
+
+  }
+
+  const userName =
+    document.getElementById(
+      "userName"
+    );
+
+  if (
+
+    userName
+
+  ) {
+
+    userName.textContent =
+
+      user.displayName
+
+      ||
+
+      user.email
+
+      ||
+
+      "";
+
+  }
+
+}
+
+
+function showLoggedOutUI() {
+
+  const login =
+    document.getElementById(
+      "loginPage"
+    );
+
+  const tracker =
+    document.getElementById(
+      "trackerPage"
+    );
+
+  const backup =
+    document.getElementById(
+      "backupPage"
+    );
+
+  if (
+    login
+  ) {
+
+    login.style.display =
+      "block";
+
+  }
+
+  if (
+    tracker
+  ) {
+
+    tracker.style.display =
+      "none";
+
+  }
+
+  if (
+    backup
+  ) {
+
+    backup.style.display =
+      "none";
+
+  }
+
+}
+
 
 // =======================
 // LOGIN
 // =======================
+
 export async function login() {
 
-  const email =
-    document.getElementById("loginEmail")
-      .value
+  try {
+
+    const email =
+      document
+      .getElementById(
+        "email"
+      )
+      ?.value
       .trim();
 
-  const password =
-    document.getElementById("loginPassword")
-      .value;
+    const password =
+      document
+      .getElementById(
+        "password"
+      )
+      ?.value;
 
-  auth
-    .signInWithEmailAndPassword(
-      email,
-      password
-    )
+    if (
 
-.then(async userCredential => {
+      !email ||
 
-    const userEmail =
-      userCredential.user.email;
+      !password
+
+    ) {
+
+      alert(
+        "Nhập email và mật khẩu"
+      );
+
+      return;
+
+    }
+
+    const result =
+
+      await auth
+      .signInWithEmailAndPassword(
+
+        email,
+
+        password
+
+      );
+
+    const user =
+      result.user;
 
     localStorage.setItem(
       "userEmail",
-      userEmail
+      user.email
     );
 
-    document.getElementById(
-      "loginPage"
-    ).style.display = "none";
+    showLoggedInUI(
+      user
+    );
 
-    document.getElementById(
-      "appPage"
-    ).style.display = "block";
+  }
 
-    document.getElementById(
-      "welcomeUser"
-    ).innerText = userEmail;
+  catch (
+    err
+  ) {
 
-    await requestNotificationPermission();
+    console.error(
+      err
+    );
 
-    await loadTasks();
+    alert(
+      "Đăng nhập thất bại"
+    );
 
-    await loadUserMusicSettings();
-
-})
-
-.catch(err => {
-
-    alert(err.message);
-
-    console.error(err);
-
-});
+  }
 
 }
+
 
 // =======================
 // LOGOUT
 // =======================
-export function logout() {
 
-  auth.signOut();
+export async function logout() {
 
-  localStorage.removeItem(
-    "userEmail"
-  );
+  try {
 
-  location.reload();
+    await auth.signOut();
+
+    localStorage.removeItem(
+      "userEmail"
+    );
+
+    localStorage.removeItem(
+      "googleToken"
+    );
+
+    showLoggedOutUI();
+
+  }
+
+  catch (
+    err
+  ) {
+
+    console.error(
+      err
+    );
+
+  }
 
 }
 
+
 // =======================
-// ENTER TO LOGIN
+// ENTER
 // =======================
+
 export function handleLoginEnter(
   event
-){
+) {
 
-  if(
-    event.key === "Enter"
-  ){
+  if (
+
+    event.key
+    ===
+    "Enter"
+
+  ) {
 
     login();
 
@@ -92,60 +274,85 @@ export function handleLoginEnter(
 
 }
 
+
 // =======================
-// AUTO LOGIN
+// AUTH STATE
 // =======================
-export function initAuthState(){
 
-  auth.onAuthStateChanged(
-    async (user)=>{
+export async function initAuthState() {
 
-    if(user){
+  return new Promise(
 
-      localStorage.setItem(
-        "userEmail",
-        user.email || ""
+    resolve => {
+
+      auth.onAuthStateChanged(
+
+        async user => {
+
+          try {
+
+            if (
+
+              !user
+
+            ) {
+
+              showLoggedOutUI();
+
+              resolve(
+                null
+              );
+
+              return;
+
+            }
+
+            localStorage.setItem(
+
+              "userEmail",
+
+              user.email
+
+            );
+
+            showLoggedInUI(
+              user
+            );
+
+            await requestNotificationPermission();
+
+            await loadTasks();
+
+            await loadUserMusicSettings();
+
+            showTracker();
+
+            resolve(
+              user
+            );
+
+          }
+
+          catch (
+            err
+          ) {
+
+            console.error(
+              err
+            );
+
+            resolve(
+              null
+            );
+
+          }
+
+        }
+
       );
-
-      document.getElementById(
-        "loginPage"
-      ).style.display =
-      "none";
-
-      document.getElementById(
-        "appPage"
-      ).style.display =
-      "block";
-
-      document.getElementById(
-        "welcomeUser"
-      ).innerText =
-      user.email || "";
-
-      await requestNotificationPermission();
-
-      await loadTasks();
-
-      await autoPlayMusicAfterLogin();
-
-    }else{
-
-      localStorage.removeItem(
-        "userEmail"
-      );
-
-      document.getElementById(
-        "loginPage"
-      ).style.display =
-      "block";
-
-      document.getElementById(
-        "appPage"
-      ).style.display =
-      "none";
 
     }
 
-  });
+  );
 
 }

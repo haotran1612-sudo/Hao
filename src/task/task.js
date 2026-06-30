@@ -1,331 +1,159 @@
- import { db } from "../config/firebase.js";
+import { db } from "../config/firebase.js";
 
 import {
-  buildReviewDays
-} from "./review.js";
+  removeTaskFromCalendar
+} from "../calendar/calendar.js";
 
 import {
-  createCalendarFromRow
-} from "../calendar/sync.js";
-
-import {
-  scheduleTodayNotifications
-} from "../notification/notification.js";
-
-import {
-  autoResize,
-  highlightTodayColumn,
-  loadWeekHeader
-} from "../utils/dom.js";
-
-import {
-  getCurrentWeekDates
-} from "../utils/date.js";
-
-import {
-  openTaskModal,
-  closeTaskModal,
-  resetForm
-} from "./task-ui.js";
+  loadTasks
+} from "./task.js";
 
 // =======================
-// SAVE TASK
+// ARCHIVE TASK
 // =======================
-export async function saveTask() {
+export async function archiveTask(id, checkbox) {
+  const ok = confirm("Bạn có chắc muốn archive task này không?");
+  if (!ok) {
+    checkbox.checked = false;
+    return;
+  }
+
   try {
-    const email = localStorage.getItem("userEmail");
+    const docRef = await db.collection("tasks").doc(id).get();
+    if (!docRef.exists) return;
 
-    const taskData = {
-      email,
-      taskName: document.getElementById("taskName")?.value || "",
-      start: document.getElementById("startDate")?.value || "",
-      deadline: document.getElementById("deadline")?.value || "",
-      processingTime: Number(document.getElementById("processingTime")?.value || 1),
+    const task = { id, ...docRef.data() };
+    const token = localStorage.getItem("googleToken");
 
-      reviewDays: {
-        day1: "", day2: "", day3: "", day4: "", day5: "", day6: "", day7: ""
-      },
-
-      priority: "Normal",
-      status: "Todo",
-      taskType: "Daily",
-
-      repeat: "None",
-      repeatInterval: 1,
-      repeatUntil: "",
-
-      calendarTitle: "",
-      calendarType: "Event",
-      attendees: "",
-      addMeet: false,
-      location: "",
-      description: "",
-
-      apply: false,
-      calendarId: "",
-      meetLink: "",
-      calendarStatus: "Create",
-
-      autoDelete: false,
-      reviewCalendarIds: [],
-
-      createdAt: new Date()
-    };
-
-    const doc = await db.collection("tasks").add(taskData);
-
-    if (taskData.start && localStorage.getItem("googleToken")) {
-      await createCalendarFromRow(doc.id);
+    // ===== DELETE CALENDAR =====
+    if (token) {
+      await removeTaskFromCalendar(task);
     }
 
+    // ===== MOVE TO BACKUP =====
+    await db.collection("backupTasks").add({
+      ...task,
+      email: localStorage.getItem("userEmail"),
+      archivedAt: new Date()
+    });
+
+    // ===== DELETE MAIN TASK =====
+    await db.collection("tasks").doc(id).delete();
+
     await loadTasks();
-    closeTaskModal();
-    resetForm();
 
   } catch (err) {
-    console.error("saveTask error", err);
-    alert(err.message);
+    console.error("archiveTask error:", err);
+    alert("Không thể backup task");
+    checkbox.checked = false;
   }
 }
 
 // =======================
-// LOAD TASKS
+// SHOW BACKUP LIST
 // =======================
-export async function loadTasks() {
+export async function showBackup() {
   try {
-    const email = localStorage.getItem("userEmail");
+    document.getElementById("trackerPage").style.display = "none";
+    document.getElementById("backupPage").style.display = "block";
 
-    const snapshot = await db
-      .collection("tasks")
-      .where("email", "==", email)
-      .get();
+    const kanban = document.querySelector(".kanban");
+    if (kanban) kanban.style.display = "none";
 
-    const tbody = document.getElementById("taskTableBody");
+    const tbody = document.getElementById("backupTableBody");
     if (!tbody) return;
 
     tbody.innerHTML = "";
 
+    const email = localStorage.getItem("userEmail");
+
+    const snapshot = await db
+      .collection("backupTasks")
+      .where("email", "==", email)
+      .get();
+
     snapshot.forEach(doc => {
       const task = doc.data();
-      if (!task?.taskName) return;
 
-      const reviewDays = buildReviewDays(task);
       const tr = document.createElement("tr");
 
-      tr.innerHTML = renderTaskRow(doc.id, task, reviewDays);
+      tr.innerHTML = `
+        <td style="text-align:center;">
+          <input type="checkbox" ${task.apply ? "checked" : ""}
+            onchange="toggleCreateCalendar('${doc.id}',this)">
+        </td>
+
+        <td>${task.taskName || ""}</td>
+        <td>${task.start || ""}</td>
+        <td>${task.deadline || ""}</td>
+        <td>${task.status || ""}</td>
+        <td>${task.priority || ""}</td>
+
+        <td>
+          ${
+            task.archivedAt
+              ? new Date(task.archivedAt.seconds * 1000).toLocaleString()
+              : ""
+          }
+        </td>
+
+        <td>
+          <button onclick="deleteBackupTask('${doc.id}')">
+            Xóa
+          </button>
+        </td>
+      `;
 
       tbody.appendChild(tr);
-      tr.querySelectorAll(".review-cell").forEach(autoResize);
     });
 
-    highlightTodayColumn();
-    scheduleTodayNotifications();
-
   } catch (err) {
-    console.error(err);
+    console.error("showBackup error:", err);
   }
 }
 
 // =======================
-// RENDER ROW (PURE UI)
+// RESTORE TASK
 // =======================
-function renderTaskRow(id, task, reviewDays) {
-  return `
-  <td><input type="checkbox" onchange="archiveTask('${id}',this)"></td>
-
-  <td><input type="datetime-local" value="${(task.start || '').substring(0,16)}"
-    onchange="updateTask('${id}','start',this.value)"></td>
-
-  <td><input type="datetime-local" value="${(task.deadline || '').substring(0,16)}"
-    onchange="updateTask('${id}','deadline',this.value)"></td>
-
-  <td><input type="number" value="${task.processingTime ?? 1}"
-    onchange="updateTask('${id}','processingTime',Number(this.value))"></td>
-
-  <td><input type="text" value="${task.taskName || ''}"
-    onchange="updateTask('${id}','taskName',this.value)"></td>
-
-  ${renderReviewCells(id, reviewDays)}
-
-  <td>
-    <select onchange="updateTask('${id}','priority',this.value)">
-      <option ${task.priority==="Normal"?"selected":""}>Normal</option>
-      <option ${task.priority==="Urgent"?"selected":""}>Urgent</option>
-    </select>
-  </td>
-
-  <td>
-    <select onchange="updateTask('${id}','status',this.value)">
-      <option ${task.status==="Todo"?"selected":""}>Todo</option>
-      <option ${task.status==="Processing"?"selected":""}>Processing</option>
-      <option ${task.status==="Done"?"selected":""}>Done</option>
-    </select>
-  </td>
-
-  <td>
-    <select onchange="updateTask('${id}','taskType',this.value)">
-      <option ${task.taskType==="Daily"?"selected":""}>Daily</option>
-      <option ${task.taskType==="Weekly"?"selected":""}>Weekly</option>
-      <option ${task.taskType==="Monthly"?"selected":""}>Monthly</option>
-      <option ${task.taskType==="Yearly"?"selected":""}>Yearly</option>
-      <option ${task.taskType==="Ôn tập"?"selected":""}>Ôn tập</option>
-    </select>
-  </td>
-
-  <td><input value="${task.calendarTitle || ''}"
-    onchange="updateTask('${id}','calendarTitle',this.value)"></td>
-
-  <td style="text-align:center;">
-    <input type="checkbox" ${task.apply ? "checked" : ""}
-      onchange="toggleCreateCalendar('${id}',this)">
-  </td>
-
-  <td>
-    <button data-id="${id}" onclick="syncFullCalendarFromRow(this)">📅</button>
-    <button onclick="rebuildReviewDays('${id}')">🔄</button>
-  </td>
-  `;
-}
-
-// =======================
-// REVIEW CELL RENDER
-// =======================
-function renderReviewCells(id, reviewDays) {
-  let html = "";
-
-  for (let i = 1; i <= 7; i++) {
-    html += `
-      <td>
-        <textarea class="review-cell"
-          oninput="autoResize(this)"
-          onchange="
-            updateTask('${id}','reviewDays.day${i}',this.value);
-            scheduleTodayNotifications();
-          ">${reviewDays["day"+i] || ""}</textarea>
-      </td>
-    `;
-  }
-
-  return html;
-}
-
-// =======================
-// ADD ROW
-// =======================
-export async function addRow() {
+export async function restoreTask(id) {
   try {
+    const docRef = await db.collection("backupTasks").doc(id).get();
+    if (!docRef.exists) return;
+
+    const task = docRef.data();
+    delete task.archivedAt;
+
     await db.collection("tasks").add({
+      ...task,
       email: localStorage.getItem("userEmail"),
-      taskName: "",
-      start: "",
-      deadline: "",
-      processingTime: 0,
-
-      reviewDays: {
-        day1:"",day2:"",day3:"",day4:"",day5:"",day6:"",day7:""
-      },
-
-      priority:"Normal",
-      status:"Todo",
-      taskType:"Daily",
-
-      repeat:"None",
-      repeatInterval:1,
-      repeatUntil:"",
-
-      calendarTitle:"",
-      calendarType:"Event",
-      attendees:"",
-      addMeet:false,
-
-      location:"",
-      description:"",
-
-      apply:false,
-      calendarId:"",
-      meetLink:"",
-      calendarStatus:"Create",
-
-      autoDelete:false,
-      reviewCalendarIds:[],
-
-      createdAt:new Date()
+      createdAt: new Date()
     });
 
-    loadTasks();
+    await db.collection("backupTasks").doc(id).delete();
+
+    await showBackup();
+
   } catch (err) {
-    console.error(err);
-    alert("Không thêm được dòng mới");
+    console.error("restoreTask error:", err);
+    alert("Không thể restore task");
   }
 }
 
 // =======================
-// UPDATE TASK (minimal bridge)
+// DELETE BACKUP TASK
 // =======================
-export async function updateTask(id, field, value) {
+export async function deleteBackupTask(id) {
+  const ok = confirm("Bạn có chắc muốn xóa vĩnh viễn task này?");
+  if (!ok) return;
+
   try {
-    const updateData = {};
-    updateData[field] = value;
+    await db.collection("backupTasks").doc(id).delete();
+    await showBackup();
 
-    await db.collection("tasks").doc(id).update(updateData);
-
-    if (
-      ["taskType","start","deadline","taskName","processingTime"]
-      .includes(field)
-    ) {
-      await db.collection("tasks").doc(id).update({
-        reviewDays: {
-          day1:"",day2:"",day3:"",day4:"",day5:"",day6:"",day7:""
-        }
-      });
-
-      await loadTasks();
-    }
+    alert("Đã xóa backup task");
 
   } catch (err) {
-    console.error(err);
+    console.error("deleteBackupTask error:", err);
+    alert("Xóa thất bại");
   }
 }
-
-// =======================
-// VIEW SWITCH
-// =======================
-export function showTracker() {
-  document.getElementById("trackerPage").style.display = "block";
-  document.getElementById("backupPage").style.display = "none";
-
-  const kanban = document.querySelector(".kanban");
-  if (kanban) kanban.style.display = "none";
-
-  loadWeekHeader();
-  loadTasks();
-}
-
-export function showKanban() {
-  document.getElementById("trackerPage").style.display = "none";
-  document.getElementById("backupPage").style.display = "none";
-
-  const kanban = document.querySelector(".kanban");
-  if (kanban) kanban.style.display = "flex";
-}
-
-// =======================
-// SYNC CALENDAR
-// =======================
-export async function syncFullCalendarFromRow(btn) {
-  const id = btn.getAttribute("data-id");
-  const row = btn.closest("tr");
-
-  await createCalendarFromRow(id, row);
-
-  alert("Đồng bộ Calendar hoàn tất");
-}
-
-// =======================
-// UI HELPERS EXPORT (optional binding)
-// =======================
-export {
-  openTaskModal,
-  closeTaskModal,
-  resetForm
-};

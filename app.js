@@ -1,7 +1,6 @@
 // =======================
 // FIREBASE
 // =======================
-import "./config/firebase.js";
 import { auth } from "./config/firebase.js";
 
 // =======================
@@ -10,8 +9,7 @@ import { auth } from "./config/firebase.js";
 import {
 login,
 logout,
-handleLoginEnter,
-initAuthState
+handleLoginEnter
 }
 from "./auth/login.js";
 
@@ -106,23 +104,39 @@ from "./utils/dom.js";
 
 
 // =======================
-// BIND GLOBAL WINDOW
+// WINDOW BIND
 // =======================
 
 // AUTH
 window.login = login;
 window.logout = logout;
 window.googleLogin = googleLogin;
-window.registerUser = registerUser;
-window.checkProviders = checkProviders;
-window.resetPassword = resetPassword;
-window.handleLoginEnter = handleLoginEnter;
+
+window.registerUser =
+registerUser;
+
+window.checkProviders =
+checkProviders;
+
+window.resetPassword =
+resetPassword;
+
+window.handleLoginEnter =
+handleLoginEnter;
+
 
 // TASK
-window.saveTask = saveTask;
-window.loadTasks = loadTasks;
-window.updateTask = updateTask;
-window.addRow = addRow;
+window.saveTask =
+saveTask;
+
+window.loadTasks =
+loadTasks;
+
+window.updateTask =
+updateTask;
+
+window.addRow =
+addRow;
 
 window.openTaskModal =
 openTaskModal;
@@ -139,6 +153,7 @@ showTracker;
 window.showKanban =
 showKanban;
 
+
 // REVIEW
 window.rebuildReviewDays =
 rebuildReviewDays;
@@ -148,6 +163,7 @@ createCalendarFromReviewCells;
 
 window.createReviewCalendarForRow =
 createReviewCalendarForRow;
+
 
 // BACKUP
 window.archiveTask =
@@ -162,6 +178,7 @@ restoreTask;
 window.deleteBackupTask =
 deleteBackupTask;
 
+
 // CALENDAR
 window.toggleCreateCalendar =
 toggleCreateCalendar;
@@ -171,6 +188,7 @@ createCalendarFromRow;
 
 window.syncFullCalendarFromRow =
 syncFullCalendarFromRow;
+
 
 // MUSIC
 window.saveMusicUrl =
@@ -188,33 +206,25 @@ playSavedMusic;
 window.stopMusic =
 stopMusic;
 
+
 // NOTIFICATION
 window.refreshAllNotifications =
 refreshAllNotifications;
 
 
 // =======================
-// APP INIT
+// INIT APP
 // =======================
 document.addEventListener(
 "DOMContentLoaded",
-async ()=>{
-
-try{
+()=>{
 
 loadWeekHeader();
 
-if(
-typeof initAuthState ===
-"function"
-){
-
-await initAuthState();
-
-}else{
-
 auth.onAuthStateChanged(
 async(user)=>{
+
+try{
 
 if(user){
 
@@ -241,7 +251,7 @@ document.getElementById(
 if(welcome){
 
 welcome.innerText =
-user.email;
+user.email || "";
 
 }
 
@@ -269,10 +279,6 @@ document.getElementById(
 
 }
 
-});
-
-}
-
 }catch(err){
 
 console.error(
@@ -281,5 +287,7 @@ err
 );
 
 }
+
+});
 
 });

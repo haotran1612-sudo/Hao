@@ -1,336 +1,111 @@
 // =======================
-// GOOGLE AUTH MODULE
-// src/auth/google.js
-// =======================
-
-import {
-  auth,
-  provider,
-  db
-} from "../config/firebase.js";
-
-
-// =======================
-// SAVE USER
-// =======================
-
-async function saveUser(
-  user
-) {
-
-  if (
-    !user
-  ) {
-
-    return;
-
-  }
-
-  try {
-
-    await db
-      .collection(
-        "users"
-      )
-      .doc(
-        user.email
-      )
-      .set(
-
-        {
-
-          uid:
-            user.uid,
-
-          email:
-            user.email,
-
-          name:
-            user.displayName
-            || "",
-
-          photo:
-            user.photoURL
-            || "",
-
-          lastLogin:
-            new Date()
-
-        },
-
-        {
-          merge:
-            true
-        }
-
-      );
-
-  }
-
-  catch (
-    err
-  ) {
-
-    console.error(
-      err
-    );
-
-  }
-
-}
-
-
-// =======================
-// SAVE SESSION
-// =======================
-
-function saveSession(
-  user,
-  credential
-) {
-
-  localStorage.setItem(
-
-    "userEmail",
-
-    user.email
-
-  );
-
-  localStorage.setItem(
-
-    "userName",
-
-    user.displayName
-    || ""
-
-  );
-
-  localStorage.setItem(
-
-    "userPhoto",
-
-    user.photoURL
-    || ""
-
-  );
-
-  if (
-
-    credential
-    ?.accessToken
-
-  ) {
-
-    localStorage.setItem(
-
-      "googleToken",
-
-      credential
-      .accessToken
-
-    );
-
-  }
-
-}
-
-
-// =======================
-// REDIRECT
-// =======================
-
-function afterLogin(
-  user
-) {
-
-  const loginPage =
-    document.getElementById(
-      "loginPage"
-    );
-
-  const tracker =
-    document.getElementById(
-      "trackerPage"
-    );
-
-  if (
-    loginPage
-  ) {
-
-    loginPage.style.display =
-      "none";
-
-  }
-
-  if (
-    tracker
-  ) {
-
-    tracker.style.display =
-      "block";
-
-  }
-
-  const userName =
-    document.getElementById(
-      "userName"
-    );
-
-  if (
-    userName
-  ) {
-
-    userName.textContent =
-
-      user.displayName
-
-      ||
-
-      user.email;
-
-  }
-
-}
-
-
-// =======================
 // GOOGLE LOGIN
 // =======================
 
+import { auth, provider } from "../config/firebase.js";
+
+import {
+    requestNotificationPermission
+} from "../notification/notification.js";
+
+import {
+    loadTasks
+} from "../task/task.js";
+
+import {
+    loadUserMusicSettings
+} from "../music/music.js";
+
 export async function googleLogin() {
 
-  try {
+    try {
 
-    provider.setCustomParameters({
+        const result =
+            await auth.signInWithPopup(provider);
 
-      prompt:
-        "select_account"
+        const credential =
+            result.credential || null;
 
-    });
+        const token =
+            credential?.accessToken || "";
 
-    const result =
+        const user =
+            result.user;
 
-      await auth
-      .signInWithPopup(
-        provider
-      );
+        // Lưu Google Access Token
+        if (token) {
 
-    const user =
-      result.user;
+            localStorage.setItem(
+                "googleToken",
+                token
+            );
 
-    const credential =
+        }
 
-      firebase
-      .auth
-      .GoogleAuthProvider
-      .credentialFromResult(
-        result
-      );
+        // Lưu email
+        if (user?.email) {
 
-    saveSession(
+            localStorage.setItem(
+                "userEmail",
+                user.email
+            );
 
-      user,
+            const welcome =
+                document.getElementById("welcomeUser");
 
-      credential
+            if (welcome) {
 
-    );
+                welcome.innerText =
+                    user.email;
 
-    await saveUser(
-      user
-    );
+            }
 
-    afterLogin(
-      user
-    );
+        }
 
-    return user;
+        // Chuyển sang App
+        const loginPage =
+            document.getElementById("loginPage");
 
-  }
+        const appPage =
+            document.getElementById("appPage");
 
-  catch (
-    err
-  ) {
+        if (loginPage) {
 
-    console.error(
-      err
-    );
+            loginPage.style.display = "none";
 
-    let message =
+        }
 
-      "Đăng nhập Google thất bại";
+        if (appPage) {
 
-    if (
+            appPage.style.display = "block";
 
-      err.code
-      ===
-      "auth/popup-closed-by-user"
+        }
 
-    ) {
+        // Khởi tạo dữ liệu
+        await requestNotificationPermission();
 
-      message =
-        "Bạn đã đóng popup";
+        await loadTasks();
 
-    }
+        await loadUserMusicSettings();
 
-    if (
-
-      err.code
-      ===
-      "auth/popup-blocked"
-
-    ) {
-
-      message =
-        "Popup bị chặn";
+        alert(
+            "Google Login + Calendar connected thành công"
+        );
 
     }
 
-    alert(
-      message
-    );
+    catch (err) {
 
-    return null;
+        console.error(
+            "googleLogin error:",
+            err
+        );
 
-  }
+        alert(
+            err.message ||
+            "Google Login thất bại"
+        );
 
-}
-
-
-// =======================
-// GET TOKEN
-// =======================
-
-export function getGoogleToken() {
-
-  return localStorage.getItem(
-    "googleToken"
-  );
-
-}
-
-
-// =======================
-// CHECK LOGIN
-// =======================
-
-export function isGoogleLogged() {
-
-  return !!localStorage.getItem(
-    "googleToken"
-  );
-
-}
-
-
-// =======================
-// CLEAR TOKEN
-// =======================
-
-export function clearGoogleSession() {
-
-  localStorage.removeItem(
-    "googleToken"
-  );
+    }
 
 }

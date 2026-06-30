@@ -1,370 +1,334 @@
-   import {
+// =======================
+// REGISTER MODULE
+// src/auth/register.js
+// =======================
+
+import {
   auth,
   db
-} from "./firebase.js";
+}
+from "../config/firebase.js";
+
 
 // =======================
-// REGISTER
+// SAVE USER
 // =======================
-export async function registerUser() {
 
-  const email =
-    document
-      .getElementById(
-        "registerEmail"
-      )
-      ?.value
-      .trim();
+async function saveUser(
+  user
+) {
 
-  const password =
-    document
-      .getElementById(
-        "registerPassword"
-      )
-      ?.value || "";
+  if (
+    !user
+  ) {
 
-  // Validate
-  if (!email) {
-    alert("Vui lòng nhập email");
     return;
-  }
 
-  if (!password) {
-    alert("Vui lòng nhập mật khẩu");
-    return;
-  }
-
-  if (password.length < 6) {
-    alert(
-      "Mật khẩu phải có ít nhất 6 ký tự"
-    );
-    return;
   }
 
   try {
 
-    // Tạo tài khoản
-    const userCredential =
-      await auth
-        .createUserWithEmailAndPassword(
-          email,
-          password
-        );
-
-    const user =
-      userCredential.user;
-
-    // Lưu user
     await db
-      .collection("users")
-      .doc(user.uid)
+      .collection(
+        "users"
+      )
+      .doc(
+        user.email
+      )
       .set(
-      {
-        uid: user.uid,
-        email:
-          user.email ||
-          email,
 
-        provider:
-          "password",
+        {
 
-        musicUrl:
-          "",
+          uid:
+            user.uid,
 
-        autoPlayMusic:
-          false,
+          email:
+            user.email,
 
-        createdAt:
-          firebase
-            .firestore
-            .FieldValue
-            .serverTimestamp(),
+          name:
+            user.displayName
+            || "",
 
-        updatedAt:
-          firebase
-            .firestore
-            .FieldValue
-            .serverTimestamp()
+          createdAt:
+            new Date()
 
-      },
-      {
-        merge: true
-      });
+        },
 
-    // Auto login
-    localStorage.setItem(
-      "userEmail",
-      user.email ||
-      email
+        {
+          merge:
+            true
+        }
+
+      );
+
+  }
+
+  catch (
+    err
+  ) {
+
+    console.error(
+      err
     );
 
-    document.getElementById(
-      "loginPage"
-    ).style.display =
-      "none";
+  }
 
-    document.getElementById(
-      "appPage"
-    ).style.display =
-      "block";
+}
 
-    document.getElementById(
-      "welcomeUser"
-    ).innerText =
-      user.email ||
-      email;
 
-    await requestNotificationPermission();
+// =======================
+// REGISTER
+// =======================
 
-    await loadTasks();
+export async function registerUser() {
 
-    await loadUserMusicSettings();
+  try {
+
+    const email =
+      document
+      .getElementById(
+        "email"
+      )
+      ?.value
+      .trim();
+
+    const password =
+      document
+      .getElementById(
+        "password"
+      )
+      ?.value;
+
+    if (
+
+      !email ||
+
+      !password
+
+    ) {
+
+      alert(
+        "Nhập email và mật khẩu"
+      );
+
+      return;
+
+    }
+
+    if (
+
+      password.length
+      <
+      6
+
+    ) {
+
+      alert(
+        "Mật khẩu tối thiểu 6 ký tự"
+      );
+
+      return;
+
+    }
+
+    const result =
+
+      await auth
+      .createUserWithEmailAndPassword(
+
+        email,
+
+        password
+
+      );
+
+    const user =
+      result.user;
+
+    await saveUser(
+      user
+    );
+
+    localStorage.setItem(
+
+      "userEmail",
+
+      user.email
+
+    );
 
     alert(
       "Đăng ký thành công"
     );
 
-  } catch (err) {
+    return user;
+
+  }
+
+  catch (
+    err
+  ) {
 
     console.error(
-      "Register error:",
       err
     );
 
-    if (
-      err.code ===
-      "auth/invalid-email"
+    let message =
+      "Không thể đăng ký";
+
+    switch (
+
+      err.code
+
     ) {
 
-      alert(
-        "Email không đúng định dạng."
-      );
+      case
+      "auth/email-already-in-use":
 
-      return;
+        message =
+          "Email đã tồn tại";
 
-    }
+        break;
 
-    if (
-      err.code ===
-      "auth/weak-password"
-    ) {
+      case
+      "auth/invalid-email":
 
-      alert(
-        "Mật khẩu quá yếu."
-      );
+        message =
+          "Email không hợp lệ";
 
-      return;
+        break;
 
-    }
+      case
+      "auth/weak-password":
 
-    if (
-      err.code ===
-      "auth/email-already-in-use"
-    ) {
+        message =
+          "Mật khẩu quá yếu";
 
-      try {
-
-        const methods =
-          await auth
-          .fetchSignInMethodsForEmail(
-            email
-          );
-
-        if (
-          methods.includes(
-            "password"
-          ) &&
-          methods.includes(
-            "google.com"
-          )
-        ) {
-
-          alert(
-            "Email này có thể đăng nhập bằng cả Password và Google."
-          );
-
-          return;
-
-        }
-
-        if (
-          methods.includes(
-            "password"
-          )
-        ) {
-
-          alert(
-            "Email này đã được đăng ký bằng mật khẩu."
-          );
-
-          return;
-
-        }
-
-        if (
-          methods.includes(
-            "google.com"
-          )
-        ) {
-
-          alert(
-            "Email này đang dùng đăng nhập Google."
-          );
-
-          return;
-
-        }
-
-        alert(
-          "Email này đã tồn tại."
-        );
-
-      } catch (
-        checkErr
-      ) {
-
-        console.error(
-          checkErr
-        );
-
-        alert(
-          "Email này đã tồn tại."
-        );
-
-      }
-
-      return;
+        break;
 
     }
 
     alert(
-      err.message ||
-      "Đăng ký thất bại"
+      message
     );
+
+    return null;
 
   }
 
 }
 
+
 // =======================
-// CHECK LOGIN PROVIDERS
+// CHECK PROVIDERS
 // =======================
-export async function checkProviders(){
 
-  const email =
-    document
-    .getElementById(
-      "loginEmail"
-    )
-    .value
-    .trim();
+export async function checkProviders(
+  email
+) {
 
-  if(!email){
+  try {
 
-    alert(
-      "Vui lòng nhập email trước"
-    );
+    const target =
 
-    return;
+      email
 
-  }
+      ||
 
-  try{
+      document
+      .getElementById(
+        "email"
+      )
+      ?.value
+      .trim();
 
-    const methods =
+    if (
+
+      !target
+
+    ) {
+
+      return [];
+
+    }
+
+    const providers =
+
       await auth
       .fetchSignInMethodsForEmail(
-        email
+        target
       );
 
-    if(
-      !methods ||
-      methods.length===0
-    ){
+    return providers;
 
-      alert(
-        "Email này chưa được đăng ký."
-      );
+  }
 
-      return;
+  catch (
+    err
+  ) {
 
-    }
-
-    const providerText =
-      methods.join(", ");
-
-    if(
-      methods.includes("password")
-      &&
-      methods.includes("google.com")
-    ){
-
-      alert(
-        "Email này có thể đăng nhập bằng cả Password và Google."
-      );
-
-    }else if(
-      methods.includes("password")
-    ){
-
-      alert(
-        "Email này đăng nhập bằng Password."
-      );
-
-    }else if(
-      methods.includes("google.com")
-    ){
-
-      alert(
-        "Email này đăng nhập bằng Google."
-      );
-
-    }else{
-
-      alert(
-        "Phương thức đăng nhập: " +
-        providerText
-      );
-
-    }
-
-  }catch(err){
-
-    console.error(err);
-
-    alert(
-      err.message ||
-      "Không kiểm tra được phương thức đăng nhập"
+    console.error(
+      err
     );
+
+    return [];
 
   }
 
 }
+
 
 // =======================
 // RESET PASSWORD
 // =======================
-export async function resetPassword(){
 
-  const email =
-    document
-    .getElementById(
-      "loginEmail"
-    )
-    .value
-    .trim();
+export async function resetPassword() {
 
-  if(!email){
+  try {
 
-    alert(
-      "Vui lòng nhập email trước"
-    );
+    const email =
+      document
+      .getElementById(
+        "email"
+      )
+      ?.value
+      .trim();
 
-    return;
+    if (
 
-  }
+      !email
 
-  try{
+    ) {
+
+      alert(
+        "Nhập email"
+      );
+
+      return;
+
+    }
+
+    const methods =
+
+      await checkProviders(
+        email
+      );
+
+    if (
+
+      methods.length
+      ===
+      0
+
+    ) {
+
+      alert(
+        "Email chưa đăng ký"
+      );
+
+      return;
+
+    }
 
     await auth
       .sendPasswordResetEmail(
@@ -375,38 +339,46 @@ export async function resetPassword(){
       "Đã gửi email đặt lại mật khẩu"
     );
 
-  }catch(err){
+  }
+
+  catch (
+    err
+  ) {
 
     console.error(
       err
     );
 
-    if(
-      err.code===
-      "auth/user-not-found"
-    ){
+    let message =
+      "Không gửi được email";
 
-      alert(
-        "Email chưa được đăng ký"
-      );
+    switch (
 
-    }else if(
-      err.code===
-      "auth/invalid-email"
-    ){
+      err.code
 
-      alert(
-        "Email không đúng định dạng"
-      );
+    ) {
 
-    }else{
+      case
+      "auth/invalid-email":
 
-      alert(
-        err.message ||
-        "Không gửi được email reset"
-      );
+        message =
+          "Email không hợp lệ";
+
+        break;
+
+      case
+      "auth/user-not-found":
+
+        message =
+          "Không tìm thấy tài khoản";
+
+        break;
 
     }
+
+    alert(
+      message
+    );
 
   }
 

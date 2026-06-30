@@ -1,260 +1,220 @@
 // =======================
-// FIREBASE
+// CONFIG
 // =======================
-
 import { auth } from "./config/firebase.js";
 
 // =======================
 // AUTH
 // =======================
 import {
-  login,
-  logout,
-  handleLoginEnter,
-  initAuthState
+    login,
+    logout,
+    handleLoginEnter
 } from "./auth/login.js";
 
 import {
-  registerUser,
-  checkProviders,
-  resetPassword
+    registerUser,
+    checkProviders,
+    resetPassword
 } from "./auth/register.js";
 
 import {
-  googleLogin
+    googleLogin
 } from "./auth/google.js";
 
 // =======================
 // TASK
 // =======================
 import {
-  saveTask,
-  loadTasks,
-  updateTask,
-  addRow,
-  openTaskModal,
-  closeTaskModal,
-  resetForm,
-  showTracker,
-  showKanban,
-  syncFullCalendarFromRow
+    saveTask,
+    loadTasks,
+    updateTask,
+    addRow,
+    openTaskModal,
+    closeTaskModal,
+    resetForm,
+    showTracker,
+    showKanban,
+    syncFullCalendarFromRow
 } from "./task/task.js";
 
-// =======================
-// REVIEW
-// =======================
 import {
-  buildReviewDays,
-  buildReviewSchedule,
-  rebuildReviewDays,
-  parseReviewTasks,
-  createCalendarFromReviewCells,
-  createReviewCalendarForRow,
-  scheduleTodayNotifications,
-  hasReviewData
+    buildReviewDays,
+    buildReviewSchedule,
+    rebuildReviewDays,
+    parseReviewTasks,
+    createCalendarFromReviewCells,
+    createReviewCalendarForRow,
+    scheduleTodayNotifications,
+    hasReviewData
 } from "./task/review.js";
 
-// =======================
-// BACKUP
-// =======================
 import {
-  archiveTask,
-  showBackup,
-  restoreTask,
-  deleteBackupTask
+    archiveTask,
+    showBackup,
+    restoreTask,
+    deleteBackupTask
 } from "./task/backup.js";
 
 // =======================
 // CALENDAR
 // =======================
 import {
-  createCalendarEvent,
-  createReviewCalendarTask,
-  findCalendarEventByKey,
-  buildMainEventKey,
-  buildReviewEventKey
+    createCalendarEvent,
+    createReviewCalendarTask,
+    findCalendarEventByKey,
+    buildMainEventKey,
+    buildReviewEventKey
 } from "./calendar/calendar.js";
 
 import {
-  toggleCreateCalendar,
-  createCalendarFromRow,
-  syncFullCalendarFromRow as syncCalendar
+    toggleCreateCalendar,
+    createCalendarFromRow,
+    syncFullCalendarFromRow as syncCalendar
 } from "./calendar/sync.js";
 
 // =======================
 // MUSIC
 // =======================
 import {
-  saveMusicUrl,
-  loadUserMusicSettings,
-  toggleAutoPlayMusic,
-  playMusicFromUrl,
-  playSavedMusic,
-  stopMusic,
-  extractYoutubeVideoId,
-  buildYoutubeEmbedUrl
+    saveMusicUrl,
+    loadUserMusicSettings,
+    toggleAutoPlayMusic,
+    playMusicFromUrl,
+    playSavedMusic,
+    stopMusic,
+    extractYoutubeVideoId,
+    buildYoutubeEmbedUrl
 } from "./music/music.js";
 
 // =======================
 // NOTIFICATION
 // =======================
 import {
-  requestNotificationPermission,
-  showTaskNotification,
-  scheduleNotification,
-  refreshAllNotifications,
-  showInAppPopup
+    requestNotificationPermission,
+    showTaskNotification,
+    scheduleNotification,
+    refreshAllNotifications,
+    showInAppPopup
 } from "./notification/notification.js";
 
 // =======================
-// UTILS
+// DOM
 // =======================
 import {
-  autoResize,
-  highlightTodayColumn,
-  loadWeekHeader,
-  formatDate,
-  getCurrentWeekDates
+    autoResize,
+    highlightTodayColumn,
+    loadWeekHeader,
+    formatDate,
+    getCurrentWeekDates
 } from "./utils/dom.js";
 
+// =======================
+// DATE
+// =======================
 import {
-  normalizeDate,
-  isSameDate,
-  isDateInRange,
-  diffDays,
-  diffMonths,
-  isOccurrenceForTaskType
+    normalizeDate,
+    isSameDate,
+    isDateInRange,
+    diffDays,
+    diffMonths,
+    isOccurrenceForTaskType
 } from "./utils/date.js";
 
 
 // ======================================================
-// BIND WINDOW
-// (giữ tương thích onclick trong HTML cũ)
+// EXPORT TO WINDOW
+// (HTML onclick="" vẫn dùng được)
 // ======================================================
 
 Object.assign(window, {
 
-  // auth
-  login,
-  logout,
-  registerUser,
-  googleLogin,
-  checkProviders,
-  resetPassword,
-  handleLoginEnter,
+    login,
+    logout,
+    googleLogin,
 
-  // task
-  saveTask,
-  loadTasks,
-  updateTask,
-  addRow,
-  openTaskModal,
-  closeTaskModal,
-  resetForm,
-  showTracker,
-  showKanban,
-  syncFullCalendarFromRow: syncCalendar,
+    registerUser,
+    checkProviders,
+    resetPassword,
+    handleLoginEnter,
 
-  // review
-  buildReviewDays,
-  buildReviewSchedule,
-  rebuildReviewDays,
-  parseReviewTasks,
-  createCalendarFromReviewCells,
-  createReviewCalendarForRow,
-  scheduleTodayNotifications,
-  hasReviewData,
+    saveTask,
+    loadTasks,
+    updateTask,
 
-  // backup
-  archiveTask,
-  showBackup,
-  restoreTask,
-  deleteBackupTask,
+    addRow,
 
-  // calendar
-  toggleCreateCalendar,
-  createCalendarFromRow,
-  createCalendarEvent,
-  createReviewCalendarTask,
-  findCalendarEventByKey,
-  buildMainEventKey,
-  buildReviewEventKey,
+    openTaskModal,
+    closeTaskModal,
+    resetForm,
 
-  // music
-  saveMusicUrl,
-  loadUserMusicSettings,
-  toggleAutoPlayMusic,
-  playMusicFromUrl,
-  playSavedMusic,
-  stopMusic,
-  extractYoutubeVideoId,
-  buildYoutubeEmbedUrl,
+    showTracker,
+    showKanban,
 
-  // notification
-  requestNotificationPermission,
-  showTaskNotification,
-  scheduleNotification,
-  refreshAllNotifications,
-  showInAppPopup,
+    archiveTask,
+    showBackup,
+    restoreTask,
+    deleteBackupTask,
 
-  // utils
-  autoResize,
-  highlightTodayColumn,
-  loadWeekHeader,
-  formatDate,
-  getCurrentWeekDates,
+    toggleCreateCalendar,
+    createCalendarFromRow,
+    syncFullCalendarFromRow: syncCalendar,
 
-  normalizeDate,
-  isSameDate,
-  isDateInRange,
-  diffDays,
-  diffMonths,
-  isOccurrenceForTaskType
+    createCalendarFromReviewCells,
+    createReviewCalendarForRow,
+
+    rebuildReviewDays,
+
+    saveMusicUrl,
+    toggleAutoPlayMusic,
+    playSavedMusic,
+    stopMusic,
+
+    refreshAllNotifications
 });
 
 
 // ======================================================
-// INIT APP
+// APP INIT
 // ======================================================
 
-async function initApp() {
-
-  try {
+document.addEventListener("DOMContentLoaded", () => {
 
     loadWeekHeader();
 
-    await initAuthState();
+    auth.onAuthStateChanged(async (user) => {
 
-    const user = auth.currentUser;
+        if (!user) {
 
-    if (user) {
+            localStorage.removeItem("userEmail");
 
-      await requestNotificationPermission();
+            document.getElementById("loginPage").style.display = "block";
+            document.getElementById("appPage").style.display = "none";
 
-      await loadTasks();
+            return;
+        }
 
-      await loadUserMusicSettings();
+        localStorage.setItem(
+            "userEmail",
+            user.email || ""
+        );
 
-      scheduleTodayNotifications();
+        document.getElementById("loginPage").style.display = "none";
+        document.getElementById("appPage").style.display = "block";
 
-      showTracker();
+        document.getElementById("welcomeUser").innerText =
+            user.email || "";
 
-    }
+        await requestNotificationPermission();
 
-  } catch (err) {
+        await loadTasks();
 
-    console.error("APP INIT ERROR:", err);
+        await loadUserMusicSettings();
 
-  }
+        scheduleTodayNotifications();
 
-}
+        highlightTodayColumn();
 
+    });
 
-// ======================================================
-// START
-// ======================================================
-
-document.addEventListener(
-  "DOMContentLoaded",
-  initApp
-);
+});

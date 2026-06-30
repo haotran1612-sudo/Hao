@@ -1,7 +1,8 @@
 // =======================
-// CONFIG
+// FIREBASE
 // =======================
 import "./config/firebase.js";
+import { auth } from "./config/firebase.js";
 
 // =======================
 // AUTH
@@ -43,8 +44,14 @@ import {
 // REVIEW
 // =======================
 import {
+  buildReviewDays,
+  buildReviewSchedule,
   rebuildReviewDays,
-  scheduleTodayNotifications
+  parseReviewTasks,
+  createCalendarFromReviewCells,
+  createReviewCalendarForRow,
+  scheduleTodayNotifications,
+  hasReviewData
 } from "./task/review.js";
 
 // =======================
@@ -61,8 +68,17 @@ import {
 // CALENDAR
 // =======================
 import {
+  createCalendarEvent,
+  createReviewCalendarTask,
+  findCalendarEventByKey,
+  buildMainEventKey,
+  buildReviewEventKey
+} from "./calendar/calendar.js";
+
+import {
   toggleCreateCalendar,
-  createCalendarFromRow
+  createCalendarFromRow,
+  syncFullCalendarFromRow as syncCalendar
 } from "./calendar/sync.js";
 
 // =======================
@@ -74,7 +90,9 @@ import {
   toggleAutoPlayMusic,
   playMusicFromUrl,
   playSavedMusic,
-  stopMusic
+  stopMusic,
+  extractYoutubeVideoId,
+  buildYoutubeEmbedUrl
 } from "./music/music.js";
 
 // =======================
@@ -82,7 +100,10 @@ import {
 // =======================
 import {
   requestNotificationPermission,
-  refreshAllNotifications
+  showTaskNotification,
+  scheduleNotification,
+  refreshAllNotifications,
+  showInAppPopup
 } from "./notification/notification.js";
 
 // =======================
@@ -91,125 +112,149 @@ import {
 import {
   autoResize,
   highlightTodayColumn,
-  loadWeekHeader
+  loadWeekHeader,
+  formatDate,
+  getCurrentWeekDates
 } from "./utils/dom.js";
 
-
-// =======================
-// EXPORT RA WINDOW
-// (HTML onclick sẽ dùng)
-// =======================
-
-// auth
-window.login = login;
-window.logout = logout;
-window.registerUser = registerUser;
-window.googleLogin = googleLogin;
-window.checkProviders = checkProviders;
-window.resetPassword = resetPassword;
-window.handleLoginEnter = handleLoginEnter;
-
-// task
-window.saveTask = saveTask;
-window.loadTasks = loadTasks;
-window.updateTask = updateTask;
-window.addRow = addRow;
-
-window.openTaskModal = openTaskModal;
-window.closeTaskModal = closeTaskModal;
-
-window.resetForm = resetForm;
-
-window.showTracker = showTracker;
-window.showKanban = showKanban;
-
-// review
-window.rebuildReviewDays = rebuildReviewDays;
-window.scheduleTodayNotifications =
-scheduleTodayNotifications;
-
-// backup
-window.archiveTask = archiveTask;
-window.showBackup = showBackup;
-window.restoreTask = restoreTask;
-window.deleteBackupTask =
-deleteBackupTask;
-
-// calendar
-window.toggleCreateCalendar =
-toggleCreateCalendar;
-
-window.createCalendarFromRow =
-createCalendarFromRow;
-
-window.syncFullCalendarFromRow =
-syncFullCalendarFromRow;
-
-// music
-window.saveMusicUrl =
-saveMusicUrl;
-
-window.loadUserMusicSettings =
-loadUserMusicSettings;
-
-window.toggleAutoPlayMusic =
-toggleAutoPlayMusic;
-
-window.playMusicFromUrl =
-playMusicFromUrl;
-
-window.playSavedMusic =
-playSavedMusic;
-
-window.stopMusic =
-stopMusic;
-
-// notification
-window.requestNotificationPermission =
-requestNotificationPermission;
-
-window.refreshAllNotifications =
-refreshAllNotifications;
-
-// utils
-window.autoResize =
-autoResize;
-
-window.highlightTodayColumn =
-highlightTodayColumn;
+import {
+  normalizeDate,
+  isSameDate,
+  isDateInRange,
+  diffDays,
+  diffMonths,
+  isOccurrenceForTaskType
+} from "./utils/date.js";
 
 
-// =======================
+// ======================================================
+// BIND WINDOW
+// (giữ tương thích onclick trong HTML cũ)
+// ======================================================
+
+Object.assign(window, {
+
+  // auth
+  login,
+  logout,
+  registerUser,
+  googleLogin,
+  checkProviders,
+  resetPassword,
+  handleLoginEnter,
+
+  // task
+  saveTask,
+  loadTasks,
+  updateTask,
+  addRow,
+  openTaskModal,
+  closeTaskModal,
+  resetForm,
+  showTracker,
+  showKanban,
+  syncFullCalendarFromRow: syncCalendar,
+
+  // review
+  buildReviewDays,
+  buildReviewSchedule,
+  rebuildReviewDays,
+  parseReviewTasks,
+  createCalendarFromReviewCells,
+  createReviewCalendarForRow,
+  scheduleTodayNotifications,
+  hasReviewData,
+
+  // backup
+  archiveTask,
+  showBackup,
+  restoreTask,
+  deleteBackupTask,
+
+  // calendar
+  toggleCreateCalendar,
+  createCalendarFromRow,
+  createCalendarEvent,
+  createReviewCalendarTask,
+  findCalendarEventByKey,
+  buildMainEventKey,
+  buildReviewEventKey,
+
+  // music
+  saveMusicUrl,
+  loadUserMusicSettings,
+  toggleAutoPlayMusic,
+  playMusicFromUrl,
+  playSavedMusic,
+  stopMusic,
+  extractYoutubeVideoId,
+  buildYoutubeEmbedUrl,
+
+  // notification
+  requestNotificationPermission,
+  showTaskNotification,
+  scheduleNotification,
+  refreshAllNotifications,
+  showInAppPopup,
+
+  // utils
+  autoResize,
+  highlightTodayColumn,
+  loadWeekHeader,
+  formatDate,
+  getCurrentWeekDates,
+
+  normalizeDate,
+  isSameDate,
+  isDateInRange,
+  diffDays,
+  diffMonths,
+  isOccurrenceForTaskType
+});
+
+
+// ======================================================
 // INIT APP
-// =======================
-document.addEventListener(
-  "DOMContentLoaded",
-  async () => {
+// ======================================================
 
-    try {
+async function initApp() {
 
-      loadWeekHeader();
+  try {
 
-      await initAuthState();
+    loadWeekHeader();
+
+    await initAuthState();
+
+    const user = auth.currentUser;
+
+    if (user) {
 
       await requestNotificationPermission();
 
-      highlightTodayColumn();
+      await loadTasks();
+
+      await loadUserMusicSettings();
 
       scheduleTodayNotifications();
 
-      console.log(
-        "✅ TaskFlow initialized"
-      );
-
-    } catch (err) {
-
-      console.error(
-        "Init error:",
-        err
-      );
+      showTracker();
 
     }
 
+  } catch (err) {
+
+    console.error("APP INIT ERROR:", err);
+
   }
+
+}
+
+
+// ======================================================
+// START
+// ======================================================
+
+document.addEventListener(
+  "DOMContentLoaded",
+  initApp
 );

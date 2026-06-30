@@ -1,628 +1,381 @@
-//
-// CALENDAR
-//
+// =======================
+// CALENDAR MODULE
+// src/calendar/calendar.js
+// =======================
+
+
+// =======================
+// BUILD EVENT KEY
+// =======================
+
+export function buildMainEventKey(
+  task
+) {
+
+  return [
+
+    task.taskName || "",
+
+    task.start || "",
+
+    task.deadline || ""
+
+  ]
+
+  .join("|")
+
+  .trim();
+
+}
+
+
+// =======================
+// BUILD REVIEW KEY
+// =======================
+
+export function buildReviewEventKey(
+
+  title,
+
+  date,
+
+  hour,
+
+  minute
+
+) {
+
+  return [
+
+    title || "",
+
+    date
+      ?.toISOString(),
+
+    hour,
+
+    minute
+
+  ]
+
+  .join("|")
+
+  .trim();
+
+}
+
 
 // =======================
 // CREATE MAIN EVENT
 // =======================
 
-export async function createCalendarEvent(
-task,
-docId
-){
+export function createCalendarEvent(
+  task
+) {
 
-const token=
-localStorage.getItem(
-"googleToken"
-);
+  const start =
+    new Date(
+      task.start
+    );
 
-if(
-!token
-){
+  let end =
+    new Date(
+      task.deadline
+    );
 
-throw new Error(
-"Google chưa kết nối"
-);
+  if (
 
-}
+    !task.deadline
 
-// CHẶN TRÙNG
-const eventKey=
-buildMainEventKey(
-task,
-docId
-);
+  ) {
 
-const existed=
-await findCalendarEventByKey(
-eventKey
-);
+    const duration =
+      Number(
+        task.processingTime
+      ) || 1;
 
-if(
-existed
-){
+    end =
+      new Date(
 
-return existed;
+        start.getTime()
 
-}
+        +
 
-const startDate=
-new Date(
-task.start
-);
+        duration
+        *
+        3600000
 
-if(
-isNaN(
-startDate.getTime()
-)
-){
+      );
 
-throw new Error(
-"Start date không hợp lệ"
-);
+  }
 
-}
+  const attendees =
 
-const processingHours=
-Number(
-task.processingTime||
-0
-);
+    String(
+      task.attendees
+      || ""
+    )
 
-const endDate=
-new Date(
+    .split(",")
 
-startDate.getTime()
+    .map(
+      x =>
+      x.trim()
+    )
 
-+
+    .filter(
+      Boolean
+    )
 
-processingHours
-*
-60
-*
-60
-*
-1000
+    .map(
 
-);
+      email => ({
+        email
+      })
 
-const body={
+    );
 
-summary:
-task.calendarTitle
-||
-task.taskName,
+  return {
 
-location:
-task.location
-||
-"",
+    summary:
 
-description:
-task.description
-||
-"",
+      task.calendarTitle
+      ||
 
-start:{
+      task.taskName
+      ||
 
-dateTime:
-startDate.toISOString(),
+      "Task",
 
-timeZone:
-"Asia/Ho_Chi_Minh"
+    location:
 
-},
+      task.location
+      ||
 
-end:{
+      "",
 
-dateTime:
-endDate.toISOString(),
+    description:
 
-timeZone:
-"Asia/Ho_Chi_Minh"
+      task.description
+      ||
 
-},
+      "",
 
-extendedProperties:{
+    start: {
 
-private:{
+      dateTime:
 
-appTaskKey:
-eventKey,
+        start
+        .toISOString(),
 
-appTaskType:
-"main"
+      timeZone:
 
-}
+        Intl
+        .DateTimeFormat()
 
-}
+        .resolvedOptions()
 
-};
+        .timeZone
 
-if(
-task.addMeet
-){
+    },
 
-body.conferenceData={
+    end: {
 
-createRequest:{
+      dateTime:
 
-requestId:
-Date.now()
-.toString()
+        end
+        .toISOString(),
 
-}
+      timeZone:
 
-};
+        Intl
+        .DateTimeFormat()
+
+        .resolvedOptions()
+
+        .timeZone
+
+    },
+
+    attendees,
+
+    conferenceData: {
+
+      createRequest: {
+
+        requestId:
+
+          Date.now()
+          .toString()
+
+      }
+
+    }
+
+  };
 
 }
 
-if(
-task.repeat &&
-task.repeat!=="None"
-){
-
-let freq=
-task.repeat
-.toUpperCase();
-
-let rule=
-`RRULE:FREQ=${freq};INTERVAL=${task.repeatInterval||1}`;
-
-if(
-task.repeatUntil
-){
-
-const until=
-task.repeatUntil
-.replace(
-/-/g,
-""
-)
-+
-"T235959Z";
-
-rule+=
-`;UNTIL=${until}`;
-
-}
-
-body.recurrence=
-[
-rule
-];
-
-}
-
-const response=
-await fetch(
-
-"https://www.googleapis.com/calendar/v3/calendars/primary/events?conferenceDataVersion=1",
-
-{
-
-method:
-"POST",
-
-headers:{
-
-Authorization:
-`Bearer ${token}`,
-
-"Content-Type":
-"application/json"
-
-},
-
-body:
-JSON.stringify(
-body
-)
-
-}
-
-);
-
-if(
-!response.ok
-){
-
-const error=
-await response.json();
-
-console.log(
-JSON.stringify(
-error,
-null,
-2
-)
-);
-
-throw error;
-
-}
-
-return await response.json();
-
-}
 
 // =======================
-// CREATE REVIEW EVENT
+// REVIEW EVENT
 // =======================
 
-export async function createReviewCalendarTask(
-task,
-date,
-docId="",
-dayIndex=""
-){
+export function createReviewCalendarTask(
 
-const token=
-localStorage.getItem(
-"googleToken"
-);
+  reviewTask,
 
-if(
-!token
-)
-return null;
+  date
 
-const startDate=
-new Date(
+) {
 
-date.getFullYear(),
+  const start =
+    new Date(
+      date
+    );
 
-date.getMonth(),
+  start.setHours(
+    reviewTask.hour,
+    reviewTask.minute,
+    0,
+    0
+  );
 
-date.getDate(),
+  const end =
+    new Date(
+      date
+    );
 
-task.hour,
+  end.setHours(
+    reviewTask.endHour,
+    reviewTask.endMinute,
+    0,
+    0
+  );
 
-task.minute
+  return {
 
-);
+    summary:
 
-let endDate;
+      reviewTask.title,
 
-if(
-task.endHour!=null &&
-task.endMinute!=null
-){
+    description:
 
-endDate=
-new Date(
+      "Review Schedule",
 
-date.getFullYear(),
+    start: {
 
-date.getMonth(),
+      dateTime:
 
-date.getDate(),
+        start
+        .toISOString(),
 
-task.endHour,
+      timeZone:
 
-task.endMinute
+        Intl
+        .DateTimeFormat()
 
-);
+        .resolvedOptions()
 
-}else{
+        .timeZone
 
-const match=
-`${task.raw||""}`
-.match(
-/-(\d{1,2}):(\d{2})/
-);
+    },
 
-if(
-match
-){
+    end: {
 
-endDate=
-new Date(
+      dateTime:
 
-date.getFullYear(),
+        end
+        .toISOString(),
 
-date.getMonth(),
+      timeZone:
 
-date.getDate(),
+        Intl
+        .DateTimeFormat()
 
-Number(
-match[1]
-),
+        .resolvedOptions()
 
-Number(
-match[2]
-)
+        .timeZone
 
-);
+    },
 
-}else{
+    reminders: {
 
-endDate=
-new Date(
-startDate.getTime()
-+
-30*
-60*
-1000
-);
+      useDefault:
+        true
+
+    }
+
+  };
 
 }
 
-}
-
-const eventKey=
-buildReviewEventKey(
-docId,
-dayIndex,
-task,
-date
-);
-
-const existed=
-await findCalendarEventByKey(
-eventKey
-);
-
-if(
-existed
-){
-
-return existed.id;
-
-}
-
-const body={
-
-summary:
-task.title
-||
-task.raw
-||
-"Task",
-
-start:{
-
-dateTime:
-startDate.toISOString(),
-
-timeZone:
-"Asia/Ho_Chi_Minh"
-
-},
-
-end:{
-
-dateTime:
-endDate.toISOString(),
-
-timeZone:
-"Asia/Ho_Chi_Minh"
-
-},
-
-extendedProperties:{
-
-private:{
-
-appTaskKey:
-eventKey,
-
-appTaskType:
-"review"
-
-}
-
-}
-
-};
-
-const response=
-await fetch(
-
-"https://www.googleapis.com/calendar/v3/calendars/primary/events",
-
-{
-
-method:
-"POST",
-
-headers:{
-
-Authorization:
-`Bearer ${token}`,
-
-"Content-Type":
-"application/json"
-
-},
-
-body:
-JSON.stringify(
-body
-)
-
-}
-
-);
-
-if(
-!response.ok
-){
-
-const err=
-await response.text();
-
-console.error(
-err
-);
-
-return null;
-
-}
-
-const event=
-await response.json();
-
-return event.id;
-
-}
-
-// =======================
-// DUPLICATE KEY
-// =======================
-
-export function buildMainEventKey(
-task,
-docId
-){
-
-return [
-
-"main",
-
-docId||"",
-
-task.taskName||"",
-
-task.start||"",
-
-task.deadline||""
-
-].join(
-"|"
-);
-
-}
-
-export function buildReviewEventKey(
-docId,
-dayIndex,
-taskObj,
-date
-){
-
-const yyyy=
-date.getFullYear();
-
-const mm=
-String(
-date.getMonth()+1
-)
-.padStart(
-2,
-"0"
-);
-
-const dd=
-String(
-date.getDate()
-)
-.padStart(
-2,
-"0"
-);
-
-return [
-
-"review",
-
-docId||"",
-
-`day${dayIndex}`,
-
-`${yyyy}-${mm}-${dd}`,
-
-taskObj.title
-||
-taskObj.raw
-||
-"",
-
-`${String(taskObj.hour).padStart(2,"0")}:${String(taskObj.minute).padStart(2,"0")}`,
-
-`${taskObj.endHour??""}:${taskObj.endMinute??""}`
-
-].join(
-"|"
-);
-
-}
 
 // =======================
 // FIND EVENT
 // =======================
 
-export async function findCalendarEventByKey(
-eventKey
-){
+export function findCalendarEventByKey(
 
-const token=
-localStorage.getItem(
-"googleToken"
-);
+  events,
 
-if(
-!token
-)
-return null;
+  key
 
-const url=
+) {
 
-"https://www.googleapis.com/calendar/v3/calendars/primary/events"
+  if (
 
-+
+    !Array.isArray(
+      events
+    )
 
-`?privateExtendedProperty=appTaskKey=${encodeURIComponent(eventKey)}`
+  ) {
 
-+
+    return null;
 
-"&maxResults=1&singleEvents=true";
+  }
 
-const res=
-await fetch(
-url,
-{
+  for (
 
-method:
-"GET",
+    const event
+    of events
 
-headers:{
+  ) {
 
-Authorization:
-`Bearer ${token}`
+    const eventKey =
+      [
 
-}
+        event.summary
+        || "",
 
-}
-);
+        event.start
+        ?.dateTime
+        || "",
 
-if(
-!res.ok
-){
+        event.end
+        ?.dateTime
+        || ""
 
-const err=
-await res.text();
+      ]
 
-console.error(
-err
-);
+      .join("|")
 
-return null;
+      .trim();
 
-}
+    if (
 
-const data=
-await res.json();
+      eventKey
+      ===
+      key
 
-if(
-data.items &&
-data.items.length
-){
+    ) {
 
-return data.items[0];
+      return event;
 
-}
+    }
 
-return null;
+  }
+
+  return null;
 
 }

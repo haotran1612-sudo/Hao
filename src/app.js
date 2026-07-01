@@ -1,6 +1,12 @@
 // =======================
 // APP ENTRY POINT
 // =======================
+import { logout } from "./auth/login.js";
+
+// bắt buộc expose ra global
+window.logout = logout;
+
+
 window.addRow = addRow;
 import { googleLogin } from "./auth/google.js";
 

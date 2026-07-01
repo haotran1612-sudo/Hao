@@ -1,6 +1,7 @@
 // =======================
 // APP ENTRY POINT
 // =======================
+window.addRow = addRow;
 import { googleLogin } from "./auth/google.js";
 
 // bắt buộc expose ra global

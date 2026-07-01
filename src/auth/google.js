@@ -4,17 +4,33 @@
 
 import { auth, provider } from "../config/firebase.js";
 
-import {
-  requestNotificationPermission
-} from "../notification/notification.js";
+import { requestNotificationPermission } from "../notification/notification.js";
+import { loadTasks } from "../task/task.js";
+import { loadUserMusicSettings } from "../music/music.js";
 
-import {
-  loadTasks
-} from "../task/task.js";
+// =======================
+// UI HELPERS
+// =======================
 
-import {
-  loadUserMusicSettings
-} from "../music/music.js";
+function showApp(userEmail) {
+  const loginPage = document.getElementById("loginPage");
+  const appPage = document.getElementById("appPage");
+  const welcome = document.getElementById("welcomeUser");
+
+  if (loginPage) loginPage.style.display = "none";
+  if (appPage) appPage.style.display = "block";
+  if (welcome) welcome.innerText = userEmail || "";
+}
+
+function saveSession(user, token) {
+  if (user?.email) {
+    localStorage.setItem("userEmail", user.email);
+  }
+
+  if (token) {
+    localStorage.setItem("googleToken", token);
+  }
+}
 
 // =======================
 // GOOGLE LOGIN
@@ -28,29 +44,14 @@ export async function googleLogin() {
     const token = credential?.accessToken || "";
     const user = result.user;
 
-    // save token for Google Calendar API
-    if (token) {
-      localStorage.setItem("googleToken", token);
-    }
+    saveSession(user, token);
+    showApp(user?.email);
 
-    // save user
-    if (user?.email) {
-      localStorage.setItem("userEmail", user.email);
-
-      const welcome = document.getElementById("welcomeUser");
-      if (welcome) welcome.innerText = user.email;
-    }
-
-    // UI switch
-    document.getElementById("loginPage").style.display = "none";
-    document.getElementById("appPage").style.display = "block";
-
-    // init app features
     await requestNotificationPermission();
     await loadTasks();
     await loadUserMusicSettings();
 
-    alert("Google login + Calendar connected thành công");
+    alert("Google login thành công");
   } catch (err) {
     console.error("googleLogin error:", err);
     alert(err.message || "Google login failed");
@@ -58,7 +59,7 @@ export async function googleLogin() {
 }
 
 // =======================
-// BIND GLOBAL
+// BIND GLOBAL (for HTML onclick)
 // =======================
 
 window.googleLogin = googleLogin;

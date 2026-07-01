@@ -1,7 +1,10 @@
 // =======================
 // APP ENTRY POINT
 // =======================
+import { googleLogin } from "./auth/google.js";
 
+// bắt buộc expose ra global
+window.googleLogin = googleLogin;
 // Firebase (core)
 import { auth } from "./config/firebase.js";
 

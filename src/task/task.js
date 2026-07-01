@@ -348,10 +348,10 @@ export async function addRow() {
 
     await loadTasks();
 
-  } catch (err) {
-    console.error("addRow error:", err);
-    alert("Không thêm được dòng mới");
-  }
+  }catch (err) {
+  console.error("addRow error:", err);
+  alert(err.message);
+}
 }
 
 // =======================

@@ -2,7 +2,7 @@
 // TASK MODULE
 // =======================
 
-import { db } from "../config/firebase.js";
+import { auth, db } from "../config/firebase.js";
 
 // utils
 import {

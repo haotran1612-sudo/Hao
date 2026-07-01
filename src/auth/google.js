@@ -1,111 +1,64 @@
 // =======================
-// GOOGLE LOGIN
+// GOOGLE AUTH MODULE
 // =======================
 
 import { auth, provider } from "../config/firebase.js";
 
 import {
-    requestNotificationPermission
+  requestNotificationPermission
 } from "../notification/notification.js";
 
 import {
-    loadTasks
+  loadTasks
 } from "../task/task.js";
 
 import {
-    loadUserMusicSettings
+  loadUserMusicSettings
 } from "../music/music.js";
 
+// =======================
+// GOOGLE LOGIN
+// =======================
+
 export async function googleLogin() {
+  try {
+    const result = await auth.signInWithPopup(provider);
 
-    try {
+    const credential = result.credential || null;
+    const token = credential?.accessToken || "";
+    const user = result.user;
 
-        const result =
-            await auth.signInWithPopup(provider);
-
-        const credential =
-            result.credential || null;
-
-        const token =
-            credential?.accessToken || "";
-
-        const user =
-            result.user;
-
-        // Lưu Google Access Token
-        if (token) {
-
-            localStorage.setItem(
-                "googleToken",
-                token
-            );
-
-        }
-
-        // Lưu email
-        if (user?.email) {
-
-            localStorage.setItem(
-                "userEmail",
-                user.email
-            );
-
-            const welcome =
-                document.getElementById("welcomeUser");
-
-            if (welcome) {
-
-                welcome.innerText =
-                    user.email;
-
-            }
-
-        }
-
-        // Chuyển sang App
-        const loginPage =
-            document.getElementById("loginPage");
-
-        const appPage =
-            document.getElementById("appPage");
-
-        if (loginPage) {
-
-            loginPage.style.display = "none";
-
-        }
-
-        if (appPage) {
-
-            appPage.style.display = "block";
-
-        }
-
-        // Khởi tạo dữ liệu
-        await requestNotificationPermission();
-
-        await loadTasks();
-
-        await loadUserMusicSettings();
-
-        alert(
-            "Google Login + Calendar connected thành công"
-        );
-
+    // save token for Google Calendar API
+    if (token) {
+      localStorage.setItem("googleToken", token);
     }
 
-    catch (err) {
+    // save user
+    if (user?.email) {
+      localStorage.setItem("userEmail", user.email);
 
-        console.error(
-            "googleLogin error:",
-            err
-        );
-
-        alert(
-            err.message ||
-            "Google Login thất bại"
-        );
-
+      const welcome = document.getElementById("welcomeUser");
+      if (welcome) welcome.innerText = user.email;
     }
 
+    // UI switch
+    document.getElementById("loginPage").style.display = "none";
+    document.getElementById("appPage").style.display = "block";
+
+    // init app features
+    await requestNotificationPermission();
+    await loadTasks();
+    await loadUserMusicSettings();
+
+    alert("Google login + Calendar connected thành công");
+  } catch (err) {
+    console.error("googleLogin error:", err);
+    alert(err.message || "Google login failed");
+  }
 }
+
+// =======================
+// BIND GLOBAL
+// =======================
+
+window.googleLogin = googleLogin;

@@ -1,192 +1,159 @@
-  // =======================
-// AUTO RESIZE
+// =======================
+// DOM UTILITIES
 // =======================
 
-export function autoResize(
-el
-){
+// =======================
+// AUTO RESIZE TEXTAREA
+// =======================
 
-if(
-!el
-)
-return;
+export function autoResize(el) {
+  if (!el) return;
 
-el.style.height=
-"auto";
+  el.style.height = "auto";
+  el.style.height = el.scrollHeight + "px";
 
-el.style.height=
-el.scrollHeight+
-"px";
-
+  const tr = el.closest("tr");
+  if (tr) tr.style.height = "auto";
 }
 
 // =======================
-// HIGHLIGHT TODAY
+// HIGHLIGHT TODAY COLUMN
 // =======================
 
-export function highlightTodayColumn(){
+export function highlightTodayColumn() {
+  setTimeout(() => {
+    const today = new Date();
+    const todayNorm = normalizeDate(today);
 
-const headers=
-document.querySelectorAll(
-"#taskTable th"
-);
+    let todayIndex = -1;
 
-headers.forEach(
-h=>
-h.classList.remove(
-"today-column"
-)
-);
+    for (let i = 1; i <= 7; i++) {
+      const th = document.getElementById("day" + i);
+      if (!th) continue;
 
-const today=
-new Date();
+      if (th.dataset.today === "true") {
+        todayIndex = i;
+        break;
+      }
+    }
 
-const day=
-today.getDay();
+    if (todayIndex === -1) return;
 
-// map Mon→Sun
-const index=
+    const rows = document.querySelectorAll("#taskTableBody tr");
 
-day===0
-?11
-:day+4;
+    const OFFSET = 5; // number of columns before review columns
 
-if(
-headers[index]
-){
+    rows.forEach(row => {
+      const cells = row.querySelectorAll("td");
+      const target = OFFSET + (todayIndex - 1);
 
-headers[index]
-.classList.add(
-"today-column"
-);
-
-}
-
+      if (cells[target]) {
+        cells[target].classList.add("today-column");
+      }
+    });
+  }, 300);
 }
 
 // =======================
-// WEEK HEADER
+// LOAD WEEK HEADER (MON → SUN)
 // =======================
 
-export function loadWeekHeader(){
+export function loadWeekHeader() {
+  const today = new Date();
 
-const ids=[
-"day1",
-"day2",
-"day3",
-"day4",
-"day5",
-"day6",
-"day7"
-];
+  const monday = new Date(today);
+  const dayOfWeek = today.getDay();
 
-const week=
-getCurrentWeekDates();
+  const daysFromMonday = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
 
-ids.forEach(
-(
-id,
-i
-)=>{
+  monday.setDate(today.getDate() - daysFromMonday);
 
-const el=
-document.getElementById(
-id
-);
+  const weekDays = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 
-if(
-!el
-)
-return;
+  for (let i = 0; i < 7; i++) {
+    const currentDate = new Date(monday);
+    currentDate.setDate(monday.getDate() + i);
 
-const d=
-week[i];
+    const th = document.getElementById(`day${i + 1}`);
+    if (!th) continue;
 
-el.innerHTML=
-`${formatDate(d)}`;
+    th.classList.remove("today-column");
 
-});
+    const w0 = new Date(currentDate);
+    const w1 = new Date(currentDate);
+    const w2 = new Date(currentDate);
+    const w3 = new Date(currentDate);
 
+    w1.setDate(w1.getDate() + 7);
+    w2.setDate(w2.getDate() + 14);
+    w3.setDate(w3.getDate() + 21);
+
+    th.innerHTML = `
+      <div class="week-day">${weekDays[i]}</div>
+      <div class="week-date">${w3.getDate()}.${w3.getMonth() + 1}</div>
+      <div class="week-subdate">${w2.getDate()}.${w2.getMonth() + 1}</div>
+      <div class="week-subdate">${w1.getDate()}.${w1.getMonth() + 1}</div>
+      <div class="week-subdate">${w0.getDate()}.${w0.getMonth() + 1}</div>
+    `;
+
+    const isToday =
+      currentDate.getDate() === today.getDate() &&
+      currentDate.getMonth() === today.getMonth() &&
+      currentDate.getFullYear() === today.getFullYear();
+
+    if (isToday) {
+      th.classList.add("today-column");
+      th.dataset.today = "true";
+    } else {
+      th.dataset.today = "false";
+    }
+  }
+
+  highlightTodayColumn();
 }
 
 // =======================
 // FORMAT DATE
 // =======================
 
-export function formatDate(
-date
-){
+export function formatDate(d) {
+  const months = [
+    "Jan","Feb","Mar","Apr","May","Jun",
+    "Jul","Aug","Sep","Oct","Nov","Dec"
+  ];
 
-if(
-!date
-)
-return "";
-
-date=
-new Date(
-date
-);
-
-return (
-
-String(
-date.getDate()
-)
-.padStart(
-2,
-"0"
-)
-
-+
-
-"/"
-
-+
-
-String(
-date.getMonth()+1
-)
-.padStart(
-2,
-"0"
-)
-
-);
-
+  return `${d.getDate()}-${months[d.getMonth()]}`;
 }
 
 // =======================
-// CURRENT WEEK
+// GET CURRENT WEEK DATES
 // =======================
 
-export function getCurrentWeekDates(){
+export function getCurrentWeekDates() {
+  const today = new Date();
 
-const result=[];
+  const monday = new Date(today);
 
-const now=
-new Date();
+  let dow = today.getDay();
+  dow = dow === 0 ? 6 : dow - 1;
 
-for(
-let i=0;
-i<7;
-i++
-){
+  monday.setDate(today.getDate() - dow);
 
-const d=
-new Date(
-now
-);
+  const dates = [];
 
-d.setDate(
-now.getDate()+i
-);
+  for (let i = 0; i < 7; i++) {
+    const d = new Date(monday);
+    d.setDate(monday.getDate() + i);
+    dates.push(d);
+  }
 
-result.push(
-d
-);
-
+  return dates;
 }
 
-return result;
+// =======================
+// LOCAL HELPERS
+// =======================
 
+function normalizeDate(d) {
+  return new Date(d.getFullYear(), d.getMonth(), d.getDate());
 }

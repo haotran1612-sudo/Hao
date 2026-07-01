@@ -1,7 +1,4 @@
 
-
-export const db = firebase.firestore();
-export const provider = new firebase.auth.GoogleAuthProvider();
 // =======================
 // FIREBASE CONFIG
 // src/config/firebase.js

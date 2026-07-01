@@ -6,7 +6,6 @@ import { logout } from "./auth/login.js";
 // bắt buộc expose ra global
 window.logout = logout;
 
-import { addRow } from "./task/task.js";
 window.addRow = addRow;
 import { googleLogin } from "./auth/google.js";
 

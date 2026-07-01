@@ -294,8 +294,16 @@ export async function loadTasks() {
 
 export async function addRow() {
   try {
+    const user = auth.currentUser;
+
+    if (!user) {
+      alert("Bạn chưa đăng nhập");
+      return;
+    }
+
     await db.collection("tasks").add({
-      email: localStorage.getItem("userEmail"),
+      email: user.email,
+
       taskName: "",
       start: "",
       deadline: "",
@@ -334,12 +342,14 @@ export async function addRow() {
 
       autoDelete: false,
       reviewCalendarIds: [],
+
       createdAt: new Date()
     });
 
-    loadTasks();
+    await loadTasks();
+
   } catch (err) {
-    console.error(err);
+    console.error("addRow error:", err);
     alert("Không thêm được dòng mới");
   }
 }

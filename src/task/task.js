@@ -294,15 +294,15 @@ export async function loadTasks() {
 
 export async function addRow() {
   try {
-    const user = auth.currentUser;
+    const email = localStorage.getItem("userEmail");
 
-    if (!user) {
+    if (!email) {
       alert("Bạn chưa đăng nhập");
       return;
     }
 
     await db.collection("tasks").add({
-      email: user.email,
+      email,
 
       taskName: "",
       start: "",
@@ -322,7 +322,6 @@ export async function addRow() {
       priority: "Normal",
       status: "Todo",
       taskType: "Daily",
-
       repeat: "None",
       repeatInterval: 1,
       repeatUntil: "",
@@ -348,12 +347,11 @@ export async function addRow() {
 
     await loadTasks();
 
-  }catch (err) {
-  console.error("addRow error:", err);
-  alert(err.message);
+  } catch (err) {
+    console.error("addRow error:", err);
+    alert(err.message || "Add row failed");
+  }
 }
-}
-
 // =======================
 // VIEW SWITCH
 // =======================

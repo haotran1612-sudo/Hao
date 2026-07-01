@@ -1,220 +1,140 @@
 // =======================
-// CONFIG
+// APP ENTRY POINT
 // =======================
+
+// Firebase (core)
 import { auth } from "./config/firebase.js";
 
-// =======================
-// AUTH
-// =======================
-import {
-    login,
-    logout,
-    handleLoginEnter
-} from "./auth/login.js";
-
-import {
-    registerUser,
-    checkProviders,
-    resetPassword
-} from "./auth/register.js";
-
-import {
-    googleLogin
-} from "./auth/google.js";
-
-// =======================
 // TASK
-// =======================
 import {
-    saveTask,
+  loadTasks,
+  saveTask,
+  addRow,
+  updateTask,
+  openTaskModal,
+  closeTaskModal,
+  resetForm,
+  showTracker,
+  showKanban
+} from "./task/task.js";
+
+// REVIEW
+import {
+  rebuildReviewDays
+} from "./task/review.js";
+
+// BACKUP
+import {
+  archiveTask,
+  loadBackup,
+  restoreTask,
+  deleteBackupTask
+} from "./task/backup.js";
+
+// CALENDAR SYNC
+import {
+  syncFullCalendarFromRow,
+  toggleCreateCalendar
+} from "./calendar/sync.js";
+
+// MUSIC
+import {
+  saveMusicUrl,
+  loadUserMusicSettings,
+  toggleAutoPlayMusic,
+  playMusicFromUrl,
+  playSavedMusic,
+  stopMusic
+} from "./music/music.js";
+
+// NOTIFICATION
+import {
+  requestNotificationPermission
+} from "./notification/notification.js";
+
+// DOM UTILS
+import {
+  loadWeekHeader,
+  autoResize,
+  highlightTodayColumn
+} from "./utils/dom.js";
+
+// =======================
+// BIND GLOBAL FUNCTIONS (for HTML onclick/onchange)
+// =======================
+
+function bindWindow() {
+  Object.assign(window, {
+    // task
     loadTasks,
-    updateTask,
+    saveTask,
     addRow,
+    updateTask,
     openTaskModal,
     closeTaskModal,
     resetForm,
     showTracker,
     showKanban,
-    syncFullCalendarFromRow
-} from "./task/task.js";
 
-import {
-    buildReviewDays,
-    buildReviewSchedule,
-    rebuildReviewDays,
-    parseReviewTasks,
-    createCalendarFromReviewCells,
-    createReviewCalendarForRow,
-    scheduleTodayNotifications,
-    hasReviewData
-} from "./task/review.js";
-
-import {
+    // backup
     archiveTask,
-    showBackup,
+    loadBackup,
     restoreTask,
-    deleteBackupTask
-} from "./task/backup.js";
+    deleteBackupTask,
 
-// =======================
-// CALENDAR
-// =======================
-import {
-    createCalendarEvent,
-    createReviewCalendarTask,
-    findCalendarEventByKey,
-    buildMainEventKey,
-    buildReviewEventKey
-} from "./calendar/calendar.js";
+    // review
+    rebuildReviewDays,
 
-import {
+    // calendar
+    syncFullCalendarFromRow,
     toggleCreateCalendar,
-    createCalendarFromRow,
-    syncFullCalendarFromRow as syncCalendar
-} from "./calendar/sync.js";
 
-// =======================
-// MUSIC
-// =======================
-import {
+    // music
     saveMusicUrl,
     loadUserMusicSettings,
     toggleAutoPlayMusic,
     playMusicFromUrl,
     playSavedMusic,
     stopMusic,
-    extractYoutubeVideoId,
-    buildYoutubeEmbedUrl
-} from "./music/music.js";
 
-// =======================
-// NOTIFICATION
-// =======================
-import {
-    requestNotificationPermission,
-    showTaskNotification,
-    scheduleNotification,
-    refreshAllNotifications,
-    showInAppPopup
-} from "./notification/notification.js";
-
-// =======================
-// DOM
-// =======================
-import {
+    // utils
     autoResize,
-    highlightTodayColumn,
-    loadWeekHeader,
-    formatDate,
-    getCurrentWeekDates
-} from "./utils/dom.js";
+    highlightTodayColumn
+  });
+}
 
 // =======================
-// DATE
+// INIT APP
 // =======================
-import {
-    normalizeDate,
-    isSameDate,
-    isDateInRange,
-    diffDays,
-    diffMonths,
-    isOccurrenceForTaskType
-} from "./utils/date.js";
 
+async function initApp() {
+  loadWeekHeader();
+  bindWindow();
 
-// ======================================================
-// EXPORT TO WINDOW
-// (HTML onclick="" vẫn dùng được)
-// ======================================================
+  auth.onAuthStateChanged(async (user) => {
+    if (user) {
+      localStorage.setItem("userEmail", user.email || "");
 
-Object.assign(window, {
+      document.getElementById("loginPage").style.display = "none";
+      document.getElementById("appPage").style.display = "block";
 
-    login,
-    logout,
-    googleLogin,
+      document.getElementById("welcomeUser").innerText =
+        user.email || "";
 
-    registerUser,
-    checkProviders,
-    resetPassword,
-    handleLoginEnter,
+      await requestNotificationPermission();
+      await loadTasks();
+      await loadUserMusicSettings();
+    } else {
+      localStorage.removeItem("userEmail");
 
-    saveTask,
-    loadTasks,
-    updateTask,
+      document.getElementById("loginPage").style.display = "block";
+      document.getElementById("appPage").style.display = "none";
+    }
+  });
+}
 
-    addRow,
+// =======================
+// DOM READY
+// =======================
 
-    openTaskModal,
-    closeTaskModal,
-    resetForm,
-
-    showTracker,
-    showKanban,
-
-    archiveTask,
-    showBackup,
-    restoreTask,
-    deleteBackupTask,
-
-    toggleCreateCalendar,
-    createCalendarFromRow,
-    syncFullCalendarFromRow: syncCalendar,
-
-    createCalendarFromReviewCells,
-    createReviewCalendarForRow,
-
-    rebuildReviewDays,
-
-    saveMusicUrl,
-    toggleAutoPlayMusic,
-    playSavedMusic,
-    stopMusic,
-
-    refreshAllNotifications
-});
-
-
-// ======================================================
-// APP INIT
-// ======================================================
-
-document.addEventListener("DOMContentLoaded", () => {
-
-    loadWeekHeader();
-
-    auth.onAuthStateChanged(async (user) => {
-
-        if (!user) {
-
-            localStorage.removeItem("userEmail");
-
-            document.getElementById("loginPage").style.display = "block";
-            document.getElementById("appPage").style.display = "none";
-
-            return;
-        }
-
-        localStorage.setItem(
-            "userEmail",
-            user.email || ""
-        );
-
-        document.getElementById("loginPage").style.display = "none";
-        document.getElementById("appPage").style.display = "block";
-
-        document.getElementById("welcomeUser").innerText =
-            user.email || "";
-
-        await requestNotificationPermission();
-
-        await loadTasks();
-
-        await loadUserMusicSettings();
-
-        scheduleTodayNotifications();
-
-        highlightTodayColumn();
-
-    });
-
-});
+document.addEventListener("DOMContentLoaded", initApp);
